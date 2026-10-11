@@ -1,6 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
@@ -12,6 +11,7 @@ import { STORAGE_KEYS } from '@/constants/storage';
 import { Sidebar, SidebarNav } from './Sidebar';
 import { Breadcrumbs } from './Breadcrumbs';
 import { CommandSearch } from './CommandSearch';
+import { ModuleErrorBoundary } from './ModuleErrorBoundary';
 import type { NavGroup } from '../navigation';
 
 interface AppShellProps {
@@ -30,7 +30,6 @@ export function AppShell({ groups, homeTo, rootLabel, badge, headerActions, side
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem(STORAGE_KEYS.sidebarCollapsed) === '1');
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
-  const reduce = useReducedMotion();
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.sidebarCollapsed, collapsed ? '1' : '0');
@@ -80,17 +79,9 @@ export function AppShell({ groups, homeTo, rootLabel, badge, headerActions, side
           {topNotice}
           <main id="main" className="flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
             <div className="mx-auto w-full max-w-7xl">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={location.pathname}
-                  initial={reduce ? false : { opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={reduce ? undefined : { opacity: 0 }}
-                  transition={{ duration: 0.22, ease: 'easeOut' }}
-                >
-                  <Outlet />
-                </motion.div>
-              </AnimatePresence>
+              <ModuleErrorBoundary key={location.pathname}>
+                <Outlet />
+              </ModuleErrorBoundary>
             </div>
           </main>
         </div>
