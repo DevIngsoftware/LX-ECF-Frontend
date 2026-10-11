@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
 import { toast } from 'sonner';
-import { MoreHorizontal, Pencil, Power, UserPlus, Users } from 'lucide-react';
+import { Mail, MoreHorizontal, Pencil, Power, UserPlus, Users } from 'lucide-react';
 import { PageTransition } from '@/components/animations/motion';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
@@ -49,6 +49,14 @@ export function AdminUsersPage() {
     onError: (err) => toast.error(errorMessage(err)),
   });
 
+  const resend = useMutation({
+    mutationFn: (u: InternalUser) => u.pendingEmail
+      ? adminService.resendEmailChangeVerification(u.id)
+      : adminService.resendInvitation(u.id),
+    onSuccess: (_, u) => toast.success(u.pendingEmail ? 'Verificación reenviada' : 'Invitación reenviada'),
+    onError: (err) => toast.error(errorMessage(err)),
+  });
+
   // El servicio devuelve la lista completa: filtro y paginación en el cliente.
   const page = useMemo<Page<InternalUser> | undefined>(() => {
     if (!data) return undefined;
@@ -73,6 +81,8 @@ export function AdminUsersPage() {
             <div className="min-w-0">
               <p className="max-w-[220px] truncate font-medium">{row.original.name}</p>
               <p className="max-w-[220px] truncate text-xs text-muted-foreground">{row.original.email}</p>
+              {row.original.pendingEmail && <p className="max-w-[220px] truncate text-xs text-amber-700" title={row.original.pendingEmail}>Pendiente: {row.original.pendingEmail}</p>}
+              {row.original.emailVerified === false && !row.original.pendingEmail && <p className="text-xs text-amber-700">Invitación pendiente</p>}
             </div>
           </div>
         ),
@@ -93,6 +103,11 @@ export function AdminUsersPage() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onSelect={() => openForm(row.original)}><Pencil className="mr-2 h-4 w-4" /> Editar</DropdownMenuItem>
+                  {(row.original.pendingEmail || row.original.emailVerified === false) && (
+                    <DropdownMenuItem disabled={resend.isPending} onSelect={() => resend.mutate(row.original)}>
+                      <Mail className="mr-2 h-4 w-4" /> {row.original.pendingEmail ? 'Reenviar verificación' : 'Reenviar invitación'}
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem disabled={isMe} onSelect={() => setToggling(row.original)} className={row.original.active ? 'text-destructive focus:text-destructive' : undefined}>
                     <Power className="mr-2 h-4 w-4" /> {row.original.active ? 'Desactivar' : 'Reactivar'}

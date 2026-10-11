@@ -29,6 +29,8 @@ export interface AdminService {
   subscriptions(query: PageQuery & { status?: string }): Promise<Page<AdminSubscription>>;
   users(): Promise<InternalUser[]>;
   saveUser(user: Omit<InternalUser, 'id'> & { id?: string }): Promise<InternalUser>;
+  resendInvitation(id: string): Promise<void>;
+  resendEmailChangeVerification(id: string): Promise<void>;
   tickets(query: PageQuery & { status?: string }): Promise<Page<SupportTicket>>;
   updateTicket(id: string, status: string): Promise<void>;
   audit(query: PageQuery & { category?: string }): Promise<Page<AuditEvent>>;
@@ -59,6 +61,8 @@ const http = {
     subscriptions: (params) => get(ENDPOINTS.admin.subscriptions, { params }),
     users: () => get(ENDPOINTS.admin.users),
     saveUser: (u) => (u.id ? put(`${ENDPOINTS.admin.users}/${u.id}`, u) : post(ENDPOINTS.admin.users, u)),
+    resendInvitation: (id) => post(`${ENDPOINTS.admin.users}/${id}/reenviar-invitacion`),
+    resendEmailChangeVerification: (id) => post(`${ENDPOINTS.admin.users}/${id}/reenviar-verificacion`),
     tickets: (params) => get(ENDPOINTS.admin.tickets, { params }),
     updateTicket: (id, status) => patch(`${ENDPOINTS.admin.tickets}/${id}`, { status }),
     audit: (params) => get(ENDPOINTS.admin.audit, { params }),
@@ -159,6 +163,8 @@ const mock = {
       internalUsers.push(created);
       return created;
     },
+    resendInvitation: () => delay(500),
+    resendEmailChangeVerification: () => delay(500),
     async tickets(q) {
       await delay();
       return paginate(filterStatus(tickets, q.status), q, ['id', 'subject', 'company']);
@@ -203,5 +209,9 @@ export const adminService: AdminService = {
   companies: ENV.authUseMocks ? mock.admin.companies : http.admin.companies,
   company: ENV.authUseMocks ? mock.admin.company : http.admin.company,
   setCompanyStatus: ENV.authUseMocks ? mock.admin.setCompanyStatus : http.admin.setCompanyStatus,
+  users: ENV.authUseMocks ? mock.admin.users : http.admin.users,
+  saveUser: ENV.authUseMocks ? mock.admin.saveUser : http.admin.saveUser,
+  resendInvitation: ENV.authUseMocks ? mock.admin.resendInvitation : http.admin.resendInvitation,
+  resendEmailChangeVerification: ENV.authUseMocks ? mock.admin.resendEmailChangeVerification : http.admin.resendEmailChangeVerification,
 };
 export const chatService: ChatService = ENV.chatApiPath ? http.chat : mock.chat;

@@ -81,6 +81,9 @@ export interface InternalUser {
   role: AdminRole;
   active: boolean;
   lastLoginAt?: ISODate;
+  emailVerified?: boolean;
+  pendingEmail?: string | null;
+  emailSent?: boolean;
 }
 
 export interface SupportTicket {

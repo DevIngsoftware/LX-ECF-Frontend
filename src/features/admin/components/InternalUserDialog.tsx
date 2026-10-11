@@ -12,6 +12,7 @@ import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { adminService } from '@/services/api/platform';
+import { useAuth } from '@/features/auth/auth-context';
 import { queryKeys } from '@/services/api/query-keys';
 import { errorMessage } from '@/services/http/errors';
 import type { InternalUser } from '@/types/platform';
@@ -35,6 +36,8 @@ const toValues = (u?: InternalUser | null): FormValues => ({
 
 export function InternalUserDialog({ open, onOpenChange, user }: { open: boolean; onOpenChange: (o: boolean) => void; user: InternalUser | null }) {
   const qc = useQueryClient();
+  const { user: me } = useAuth();
+  const isMe = !!user && user.id === me?.id;
   const form = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: toValues(user) });
 
   useEffect(() => {
@@ -44,8 +47,14 @@ export function InternalUserDialog({ open, onOpenChange, user }: { open: boolean
   const save = useMutation({
     mutationFn: (v: FormValues) =>
       adminService.saveUser({ ...(user ? { id: user.id, lastLoginAt: user.lastLoginAt } : {}), name: v.name.trim(), email: v.email.trim().toLowerCase(), role: v.role, active: v.active }),
-    onSuccess: () => {
-      toast.success(user ? 'Usuario actualizado' : 'Invitación enviada');
+    onSuccess: (saved) => {
+      if (saved.emailSent === false) {
+        toast.warning(user ? 'Cambios guardados, pero no se pudo enviar la verificación. Puedes reenviarla.' : 'Usuario creado, pero no se pudo enviar la invitación. Puedes reenviarla.');
+      } else if (saved.pendingEmail) {
+        toast.success(`Cambios guardados. La verificación está pendiente en ${saved.pendingEmail}.`);
+      } else {
+        toast.success(user ? 'Usuario actualizado' : 'Invitación enviada');
+      }
       void qc.invalidateQueries({ queryKey: queryKeys.admin.users });
       onOpenChange(false);
     },
@@ -84,6 +93,8 @@ export function InternalUserDialog({ open, onOpenChange, user }: { open: boolean
                     <Input {...field} type="email" placeholder="nombre@loadexpress.com" autoComplete="off" />
                   </FormControl>
                   {!user && <FormDescription>Recibirá un enlace para definir su contraseña.</FormDescription>}
+                  {user && <FormDescription>Si cambias el correo, enviaremos una verificación al nuevo. El actual seguirá activo hasta confirmarlo.</FormDescription>}
+                  {user?.pendingEmail && <FormDescription>Verificación pendiente: {user.pendingEmail}</FormDescription>}
                   <FormMessage />
                 </FormItem>
               )}
@@ -94,7 +105,7 @@ export function InternalUserDialog({ open, onOpenChange, user }: { open: boolean
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Rol</FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
+                  <Select value={field.value} onValueChange={field.onChange} disabled={isMe}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue />
@@ -123,7 +134,7 @@ export function InternalUserDialog({ open, onOpenChange, user }: { open: boolean
                     <FormDescription>Los usuarios inactivos no pueden iniciar sesión.</FormDescription>
                   </div>
                   <FormControl>
-                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                    <Switch checked={field.value} onCheckedChange={field.onChange} disabled={isMe} />
                   </FormControl>
                 </FormItem>
               )}
