@@ -1,37 +1,23 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, BookOpen, KeyRound, Webhook, Zap } from 'lucide-react';
+import { ArrowRight, BookOpen, KeyRound, SearchCheck, Zap } from 'lucide-react';
 import { Reveal } from '@/components/animations/motion';
 import { CodeBlock } from '@/components/shared/CodeBlock';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ROUTES } from '@/constants/routes';
+import { EMIT_REQUEST, EMIT_RESPONSE } from '@/features/developers/sections/reference-data';
 import { SectionHeading } from './SectionHeading';
 
-const REQUEST = `# Ejemplo ilustrativo: la referencia oficial está en el portal de desarrolladores
-curl -X POST "https://api.ejemplo.test/v1/comprobantes" \\
-  -H "Authorization: Bearer <TU_API_KEY>" \\
+const REQUEST = `curl -X POST "$LX_API_URL/api-client/facturas" \\
+  -H "Authorization: Bearer $LX_ACCESS_TOKEN" \\
   -H "Content-Type: application/json" \\
-  -d '{
-    "tipo": "E31",
-    "comprador": { "rnc": "101000000", "razonSocial": "Cliente Ejemplo" },
-    "items": [
-      { "descripcion": "Servicio de consultoría", "cantidad": 1, "precio": 10000, "itbis": 18 }
-    ]
-  }'`;
-
-const RESPONSE = `{
-  "id": "c8f2e1a0-ejemplo",
-  "encf": "E310000000001",
-  "estadoInterno": "CREADO",
-  "estadoDgii": "EN_PROCESO",
-  "trackId": "ejemplo-track-id",
-  "total": 11800.00
-}`;
+  -H "Idempotency-Key: <UUID_UNICO>" \\
+  -d '${EMIT_REQUEST}'`;
 
 const POINTS = [
   { icon: KeyRound, text: 'Autenticación con credenciales por empresa' },
   { icon: Zap, text: 'Emisión y consulta de estados desde tu sistema' },
-  { icon: Webhook, text: 'Notificaciones de cambios de estado' },
+  { icon: SearchCheck, text: 'Consulta de estado DGII por e-NCF' },
 ];
 
 export function ApiSection() {
@@ -76,16 +62,16 @@ export function ApiSection() {
                 <TabsTrigger value="request">Solicitud</TabsTrigger>
                 <TabsTrigger value="response">Respuesta</TabsTrigger>
               </TabsList>
-              <span className="rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Ejemplo ilustrativo</span>
+              <span className="rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Ejemplo de integración</span>
             </div>
             <TabsContent value="request" className="mt-0">
-              <CodeBlock code={REQUEST} lang="bash" title="Ejemplo ilustrativo · cURL" />
+              <CodeBlock code={REQUEST} lang="bash" title="Crear comprobante · cURL" />
             </TabsContent>
             <TabsContent value="response" className="mt-0">
-              <CodeBlock code={RESPONSE} lang="json" title="Ejemplo ilustrativo · Respuesta JSON" />
+              <CodeBlock code={EMIT_RESPONSE} lang="json" title="Crear comprobante · Respuesta JSON" />
             </TabsContent>
           </Tabs>
-          <p className="mt-3 text-xs text-muted-foreground">Campos y rutas de ejemplo. Consulta el portal de desarrolladores para la especificación vigente.</p>
+          <p className="mt-3 text-xs text-muted-foreground">Configura LX_API_URL con la base de tu API, incluido /v1. El envío a la DGII se solicita por separado. Consulta la guía y Swagger para todos los campos.</p>
         </Reveal>
       </div>
     </section>

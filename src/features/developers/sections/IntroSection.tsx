@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button';
 import { COMPANY } from '@/constants/env';
 import { ROUTES } from '@/constants/routes';
 import { Callout, DocBlock, DocHeader } from '../components/doc-ui';
+import { SwaggerLinks } from '../components/SwaggerLinks';
 
 const FEATURES = [
-  { icon: Workflow, title: 'Emisión de e-CF', text: 'Envía los datos de tus comprobantes y la plataforma se encarga de firmarlos y remitirlos a la DGII.' },
+  { icon: Workflow, title: 'Emisión de e-CF', text: 'Crea el comprobante con sus datos y luego solicita su firma y envío a la DGII.' },
   { icon: ShieldCheck, title: 'Estados en tiempo real', text: 'Consulta el estado interno y el estado DGII de cada comprobante emitido.' },
   { icon: FileCode2, title: 'Representación impresa', text: 'Descarga el PDF del comprobante y su XML cuando ya esté firmado.' },
   { icon: Webhook, title: 'Integración con tu sistema', text: 'Conecta tu ERP, punto de venta o tienda en línea mediante una API REST.' },
@@ -61,9 +62,9 @@ export function IntroSection() {
 
       <DocBlock title="Antes de comenzar">
         <Callout tone="info" title="Referencia de la API actual">
-          Las rutas y los campos de esta guía corresponden a la API implementada. Consulta también la especificación generada en <code>/v3/api-docs</code>
-          y prueba los endpoints en <code>/swagger-ui/index.html</code> de tu instalación.
+          Esta guía resume las operaciones de integración. Swagger muestra la especificación generada por la API y permite consultar los campos de cada solicitud.
         </Callout>
+        <SwaggerLinks />
         <Link to={ROUTES.developers.section('documentacion')} className="inline-flex items-center gap-1 text-sm font-medium text-brand hover:underline">
           Ir a la referencia de endpoints <ArrowRight className="h-4 w-4" aria-hidden />
         </Link>

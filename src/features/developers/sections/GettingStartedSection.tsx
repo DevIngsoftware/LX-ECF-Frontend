@@ -13,7 +13,7 @@ const STEPS = [
   },
   {
     title: 'Genera una credencial de pruebas',
-    text: 'Desde la sección Credenciales crea una clave para el ambiente de pruebas. El secreto se muestra una sola vez.',
+    text: 'Con el módulo API activo, crea una clave para el ambiente de pruebas desde Credenciales. El secreto se muestra una sola vez.',
     link: { to: ROUTES.developers.section('credenciales'), label: 'Ir a credenciales' },
   },
   {
@@ -22,8 +22,8 @@ const STEPS = [
     link: { to: ROUTES.developers.section('autenticacion'), label: 'Ver autenticación' },
   },
   {
-    title: 'Emite tu primer comprobante',
-    text: 'Envía una solicitud de emisión con un encabezado Idempotency-Key único para evitar duplicados.',
+    title: 'Crea y envía tu primer comprobante',
+    text: 'Crea el comprobante con una Idempotency-Key única; después solicita su envío a la DGII.',
     link: { to: ROUTES.developers.section('ejemplos'), label: 'Ver ejemplos' },
   },
   {
@@ -33,7 +33,7 @@ const STEPS = [
   },
 ];
 
-const FIRST_CALL = `curl -X GET "https://{BASE_URL_PRUEBAS}/v1/api-client/facturas?size=5" \\
+const FIRST_CALL = `curl "$LX_API_URL/api-client/facturas?size=5" \\
   -H "Authorization: Bearer $LX_ACCESS_TOKEN" \\
   -H "Accept: application/json"`;
 
@@ -71,7 +71,7 @@ export function GettingStartedSection() {
       <DocBlock title="Tu primera llamada" description="Lista los comprobantes más recientes para verificar que tu credencial funciona.">
         <CodeBlock lang="bash" title="cURL — Lista de comprobantes" code={FIRST_CALL} />
         <p className="text-sm text-muted-foreground">
-          Reemplaza <InlineCode>{'{BASE_URL_PRUEBAS}'}</InlineCode> por la URL de tu instalación en pruebas y define la variable{' '}
+          Define <InlineCode>LX_API_URL</InlineCode> con la URL base de tu API, incluyendo <InlineCode>/v1</InlineCode>, y{' '}
           <InlineCode>LX_ACCESS_TOKEN</InlineCode> con el token obtenido al intercambiar tu API Key y API Secret en tu servidor.
         </p>
         <Callout tone="info">Usa siempre el ambiente de pruebas hasta validar tu integración de extremo a extremo.</Callout>

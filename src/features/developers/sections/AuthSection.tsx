@@ -2,12 +2,11 @@ import { KeyRound, ShieldCheck } from 'lucide-react';
 import { CodeBlock } from '@/components/shared/CodeBlock';
 import { Callout, DocBlock, DocHeader, InlineCode } from '../components/doc-ui';
 
-const BEARER = `GET /v1/api-client/identity HTTP/1.1
-Host: {BASE_URL}
-Authorization: Bearer <ACCESS_TOKEN>
-Accept: application/json`;
+const BEARER = `curl "$LX_API_URL/api-client/identity" \\
+  -H "Authorization: Bearer $LX_ACCESS_TOKEN" \\
+  -H "Accept: application/json"`;
 
-const API_KEY = `curl -X POST "https://{BASE_URL}/v1/api-keys/token" \\
+const API_KEY = `curl -X POST "$LX_API_URL/api-keys/token" \\
   -H "Content-Type: application/json" \\
   -d @- <<JSON
   {
@@ -60,7 +59,7 @@ export function AuthSection() {
       </DocBlock>
 
       <DocBlock title="2. Usar el token" description="Incluye el token en cada solicitud.">
-        <CodeBlock lang="http" title="HTTP" code={BEARER} />
+        <CodeBlock lang="bash" title="cURL — Verificar token" code={BEARER} />
         <p className="text-sm text-muted-foreground">
           Si el token expira o es inválido, la API responde <InlineCode>401 Unauthorized</InlineCode>. Solicita un nuevo token y repite la operación
           solo si es segura (consultas) o si usas el mismo <InlineCode>Idempotency-Key</InlineCode> (emisión).

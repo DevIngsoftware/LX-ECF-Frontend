@@ -5,15 +5,20 @@ import { Badge } from '@/components/ui/badge';
 import { Callout, DocBlock, DocHeader, DocTable, InlineCode } from '../components/doc-ui';
 import { HttpStatusBadge, MethodBadge } from '../components/MethodBadge';
 import { ENDPOINTS_DOC } from './reference-data';
+import { SwaggerLinks } from '../components/SwaggerLinks';
 
 export function ReferenceSection() {
   return (
     <>
-      <DocHeader eyebrow="Referencia" title="Documentación de endpoints" description="Operaciones disponibles para emitir y consultar comprobantes fiscales electrónicos." />
+      <DocHeader eyebrow="Referencia" title="Documentación de endpoints" description="Rutas principales de autenticación, emisión y consulta para integraciones servidor a servidor." />
+
+      <DocBlock title="Referencia interactiva" description="Swagger incluye el contrato técnico generado por la API para las rutas de integración.">
+        <SwaggerLinks />
+      </DocBlock>
 
       <div className="mb-8">
         <Callout tone="warning" icon={FileWarning} title="Ambiente fiscal de la empresa">
-          La credencial técnica usa el ambiente DGII configurado para su empresa. Crear un comprobante reserva un e-NCF; enviarlo a la DGII es una llamada separada.
+          La credencial técnica usa el ambiente DGII configurado para su empresa. Crear un comprobante reserva un e-NCF; enviarlo a la DGII es una llamada separada. «Try it out» de Swagger ejecuta operaciones reales en ese ambiente.
         </Callout>
       </div>
 

@@ -22,7 +22,7 @@ const FAQ = [
   },
   {
     q: '¿Dónde está la especificación OpenAPI?',
-    a: 'La API genera su especificación en /v3/api-docs y la vista interactiva en /swagger-ui/index.html de tu instalación.',
+    a: 'En Documentación encontrarás enlaces directos a Swagger y al esquema OpenAPI de las rutas de integración.',
   },
 ];
 

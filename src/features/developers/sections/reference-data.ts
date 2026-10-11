@@ -42,6 +42,19 @@ export const EMIT_RESPONSE = `{
 
 export const ENDPOINTS_DOC: EndpointDoc[] = [
   {
+    id: 'token', method: 'POST', path: '/v1/api-keys/token', summary: 'Obtener token técnico',
+    description: 'Intercambia la API Key y el API Secret por un token Bearer válido durante 900 segundos. Envíalos solo desde tu servidor.',
+    headers: [{ name: 'Content-Type', value: 'application/json', required: true, note: 'Cuerpo en JSON.' }],
+    request: `{ "apiKey": "lxk_...", "apiSecret": "lxs_..." }`,
+    response: `{ "accessToken": "<JWT>", "expiresIn": 900, "tokenType": "Bearer" }`, responseStatus: 200,
+  },
+  {
+    id: 'identity', method: 'GET', path: '/v1/api-client/identity', summary: 'Verificar credencial',
+    description: 'Confirma la empresa y el ambiente asociados al token técnico antes de emitir.',
+    headers: [AUTH_HEADER],
+    response: `{ "rnc": "101123456", "environment": "sandbox", "credentialId": "1" }`, responseStatus: 200,
+  },
+  {
     id: 'validate', method: 'POST', path: `${BASE}/validar`, summary: 'Validar formulario',
     description: 'Valida los datos antes de reservar un e-NCF. No envía el comprobante.',
     headers: [AUTH_HEADER, { name: 'Content-Type', value: 'application/json', required: true, note: 'Cuerpo en JSON.' }],

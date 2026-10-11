@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Callout, DocBlock, DocHeader } from '../components/doc-ui';
 import { EMIT_REQUEST } from './reference-data';
 
-const CURL = `curl -X POST "https://{BASE_URL}/v1/api-client/facturas" \\
+const CURL = `curl -X POST "$LX_API_URL/api-client/facturas" \\
   -H "Authorization: Bearer $LX_ACCESS_TOKEN" \\
   -H "Content-Type: application/json" \\
   -H "Idempotency-Key: 3f6c1e0a-7d2b-4b8e-9a51-0c2f5e7d9a10" \\
@@ -13,7 +13,7 @@ const JS = `// Node.js 18+; ejecutar desde tu servidor
 import { randomUUID } from 'node:crypto';
 
 const idempotencyKey = randomUUID(); // conservar junto a la factura interna
-const response = await fetch(\`\${process.env.LX_BASE_URL}/v1/api-client/facturas\`, {
+const response = await fetch(\`\${process.env.LX_API_URL}/api-client/facturas\`, {
   method: 'POST',
   headers: {
     Authorization: \`Bearer \${process.env.LX_ACCESS_TOKEN}\`,
@@ -47,7 +47,7 @@ public class CrearEcf {
       ${EMIT_REQUEST}
       """;
     HttpRequest request = HttpRequest.newBuilder()
-      .uri(URI.create(System.getenv("LX_BASE_URL") + "/v1/api-client/facturas"))
+      .uri(URI.create(System.getenv("LX_API_URL") + "/api-client/facturas"))
       .header("Authorization", "Bearer " + System.getenv("LX_ACCESS_TOKEN"))
       .header("Content-Type", "application/json")
       .header("Idempotency-Key", UUID.randomUUID().toString())
@@ -59,7 +59,7 @@ public class CrearEcf {
   }
 }`;
 
-const STATUS_CURL = `curl -X GET "https://{BASE_URL}/v1/api-client/facturas/{eNcf}/estado" \\
+const STATUS_CURL = `curl "$LX_API_URL/api-client/facturas/{eNcf}/estado" \\
   -H "Authorization: Bearer $LX_ACCESS_TOKEN"`;
 
 export function ExamplesSection() {

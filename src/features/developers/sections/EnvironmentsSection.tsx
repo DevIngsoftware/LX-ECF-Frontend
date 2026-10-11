@@ -1,30 +1,21 @@
-import { FlaskConical, Rocket, ShieldCheck } from 'lucide-react';
+import { FlaskConical, Rocket } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { ENV } from '@/constants/env';
 import { Callout, DocBlock, DocHeader, InlineCode } from '../components/doc-ui';
 
 const ENVIRONMENTS = [
   {
     icon: FlaskConical,
-    name: 'Pruebas',
-    baseUrl: '{BASE_URL_PRUEBAS}',
-    keyPrefix: 'lx_test_',
-    text: 'Ambiente para desarrollo e integración. Los comprobantes no tienen validez fiscal.',
+    name: 'Pruebas y certificación',
+    credential: 'sandbox',
+    text: 'Para integrar y completar la certificación de la empresa ante la DGII. Los comprobantes de estos ambientes no tienen validez fiscal de producción.',
     tone: 'info' as const,
-  },
-  {
-    icon: ShieldCheck,
-    name: 'Certificación',
-    baseUrl: '{BASE_URL_CERTIFICACION}',
-    keyPrefix: 'lx_test_',
-    text: 'Ambiente para completar el proceso de certificación como emisor electrónico ante la DGII.',
-    tone: 'warning' as const,
   },
   {
     icon: Rocket,
     name: 'Producción',
-    baseUrl: '{BASE_URL_PRODUCCION}',
-    keyPrefix: 'lx_live_',
-    text: 'Ambiente real. Los comprobantes emitidos tienen validez fiscal y se remiten a la DGII.',
+    credential: 'production',
+    text: 'Para empresas habilitadas en producción ante la DGII. Los comprobantes emitidos son fiscales.',
     tone: 'success' as const,
   },
 ];
@@ -32,48 +23,37 @@ const ENVIRONMENTS = [
 export function EnvironmentsSection() {
   return (
     <>
-      <DocHeader eyebrow="Comenzar" title="Ambientes" description="Cada ambiente tiene su propia URL base y sus propias credenciales." />
+      <DocHeader eyebrow="Comenzar" title="Ambientes" description="Usa la URL de la API de tu instalación. El ambiente fiscal se configura por empresa y la credencial técnica debe coincidir con él." />
 
-      <DocBlock>
-        <div className="grid gap-4 lg:grid-cols-3">
-          {ENVIRONMENTS.map((e) => (
-            <div key={e.name} className="surface surface-hover flex flex-col p-5">
-              <div className="mb-3 flex items-center justify-between gap-2">
-                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted text-foreground">
-                  <e.icon className="h-4 w-4" aria-hidden />
-                </span>
-                <Badge variant={e.tone}>{e.name}</Badge>
+      <DocBlock title="URL base de la API">
+        <p className="text-sm text-muted-foreground">
+          En esta instalación: <InlineCode>{ENV.apiBaseUrl || '{URL_DE_TU_API}/v1'}</InlineCode>. Configura esta URL en tu servidor como <InlineCode>LX_API_URL</InlineCode>.
+          Las rutas de los ejemplos se agregan a esa base.
+        </p>
+      </DocBlock>
+
+      <DocBlock title="Credenciales por ambiente">
+        <div className="grid gap-4 sm:grid-cols-2">
+          {ENVIRONMENTS.map((environment) => (
+            <div key={environment.name} className="surface surface-hover p-5">
+              <div className="mb-3 flex items-center gap-3">
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted"><environment.icon className="h-4 w-4" aria-hidden /></span>
+                <Badge variant={environment.tone}>{environment.name}</Badge>
               </div>
-              <p className="text-sm text-muted-foreground">{e.text}</p>
-              <dl className="mt-4 space-y-2 text-sm">
-                <div>
-                  <dt className="text-xs text-muted-foreground">URL base</dt>
-                  <dd className="mt-0.5 flex flex-wrap items-center gap-2">
-                    <InlineCode>{e.baseUrl}</InlineCode>
-                    <Badge variant="neutral">Por confirmar</Badge>
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-muted-foreground">Prefijo de credencial</dt>
-                  <dd className="mt-0.5">
-                    <InlineCode>{e.keyPrefix}</InlineCode>
-                  </dd>
-                </div>
-              </dl>
+              <p className="text-sm text-muted-foreground">{environment.text}</p>
+              <p className="mt-3 text-sm">Valor de la credencial: <InlineCode>{environment.credential}</InlineCode></p>
             </div>
           ))}
         </div>
       </DocBlock>
 
-      <DocBlock title="Recomendaciones">
+      <DocBlock title="Reglas de acceso">
         <ul className="list-inside list-disc space-y-1.5 text-sm text-muted-foreground marker:text-brand">
-          <li>Configura la URL base mediante variables de entorno para cambiar de ambiente sin modificar código.</li>
-          <li>Las credenciales de pruebas no funcionan en producción y viceversa.</li>
-          <li>Valida en pruebas todos los tipos de e-CF que vas a emitir antes de pasar a producción.</li>
+          <li>La API Key comienza con <InlineCode>lxk_</InlineCode> y el secreto con <InlineCode>lxs_</InlineCode>, en ambos ambientes.</li>
+          <li>La credencial de pruebas no funciona si la empresa está configurada en producción, ni a la inversa.</li>
+          <li>Se necesita una suscripción vigente con el módulo API activo para obtener un token técnico.</li>
         </ul>
-        <Callout tone="warning" title="URLs por confirmar">
-          Las URLs base definitivas se publicarán junto con la especificación OpenAPI oficial. Los valores mostrados son marcadores de posición.
-        </Callout>
+        <Callout tone="info">La URL de la API puede cambiar entre instalaciones, pero el ambiente DGII lo determina la configuración de tu empresa.</Callout>
       </DocBlock>
     </>
   );

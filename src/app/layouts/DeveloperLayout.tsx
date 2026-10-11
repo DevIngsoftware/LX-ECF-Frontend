@@ -17,7 +17,7 @@ export function DeveloperLayout() {
       chatContext="developer"
       sidebarFooter={
         <div className="rounded-lg border border-dashed p-3 text-xs text-muted-foreground">
-          Los contratos y ejemplos son <strong className="text-foreground">ilustrativos</strong> hasta publicar la especificación OpenAPI oficial.
+          Esta guía resume las rutas de integración. Consulta <Link to={ROUTES.developers.section('documentacion')} className="font-medium text-brand hover:underline">Documentación</Link> para ver ejemplos y abrir Swagger.
         </div>
       }
       headerActions={
