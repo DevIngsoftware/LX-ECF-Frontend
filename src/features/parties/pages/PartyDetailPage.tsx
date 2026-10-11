@@ -7,19 +7,21 @@ import {
 import { PageTransition } from '@/components/animations/motion';
 import { CopyButton } from '@/components/shared/CopyButton';
 import { StatCard } from '@/components/shared/StatCard';
-import { ErrorState, LoadingState } from '@/components/shared/states';
+import { ErrorState, LoadingState, ModuleNotContracted } from '@/components/shared/states';
 import { Button } from '@/components/ui/button';
 import { ROUTES } from '@/constants/routes';
 import { useAuth } from '@/features/auth/auth-context';
-import { partiesService } from '@/services/api/operations';
+import { partiesService, receptionService } from '@/services/api/operations';
 import { queryKeys } from '@/services/api/query-keys';
-import type { PartyKind } from '@/types/business';
+import type { PartyKind, ReceivedDocument } from '@/types/business';
+import type { InvoiceSummary } from '@/types/ecf';
 import { formatDate, formatMoney, formatNumber, initials } from '@/utils/format';
 import { PARTY_META, formatRnc } from '../components/party-meta';
 import { PartyFormSheet } from '../components/PartyFormSheet';
 import { PartyActiveConfirm } from '../components/PartyActiveConfirm';
 import { PartyStatusBadge } from '../components/PartyStatusBadge';
 import { PartyHistoryTable } from '../components/PartyHistoryTable';
+import { SupplierHistoryTable } from '../components/SupplierHistoryTable';
 
 function InfoRow({ icon: Icon, label, children }: { icon: LucideIcon; label: string; children: ReactNode }) {
   return (
@@ -39,14 +41,17 @@ export function PartyDetailPage({ kind }: { kind: PartyKind }) {
   const { id = '' } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const meta = PARTY_META[kind];
-  const { hasPermission } = useAuth();
+  const { hasPermission, hasModule } = useAuth();
   const canWrite = hasPermission('parties.write');
   const canEmit = kind === 'customers' && hasPermission('invoices.emit');
   const [editOpen, setEditOpen] = useState(false);
   const [toggleOpen, setToggleOpen] = useState(false);
 
   const party = useQuery({ queryKey: queryKeys.party(kind, id), queryFn: () => partiesService.get(kind, id), enabled: !!id });
-  const history = useQuery({ queryKey: queryKeys.partyHistory(kind, id), queryFn: () => partiesService.history(kind, id), enabled: !!id });
+  const canReadReception = hasModule('reception');
+  const history = useQuery<InvoiceSummary[] | ReceivedDocument[]>({ queryKey: queryKeys.partyHistory(kind, id),
+    queryFn: async () => kind === 'customers' ? partiesService.history(kind, id) : receptionService.supplierHistory(id),
+    enabled: !!id && (kind === 'customers' || canReadReception) });
 
   const back = (
     <Button variant="ghost" size="sm" asChild className="-ml-2 mb-4 text-muted-foreground">
@@ -143,7 +148,13 @@ export function PartyDetailPage({ kind }: { kind: PartyKind }) {
           {p.notes && <InfoRow icon={StickyNote} label="Notas internas">{p.notes}</InfoRow>}
         </section>
         <div className="min-w-0 lg:col-span-2">
-          <PartyHistoryTable kind={kind} items={history.data} isLoading={history.isLoading} error={history.error} onRetry={() => void history.refetch()} />
+          {kind === 'customers' ? (
+            <PartyHistoryTable kind={kind} items={history.data as InvoiceSummary[] | undefined} isLoading={history.isLoading} error={history.error} onRetry={() => void history.refetch()} />
+          ) : !canReadReception ? (
+            <div className="surface"><ModuleNotContracted module="reception" /></div>
+          ) : (
+            <SupplierHistoryTable items={history.data as ReceivedDocument[] | undefined} isLoading={history.isLoading} error={history.error} onRetry={() => void history.refetch()} />
+          )}
         </div>
       </div>
 

@@ -33,6 +33,7 @@ export interface CatalogService {
 export interface ReceptionService {
   list(query: PageQuery & { status?: string }): Promise<Page<ReceivedDocument>>;
   downloadXml(id: string): Promise<Blob>;
+  supplierHistory(id: string): Promise<ReceivedDocument[]>;
 }
 
 export interface ReceivablesService {
@@ -89,6 +90,7 @@ const http = {
   reception: {
     list: (params) => get(ENDPOINTS.reception, { params }),
     downloadXml: (id) => getBlob(`${ENDPOINTS.reception}/${id}/xml`),
+    supplierHistory: (id) => get(`/proveedores/${encodeURIComponent(id)}/comprobantes`),
   } satisfies ReceptionService,
   receivables: {
     list: (params) => get(ENDPOINTS.receivables.list, { params }),
