@@ -9,8 +9,9 @@ type RetryableRequest = AxiosRequestConfig & { _retry?: boolean };
 const publicAuthPaths = [
   ENDPOINTS.auth.login, ENDPOINTS.auth.register, ENDPOINTS.auth.refresh, ENDPOINTS.auth.logout,
   ENDPOINTS.auth.verifyEmail, ENDPOINTS.auth.forgot, ENDPOINTS.auth.reset,
+  ENV.chatApiPath,
 ];
-const isPublicAuthRequest = (url?: string) => publicAuthPaths.some((path) => url?.startsWith(path));
+const isPublicAuthRequest = (url?: string) => publicAuthPaths.some((path) => path && url?.startsWith(path));
 let refreshPromise: Promise<AuthTokens> | null = null;
 
 export const http = axios.create({

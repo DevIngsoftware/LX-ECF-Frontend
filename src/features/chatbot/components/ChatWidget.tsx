@@ -81,7 +81,7 @@ function ConnectedChatWidget({ context }: { context: ChatContext }) {
     setPending(true);
     abortRef.current = new AbortController();
     try {
-      const reply = await chatService.send(history, abortRef.current.signal);
+      const reply = await chatService.send(history.slice(-12), abortRef.current.signal);
       setMessages((m) => [...m, { id: crypto.randomUUID(), role: 'assistant', content: reply, createdAt: new Date().toISOString() }]);
     } catch (err) {
       setMessages((m) => [...m, { id: crypto.randomUUID(), role: 'assistant', content: errorMessage(err), createdAt: new Date().toISOString(), error: true }]);
@@ -116,7 +116,7 @@ function ConnectedChatWidget({ context }: { context: ChatContext }) {
             <header className="flex items-center gap-3 border-b bg-ink px-4 py-3 text-white">
               <span className="relative flex h-9 w-9 items-center justify-center rounded-full bg-brand">
                 <Bot className="h-5 w-5" />
-                <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-ink bg-zinc-400" title="Vista previa" />
+                <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-ink bg-emerald-400" title="Asistente conectado" />
               </span>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">{t('chat.title')}</p>
