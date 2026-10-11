@@ -9,7 +9,6 @@ import { get, getBlob, patch, post, put } from '../http/client';
 import { ApiError, toApiError } from '../http/errors';
 import { ENDPOINTS } from './endpoints';
 import { customers, invoices, suppliers } from '../mocks/data';
-import { buildReport } from '../mocks/reports';
 import { delay, paginate, uid } from '../mocks/utils';
 
 type ActiveFilter = { active?: 'all' | 'active' | 'inactive' };
@@ -171,16 +170,6 @@ const mock = {
     summary: (params) => http.expenses.summary(params),
     create: (input) => http.expenses.create(input),
   } satisfies ExpensesService,
-  reports: {
-    async get(key, range) {
-      await delay(600);
-      return buildReport(key, range);
-    },
-    async export(key, format) {
-      await delay(500);
-      throw new ApiError('server', `La exportación ${format.toUpperCase()} estará disponible cuando el backend habilite este servicio.`, 503);
-    },
-  } satisfies ReportsService,
 };
 
 const impl = ENV.useMocks ? mock : http;
@@ -215,4 +204,4 @@ export const catalogService: CatalogService = http.catalog;
 export const receptionService: ReceptionService = http.reception;
 export const receivablesService: ReceivablesService = http.receivables;
 export const expensesService: ExpensesService = http.expenses;
-export const reportsService: ReportsService = impl.reports;
+export const reportsService: ReportsService = http.reports;
