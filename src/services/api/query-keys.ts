@@ -21,6 +21,7 @@ export const queryKeys = {
   notifications: ['notifications'] as const,
   users: ['users'] as const,
   company: ['company-settings'] as const,
+  companyLogo: ['company-logo'] as const,
   settingsStatus: ['settings-status'] as const,
   onboarding: ['onboarding'] as const,
   credentials: ['credentials'] as const,

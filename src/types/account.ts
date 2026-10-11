@@ -158,6 +158,7 @@ export interface CompanySettings {
   invoiceFooter?: string;
   primaryColor?: string;
   sendEmailToBuyer: boolean;
+  logoPresent: boolean;
 }
 
 export interface SettingsStatusItem {

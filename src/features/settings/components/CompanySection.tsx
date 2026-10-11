@@ -1,10 +1,17 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { Building2, Loader2, Upload } from 'lucide-react';
+import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { settingsService } from '@/services/api/account';
+import { queryKeys } from '@/services/api/query-keys';
+import { errorMessage } from '@/services/http/errors';
 import type { CompanySettings } from '@/types/account';
 import { SaveBar, SectionError, SectionLoading, SectionShell, useCompanySettings } from './settings-shared';
 
@@ -27,7 +34,36 @@ const toValues = (data?: CompanySettings): Values => ({
 
 export function CompanySection() {
   const { data, isLoading, error, refetch, save } = useCompanySettings();
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedPreview, setSelectedPreview] = useState<string | null>(null);
+  const [savedPreview, setSavedPreview] = useState<string | null>(null);
+  const logo = useQuery({ queryKey: queryKeys.companyLogo, queryFn: settingsService.logo, enabled: !!data?.logoPresent, retry: false });
+  const uploadLogo = useMutation({
+    mutationFn: settingsService.uploadLogo,
+    onSuccess: async () => {
+      await logo.refetch();
+      setSelectedFile(null);
+      if (fileInput.current) fileInput.current.value = '';
+      toast.success('Logo guardado. Se usará en los PDF de la empresa.');
+    },
+    onError: (err) => toast.error(errorMessage(err)),
+  });
   const form = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { legalName: '', tradeName: '', email: '', phone: '', address: '' } });
+
+  useEffect(() => {
+    if (!selectedFile) { setSelectedPreview(null); return; }
+    const url = URL.createObjectURL(selectedFile);
+    setSelectedPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [selectedFile]);
+
+  useEffect(() => {
+    if (!logo.data) { setSavedPreview(null); return; }
+    const url = URL.createObjectURL(logo.data);
+    setSavedPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [logo.data]);
 
   useEffect(() => {
     if (data) form.reset(toValues(data));
@@ -45,6 +81,37 @@ export function CompanySection() {
       ) : (
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} noValidate className="space-y-5">
+            <div className="rounded-xl border p-4 sm:p-5">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                <div className="flex h-24 w-40 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-muted/30 p-2">
+                  {selectedPreview || savedPreview
+                    ? <img src={selectedPreview ?? savedPreview ?? ''} alt="Logo de la empresa" className="max-h-full max-w-full object-contain" />
+                    : <Building2 className="h-8 w-8 text-muted-foreground" aria-hidden />}
+                </div>
+                <div className="min-w-0 flex-1 space-y-2">
+                  <label htmlFor="company-logo" className="text-sm font-medium">Logo de la empresa</label>
+                  <p className="text-sm text-muted-foreground">PNG, JPG o GIF, hasta 5 MB. Se verá en los PDF de tus comprobantes.</p>
+                  <Input id="company-logo" ref={fileInput} type="file" accept="image/png,image/jpeg,image/gif" disabled={uploadLogo.isPending}
+                    onChange={(event) => {
+                      const file = event.target.files?.[0] ?? null;
+                      if (file && (!['image/png', 'image/jpeg', 'image/gif'].includes(file.type) || file.size > 5 * 1024 * 1024)) {
+                        toast.error('Selecciona una imagen PNG, JPG o GIF de hasta 5 MB.');
+                        event.target.value = '';
+                        setSelectedFile(null);
+                        return;
+                      }
+                      setSelectedFile(file);
+                    }} />
+                  {selectedFile && <p className="text-xs text-muted-foreground">Vista previa: {selectedFile.name}</p>}
+                  {logo.isError && data?.logoPresent && !selectedPreview && <p className="text-xs text-destructive">No se pudo cargar el logo guardado. Puedes volver a subirlo.</p>}
+                  <Button type="button" variant="outline" disabled={!selectedFile || uploadLogo.isPending}
+                    onClick={() => selectedFile && uploadLogo.mutate(selectedFile)}>
+                    {uploadLogo.isPending ? <Loader2 className="animate-spin" /> : <Upload />}
+                    {data?.logoPresent || logo.data ? 'Cambiar logo' : 'Agregar logo'}
+                  </Button>
+                </div>
+              </div>
+            </div>
             <div className="grid gap-5 sm:grid-cols-2">
               <FormField control={form.control} name="legalName" render={({ field }) => (
                 <FormItem className="sm:col-span-2">

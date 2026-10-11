@@ -3,7 +3,7 @@ import type {
   AppNotification, CompanySettings, ModuleInfo, ModuleKey, OnboardingState, Plan, ServiceInvoice, SettingsStatusItem,
   Subscription, SubscriptionPayment, TenantUser, TenantUserInput,
 } from '@/types/account';
-import { get, patch, post, put } from '../http/client';
+import { get, getBlob, patch, post, put } from '../http/client';
 import { ApiError } from '../http/errors';
 import { ENDPOINTS } from './endpoints';
 import { modules, notifications, plans, serviceInvoices, tenantUsers } from '../mocks/data';
@@ -45,6 +45,8 @@ export interface CertificateUpload {
 export interface SettingsService {
   company(): Promise<CompanySettings>;
   updateCompany(input: CompanySettings): Promise<CompanySettings>;
+  logo(): Promise<Blob>;
+  uploadLogo(file: File): Promise<void>;
   status(): Promise<SettingsStatusItem[]>;
   uploadCertificate(input: CertificateUpload): Promise<void>;
   onboarding(): Promise<OnboardingState>;
@@ -78,6 +80,12 @@ const http = {
   settings: {
     company: () => get(ENDPOINTS.settings.company),
     updateCompany: (input) => put(ENDPOINTS.settings.company, input),
+    logo: () => getBlob(ENDPOINTS.settings.logo),
+    uploadLogo: (file) => {
+      const form = new FormData();
+      form.append('logo', file);
+      return post<void>(ENDPOINTS.settings.uploadLogo, form, { headers: { 'Content-Type': 'multipart/form-data' } });
+    },
     status: () => get(ENDPOINTS.settings.status),
     uploadCertificate: ({ file, password }) => {
       const form = new FormData();
@@ -103,9 +111,11 @@ let companySettings: CompanySettings = {
   invoiceFooter: 'Gracias por preferirnos.',
   primaryColor: '#E60012',
   sendEmailToBuyer: true,
+  logoPresent: false,
 };
 
 const onboardingState: OnboardingState = { currentStep: 0, completedSteps: [], canIssue: false };
+let mockLogo: Blob | null = null;
 
 const mock = {
   billing: {
@@ -190,8 +200,18 @@ const mock = {
     },
     async updateCompany(input) {
       await delay(600);
-      companySettings = input;
-      return input;
+      companySettings = { ...input, logoPresent: !!mockLogo || input.logoPresent };
+      return companySettings;
+    },
+    async logo() {
+      await delay();
+      if (!mockLogo) throw new ApiError('not_found', 'La empresa no tiene logo.', 404);
+      return mockLogo;
+    },
+    async uploadLogo(file) {
+      await delay(300);
+      mockLogo = file;
+      companySettings = { ...companySettings, logoPresent: true };
     },
     async status() {
       await delay(300);
