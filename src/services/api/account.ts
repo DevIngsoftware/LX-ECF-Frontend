@@ -254,6 +254,6 @@ export const billingService: BillingService = {
   simulatePayment: ENV.authUseMocks ? mock.billing.simulatePayment : http.billing.simulatePayment,
 };
 export const modulesService: ModulesService = impl.modules;
-export const notificationsService: NotificationsService = impl.notifications;
+export const notificationsService: NotificationsService = ENV.authUseMocks ? mock.notifications : http.notifications;
 export const usersService: UsersService = ENV.authUseMocks ? mock.users : http.users;
 export const settingsService: SettingsService = ENV.settingsUseMocks ? mock.settings : http.settings;
