@@ -6,7 +6,7 @@ import type {
 import { get, getBlob, patch, post, put } from '../http/client';
 import { ApiError } from '../http/errors';
 import { ENDPOINTS } from './endpoints';
-import { modules, notifications, plans, serviceInvoices, tenantUsers } from '../mocks/data';
+import { notifications, plans, serviceInvoices, tenantUsers } from '../mocks/data';
 import { daysAgo, daysAhead, delay, uid } from '../mocks/utils';
 
 export interface BillingService {
@@ -142,17 +142,6 @@ const mock = {
       return { planId, planName: plan.name, status: 'PRUEBA', startedAt: new Date().toISOString(), renewalDate: daysAhead(30), documentsUsed: 0, documentsLimit: plan.invoiceLimit, usersUsed: 1, usersLimit: plan.userLimit, modules: plan.modules };
     },
   } satisfies BillingService,
-  modules: {
-    async list() {
-      await delay();
-      return modules;
-    },
-    async request(key) {
-      await delay(700);
-      const m = modules.find((x) => x.key === key);
-      if (m) m.status = 'SOLICITADO';
-    },
-  } satisfies ModulesService,
   notifications: {
     async list() {
       await delay(300);
@@ -253,7 +242,7 @@ export const billingService: BillingService = {
   payments: ENV.authUseMocks ? mock.billing.payments : http.billing.payments,
   simulatePayment: ENV.authUseMocks ? mock.billing.simulatePayment : http.billing.simulatePayment,
 };
-export const modulesService: ModulesService = impl.modules;
+export const modulesService: ModulesService = http.modules;
 export const notificationsService: NotificationsService = ENV.authUseMocks ? mock.notifications : http.notifications;
 export const usersService: UsersService = ENV.authUseMocks ? mock.users : http.users;
 export const settingsService: SettingsService = ENV.settingsUseMocks ? mock.settings : http.settings;

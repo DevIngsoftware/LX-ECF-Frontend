@@ -1,6 +1,6 @@
 import type { EcfTypeCode, InvoiceDetail, InvoiceSummary } from '@/types/ecf';
 import type { Expense, Party, Product, Receivable, ReceivablePayment } from '@/types/business';
-import type { AppNotification, ModuleInfo, Plan, ServiceInvoice, TenantUser } from '@/types/account';
+import type { AppNotification, Plan, ServiceInvoice, TenantUser } from '@/types/account';
 import type { AdminCompany, ApiCredential, AuditEvent, InternalUser, AdminSubscription } from '@/types/platform';
 import { daysAgo, daysAhead, seeded } from './utils';
 
@@ -165,15 +165,6 @@ export const expenses: Expense[] = Array.from({ length: 30 }, (_, i) => {
     ncf: i % 4 ? `E31${String(9000 + i).padStart(10, '0')}` : undefined,
   };
 });
-
-export const modules: ModuleInfo[] = [
-  { key: 'reception', name: 'Recepción de e-CF', description: 'Recibe y gestiona comprobantes electrónicos emitidos por tus proveedores.', benefits: ['Bandeja centralizada de documentos recibidos', 'Consulta de XML y PDF', 'Historial por proveedor'], requirements: ['Empresa habilitada como receptor electrónico'], status: 'DISPONIBLE', availability: 'Todos los planes' },
-  { key: 'receivables', name: 'Cuentas por cobrar', description: 'Controla saldos, vencimientos y pagos de tus facturas emitidas.', benefits: ['Registro de pagos parciales', 'Alertas de vencimiento', 'Reportes de antigüedad'], requirements: [], status: 'ACTIVO', availability: 'Planes empresariales' },
-  { key: 'catalog', name: 'Catálogo de productos y servicios', description: 'Agiliza la emisión con artículos, precios e impuestos predefinidos.', benefits: ['Autocompletado en facturas', 'Categorías y códigos', 'Sin control de inventario obligatorio'], requirements: [], status: 'ACTIVO', availability: 'Todos los planes' },
-  { key: 'advanced_reports', name: 'Reportes avanzados', description: 'Análisis de ventas, impuestos y tendencias con exportación.', benefits: ['Preparación de 606 y 607', 'Exportación CSV, Excel y PDF', 'Tendencias comparativas'], requirements: [], status: 'DISPONIBLE', availability: 'Planes empresariales' },
-  { key: 'api', name: 'API comercial', description: 'Integra la emisión de e-CF con tu ERP, POS o tienda en línea.', benefits: ['Credenciales sandbox y producción', 'Historial de solicitudes', 'Documentación para desarrolladores'], requirements: ['Configuración DGII completa'], status: 'ACTIVO', availability: 'Bajo solicitud' },
-  { key: 'expenses', name: 'Gestión de gastos', description: 'Registra y clasifica los gastos de tu empresa por período.', benefits: ['Categorías personalizables', 'Asociación con proveedores', 'Resúmenes por período'], requirements: [], status: 'SOLICITADO', availability: 'Todos los planes' },
-];
 
 export const plans: Plan[] = [
   { id: 'plan-inicial', name: 'Inicial', description: 'Para pequeñas empresas que comienzan con la facturación electrónica.', priceLabel: null, invoiceLimit: null, userLimit: 2, modules: ['catalog'], active: true },
