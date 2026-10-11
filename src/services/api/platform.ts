@@ -200,5 +200,8 @@ export const developersService: DevelopersService = impl.developers;
 export const adminService: AdminService = {
   ...impl.admin,
   dashboard: ENV.authUseMocks ? mock.admin.dashboard : http.admin.dashboard,
+  companies: ENV.authUseMocks ? mock.admin.companies : http.admin.companies,
+  company: ENV.authUseMocks ? mock.admin.company : http.admin.company,
+  setCompanyStatus: ENV.authUseMocks ? mock.admin.setCompanyStatus : http.admin.setCompanyStatus,
 };
 export const chatService: ChatService = ENV.chatApiPath ? http.chat : mock.chat;

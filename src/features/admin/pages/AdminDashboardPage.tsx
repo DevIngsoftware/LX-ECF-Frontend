@@ -35,7 +35,7 @@ export function AdminDashboardPage() {
         </>
       )}
       <div className="mt-6 surface p-5">
-        <EmptyState compact title="Otros módulos pendientes" description="El directorio de empresas, los planes, suscripciones, pagos, solicitudes de API, incidencias y auditoría aún no están conectados a la API." />
+        <EmptyState compact title="Otros módulos pendientes" description="Los planes, suscripciones, pagos, solicitudes de API, incidencias y auditoría aún no están conectados a la API." />
       </div>
     </PageTransition>
   );

@@ -156,7 +156,7 @@ export function DataTable<T>({
               <ChevronLeft />
             </Button>
             <span className="tabular-nums text-muted-foreground">
-              {pageIndex + 1} / {page?.totalPages ?? 1}
+              {pageIndex + 1} / {Math.max(1, page?.totalPages ?? 1)}
             </span>
             <Button variant="outline" size="sm" onClick={() => onPageChange(pageIndex + 1)} disabled={!page || pageIndex + 1 >= page.totalPages || isLoading} aria-label="Página siguiente">
               <ChevronRight />
