@@ -27,6 +27,7 @@ export interface AdminService {
   plans(): Promise<Plan[]>;
   savePlan(plan: Plan): Promise<Plan>;
   subscriptions(query: PageQuery & { status?: string }): Promise<Page<AdminSubscription>>;
+  setSubscriptionStatus(id: string, status: string): Promise<void>;
   users(): Promise<InternalUser[]>;
   saveUser(user: Omit<InternalUser, 'id'> & { id?: string }): Promise<InternalUser>;
   resendInvitation(id: string): Promise<void>;
@@ -59,6 +60,7 @@ const http = {
     plans: () => get(ENDPOINTS.admin.plans),
     savePlan: (plan) => (plan.id ? put(`${ENDPOINTS.admin.plans}/${plan.id}`, plan) : post(ENDPOINTS.admin.plans, plan)),
     subscriptions: (params) => get(ENDPOINTS.admin.subscriptions, { params }),
+    setSubscriptionStatus: (id, status) => patch(`${ENDPOINTS.admin.subscriptions}/${id}/estado`, { status }),
     users: () => get(ENDPOINTS.admin.users),
     saveUser: (u) => (u.id ? put(`${ENDPOINTS.admin.users}/${u.id}`, u) : post(ENDPOINTS.admin.users, u)),
     resendInvitation: (id) => post(`${ENDPOINTS.admin.users}/${id}/reenviar-invitacion`),
@@ -148,6 +150,11 @@ const mock = {
       await delay();
       return paginate(filterStatus(adminSubscriptions, q.status), q, ['company', 'plan']);
     },
+    async setSubscriptionStatus(id, status) {
+      await delay(400);
+      const subscription = adminSubscriptions.find((item) => item.id === id);
+      if (subscription) subscription.status = status;
+    },
     async users() {
       await delay();
       return [...internalUsers];
@@ -212,6 +219,7 @@ export const adminService: AdminService = {
   plans: ENV.authUseMocks ? mock.admin.plans : http.admin.plans,
   savePlan: ENV.authUseMocks ? mock.admin.savePlan : http.admin.savePlan,
   subscriptions: ENV.authUseMocks ? mock.admin.subscriptions : http.admin.subscriptions,
+  setSubscriptionStatus: ENV.authUseMocks ? mock.admin.setSubscriptionStatus : http.admin.setSubscriptionStatus,
   users: ENV.authUseMocks ? mock.admin.users : http.admin.users,
   saveUser: ENV.authUseMocks ? mock.admin.saveUser : http.admin.saveUser,
   resendInvitation: ENV.authUseMocks ? mock.admin.resendInvitation : http.admin.resendInvitation,

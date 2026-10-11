@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Ban, CreditCard, MoreHorizontal, Play, XCircle } from 'lucide-react';
+import { toast } from 'sonner';
 import { PageTransition } from '@/components/animations/motion';
 import { PageHeader } from '@/components/shared/PageHeader';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { EmptyState } from '@/components/shared/states';
 import { GenericStatusBadge } from '@/components/shared/StatusBadge';
 import { DataTable } from '@/components/tables/DataTable';
@@ -15,27 +17,42 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useTableQuery } from '@/hooks/use-table-query';
 import { adminService } from '@/services/api/platform';
+import { useAuth } from '@/features/auth/auth-context';
+import { errorMessage } from '@/services/http/errors';
 import { queryKeys } from '@/services/api/query-keys';
 import type { AdminSubscription } from '@/types/platform';
 import { daysUntil, formatDate, formatMoney } from '@/utils/format';
 import { SUBSCRIPTION_STATUSES } from '../components/admin-meta';
 import { FilterSelect } from '../components/FilterSelect';
 
-/** Acciones disponibles según el estado. El servicio aún no expone el cambio de estado de suscripciones. */
 const actionsFor = (status: string) => [
-  { key: 'reactivate', label: 'Reactivar', icon: Play, show: status === 'SUSPENDIDA' || status === 'VENCIDA' },
-  { key: 'suspend', label: 'Suspender', icon: Ban, show: status === 'ACTIVA' || status === 'PRUEBA' },
-  { key: 'cancel', label: 'Cancelar', icon: XCircle, show: status !== 'CANCELADA' },
+  { key: 'ACTIVA', label: 'Reactivar', icon: Play, show: status === 'SUSPENDIDA' },
+  { key: 'SUSPENDIDA', label: 'Suspender', icon: Ban, show: status === 'ACTIVA' || status === 'PRUEBA' },
+  { key: 'CANCELADA', label: 'Cancelar', icon: XCircle, show: status !== 'CANCELADA' },
 ];
 
 export function AdminSubscriptionsPage() {
+  const qc = useQueryClient();
+  const { hasPermission } = useAuth();
+  const canEdit = hasPermission('admin.plans.write');
   const t = useTableQuery({ sort: [{ id: 'renewalDate', desc: false }] });
   const [status, setStatus] = useState('ALL');
+  const [changing, setChanging] = useState<{ subscription: AdminSubscription; status: string; label: string } | null>(null);
   const query = { ...t.query, status: status === 'ALL' ? undefined : status };
   const { data, isLoading, isFetching, error, refetch } = useQuery({
     queryKey: queryKeys.admin.subscriptions(query),
     queryFn: () => adminService.subscriptions(query),
     placeholderData: keepPreviousData,
+  });
+  const changeStatus = useMutation({
+    mutationFn: ({ subscription, status: next }: { subscription: AdminSubscription; status: string }) =>
+      adminService.setSubscriptionStatus(subscription.id, next),
+    onSuccess: () => {
+      toast.success('Estado de suscripción actualizado');
+      setChanging(null);
+      void qc.invalidateQueries({ queryKey: ['admin', 'subscriptions'] });
+    },
+    onError: (err) => toast.error(errorMessage(err)),
   });
 
   const columns = useMemo<ColumnDef<AdminSubscription, unknown>[]>(
@@ -70,7 +87,7 @@ export function AdminSubscriptionsPage() {
         id: 'actions',
         header: () => <span className="sr-only">Acciones</span>,
         enableSorting: false,
-        cell: ({ row }) => (
+        cell: ({ row }) => canEdit ? (
           <div className="flex justify-end">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -81,19 +98,18 @@ export function AdminSubscriptionsPage() {
               <DropdownMenuContent align="end" className="w-60">
                 <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Cambiar estado</DropdownMenuLabel>
                 {actionsFor(row.original.status).filter((a) => a.show).map((a) => (
-                  <DropdownMenuItem key={a.key} disabled>
+                  <DropdownMenuItem key={a.key} onSelect={() => setChanging({ subscription: row.original, status: a.key, label: a.label })}>
                     <a.icon className="mr-2 h-4 w-4" /> {a.label}
                   </DropdownMenuItem>
                 ))}
-                <DropdownMenuSeparator />
-                <p className="px-2 py-1.5 text-xs text-muted-foreground">Disponible cuando el servicio de suscripciones habilite el cambio de estado. Para suspender el acceso usa la ficha de la empresa.</p>
+                {row.original.status === 'VENCIDA' && <><DropdownMenuSeparator /><p className="px-2 py-1.5 text-xs text-muted-foreground">Para renovar una suscripción vencida, la empresa debe realizar otra operación de prueba.</p></>}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-        ),
+        ) : null,
       },
     ],
-    [],
+    [canEdit],
   );
 
   return (
@@ -120,6 +136,16 @@ export function AdminSubscriptionsPage() {
           </div>
         }
         empty={!t.search && status === 'ALL' ? <EmptyState compact icon={CreditCard} title="Aún no hay suscripciones" /> : undefined}
+      />
+      <ConfirmDialog
+        open={!!changing}
+        onOpenChange={(open) => !open && !changeStatus.isPending && setChanging(null)}
+        title={`${changing?.label ?? 'Cambiar'} suscripción`}
+        description={changing ? `${changing.label} la suscripción de ${changing.subscription.company}. Este cambio afectará sus módulos incluidos; no cambia el estado fiscal de la empresa.` : ''}
+        confirmLabel={changing?.label ?? 'Confirmar'}
+        destructive={changing?.status !== 'ACTIVA'}
+        loading={changeStatus.isPending}
+        onConfirm={() => changing && changeStatus.mutate(changing)}
       />
     </PageTransition>
   );
