@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { useFieldArray, useForm, FormProvider, useWatch } from 'react-hook-form';
+import { useFieldArray, useForm, FormProvider, useWatch, type FieldErrors } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -42,6 +42,16 @@ function savedPendingRequest(): { payload: string; key: string } | null {
   } catch { return null; }
 }
 
+function firstValidationMessage(value: unknown): string | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  if ('message' in value && typeof value.message === 'string') return value.message;
+  for (const nested of Object.values(value)) {
+    const message = firstValidationMessage(nested);
+    if (message) return message;
+  }
+  return undefined;
+}
+
 export function NewInvoicePage() {
   const { hasModule } = useAuth();
   const navigate = useNavigate();
@@ -53,6 +63,7 @@ export function NewInvoicePage() {
   const draftId = params.get('borrador');
   const noteType = requestedType === 'E33' || requestedType === 'E34' ? requestedType : null;
   const [validation, setValidation] = useState<PreValidationResult | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   const pendingRequest = useRef<{ payload: string; key: string } | null>(savedPendingRequest());
   const restoredDraftId = useRef<string | null>(null);
   const form = useForm<InvoiceFormValues>({ resolver: zodResolver(invoiceFormSchema), defaultValues: defaultValues(isEcfCode(requestedType) ? requestedType : 'E31') });
@@ -148,10 +159,28 @@ export function NewInvoicePage() {
       toast.success(ENV.invoicesUseMocks ? 'Comprobante creado en modo demostración' : 'Comprobante registrado');
       navigate(ROUTES.app.invoice(result.id));
     },
-    onError: (error) => toast.error(errorMessage(error)),
+    onError: (error) => {
+      const message = `No se pudo registrar el comprobante: ${errorMessage(error)}`;
+      setFormError(message);
+      toast.error(message);
+    },
   });
   const busy = validate.isPending || emit.isPending || save.isPending;
   const errors = form.formState.errors;
+  const onInvalid = (invalid: FieldErrors<InvoiceFormValues>) => {
+    const message = firstValidationMessage(invalid) ?? 'Revisa los datos del comprobante';
+    const feedback = `No se registró el comprobante: ${message}. Corrige el campo señalado en el formulario y vuelve a intentarlo.`;
+    setFormError(feedback);
+    toast.error(`No se registró el comprobante: ${message}`);
+  };
+  const validateForm = form.handleSubmit((values) => {
+    setFormError(null);
+    validate.mutate(values);
+  }, onInvalid);
+  const registerForm = form.handleSubmit((values) => {
+    setFormError(null);
+    emit.mutate(values);
+  }, onInvalid);
 
   return <PageTransition>
     <PageHeader eyebrow="Facturación electrónica" title={type === 'E33' || type === 'E34' ? 'Nueva nota electrónica' : 'Nueva factura'} description={ENV.invoicesUseMocks ? 'Prepara un e-CF y revisa los totales antes de registrarlo. En modo demostración no se envía a la DGII.' : 'Prepara el e-CF, valídalo y regístralo. Podrás enviarlo a la DGII desde el detalle.'}
@@ -161,7 +190,7 @@ export function NewInvoicePage() {
     {savedDraft.error && <ErrorState error={savedDraft.error} onRetry={() => void savedDraft.refetch()} />}
     {!savedDraft.isLoading && !savedDraft.error && (
     <FormProvider {...form}>
-      <form onSubmit={form.handleSubmit((values) => emit.mutate(values))} noValidate className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <form onSubmit={registerForm} noValidate className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 space-y-6">
           <TypeSection step={1} locked={!!noteType && !!reference.data} />
           <FormSection id="sec-comprador" step={2} title={config.buyerLabel} description="Elige un cliente guardado o escribe sus datos directamente.">
@@ -224,7 +253,8 @@ export function NewInvoicePage() {
         </div>
         <aside className="lg:sticky lg:top-24 lg:self-start"><div className="surface space-y-5 p-5"><h2 className="font-semibold">Resumen</h2>
           <TotalsList values={{ subtotal: totals.taxable, discount: totals.discount, itbis: totals.itbis, itbisByRate: totals.itbisByRate, retainedItbis: totals.retainedItbis, retainedIsr: totals.retainedIsr, total: totals.total }} />
-          <div className="space-y-2 border-t pt-5">{!ENV.invoicesUseMocks && <Button type="button" variant="outline" className="w-full" disabled={busy} onClick={() => save.mutate(form.getValues())}>{save.isPending ? <Loader2 className="animate-spin" /> : <Save />} Guardar borrador</Button>}<Button type="button" variant="outline" className="w-full" disabled={busy} onClick={form.handleSubmit((values) => validate.mutate(values))}>{validate.isPending ? <Loader2 className="animate-spin" /> : <FileCheck2 />} Validar borrador</Button><Button type="submit" className="w-full" disabled={busy}>{emit.isPending ? <Loader2 className="animate-spin" /> : <FileCheck2 />} Registrar comprobante</Button></div>
+          <div className="space-y-2 border-t pt-5">{!ENV.invoicesUseMocks && <Button type="button" variant="outline" className="w-full" disabled={busy} onClick={() => save.mutate(form.getValues())}>{save.isPending ? <Loader2 className="animate-spin" /> : <Save />} Guardar borrador</Button>}<Button type="button" variant="outline" className="w-full" disabled={busy} onClick={validateForm}>{validate.isPending ? <Loader2 className="animate-spin" /> : <FileCheck2 />} Validar borrador</Button><Button type="submit" className="w-full" disabled={busy}>{emit.isPending ? <Loader2 className="animate-spin" /> : <FileCheck2 />} Registrar comprobante</Button></div>
+          {formError && <p role="alert" className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">{formError}</p>}
           <p className="text-xs text-muted-foreground">{ENV.invoicesUseMocks ? 'Modo demostración: el registro se guarda solo en la memoria de esta página y no tiene validez fiscal.' : 'Registrar asigna un e-NCF real de la empresa. El envío a la DGII es un paso separado.'}</p>
         </div>{validation && <div className="surface mt-4 p-4"><h2 className="mb-3 text-sm font-semibold">Validación</h2><DgiiMessages messages={validation.messages} tone={validation.valid ? 'info' : 'warning'} /></div>}</aside>
       </form>
