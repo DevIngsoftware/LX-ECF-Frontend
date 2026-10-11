@@ -3,7 +3,7 @@ import type { Page, PageQuery, DateRange } from '@/types/common';
 import type {
   DgiiOverview, EmitResult, InvoiceDetail, InvoiceDraft, InvoiceFilters, InvoiceSummary, PreValidationResult, TrackStatusResult,
 } from '@/types/ecf';
-import type { DashboardSummary } from '@/types/business';
+import type { DashboardOverview } from '@/types/business';
 import { get, getBlob, post } from '../http/client';
 import { ApiError } from '../http/errors';
 import { ENDPOINTS } from './endpoints';
@@ -23,18 +23,19 @@ export interface InvoicesService {
   checkStatus(id: string): Promise<TrackStatusResult>;
   downloadPdf(id: string): Promise<Blob>;
   downloadXml(id: string): Promise<Blob>;
-  dashboard(range: DateRange): Promise<DashboardSummary>;
+  dashboard(range: DateRange): Promise<DashboardOverview>;
   dgiiOverview(): Promise<DgiiOverview>;
   track(trackId: string): Promise<TrackStatusResult>;
 }
 
+function localDate(iso?: string) {
+  if (!iso) return undefined;
+  const date = new Date(iso);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
 const httpInvoices: InvoicesService = {
   list: (params) => {
-    const localDate = (iso?: string) => {
-      if (!iso) return undefined;
-      const date = new Date(iso);
-      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-    };
     return get(ENDPOINTS.invoices.list, { params: { ...params, from: localDate(params.from), to: localDate(params.to) } });
   },
   get: (id) => get(ENDPOINTS.invoices.detail(id)),
@@ -45,7 +46,7 @@ const httpInvoices: InvoicesService = {
   checkStatus: (id) => get(ENDPOINTS.invoices.status(id)),
   downloadPdf: (id) => getBlob(ENDPOINTS.invoices.pdf(id), { headers: { Accept: 'application/pdf, application/json' } }),
   downloadXml: (id) => getBlob(ENDPOINTS.invoices.xml(id), { headers: { Accept: 'application/xml, application/json' } }),
-  dashboard: (range) => get(ENDPOINTS.dashboard, { params: range }),
+  dashboard: (range) => get(ENDPOINTS.dashboard, { params: { from: localDate(range.from), to: localDate(range.to) } }),
   dgiiOverview: () => get(ENDPOINTS.dgii.overview),
   track: (trackId) => get(ENDPOINTS.dgii.track(trackId)),
 };
@@ -149,7 +150,7 @@ const mockInvoices: InvoicesService = {
 
 export const invoicesService: InvoicesService = {
   ...(ENV.invoicesUseMocks ? mockInvoices : httpInvoices),
-  dashboard: ENV.useMocks ? mockInvoices.dashboard : httpInvoices.dashboard,
+  dashboard: ENV.invoicesUseMocks ? mockInvoices.dashboard : httpInvoices.dashboard,
   dgiiOverview: ENV.settingsUseMocks ? mockInvoices.dgiiOverview : httpInvoices.dgiiOverview,
   track: ENV.settingsUseMocks ? mockInvoices.track : httpInvoices.track,
 };

@@ -121,6 +121,9 @@ export interface DashboardSummary {
   alerts: DashboardAlert[];
 }
 
+/** Campos que ya tienen una fuente real en el panel del portal. */
+export type DashboardOverview = Pick<DashboardSummary, 'totalInvoiced' | 'invoicesIssued' | 'accepted' | 'pending' | 'alerts'>;
+
 export type ReportKey = 'sales' | 'types' | 'taxes' | 'customers' | 'expenses' | 'receivables' | 'dgii' | 'trends';
 export type ExportFormat = 'csv' | 'xlsx' | 'pdf';
 

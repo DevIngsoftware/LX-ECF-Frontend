@@ -45,7 +45,7 @@ export function DashboardPage() {
         </section>
         <section className="surface p-5" aria-labelledby="alerts-title">
           <h2 id="alerts-title" className="mb-4 font-semibold">Alertas</h2>
-          {summary.isLoading ? <LoadingState rows={3} /> : !data?.alerts.length ? <EmptyState compact icon={CheckCircle2} title="Todo al día" description="No hay alertas pendientes." /> : (
+          {summary.isLoading ? <LoadingState rows={3} /> : summary.error ? <ErrorState compact error={summary.error} onRetry={() => void summary.refetch()} /> : !data?.alerts.length ? <EmptyState compact icon={CheckCircle2} title="Todo al día" description="No hay alertas pendientes." /> : (
             <ul className="space-y-3">{data.alerts.map((alert) => <li key={alert.id} className="rounded-lg border p-3 text-sm">
               <p className="flex items-center gap-2 font-medium"><AlertTriangle className="h-4 w-4 text-warning" />{alert.title}</p>
               <p className="mt-1 text-muted-foreground">{alert.description}</p>
