@@ -52,10 +52,15 @@ export const invoiceFormSchema = z
       else if (!rncValid) issue(['buyer', 'rnc'], 'Debe tener 9 dígitos (RNC) u 11 dígitos (cédula)');
       if (!v.buyer.name) issue(['buyer', 'name'], 'La razón social o nombre es obligatorio');
     }
-    if (cfg.buyerMode === 'optional_rnc' && rnc && !rncValid) issue(['buyer', 'rnc'], 'Debe tener 9 dígitos (RNC) u 11 dígitos (cédula)');
+    if (cfg.buyerMode === 'optional_rnc' && rnc) {
+      if (!rncValid) issue(['buyer', 'rnc'], 'Debe tener 9 dígitos (RNC) u 11 dígitos (cédula)');
+      if (!v.buyer.name) issue(['buyer', 'name'], 'Indica el nombre del comprador cuando usas RNC o cédula');
+    }
     if (cfg.buyerMode === 'foreign') {
       if (!v.buyer.name) issue(['buyer', 'name'], 'El nombre del beneficiario es obligatorio');
       if (!v.buyer.country) issue(['buyer', 'country'], 'Indica el país');
+      if (!v.buyer.foreignId) issue(['buyer', 'foreignId'], 'Indica la identificación extranjera');
+      else if (v.buyer.foreignId.length > 15) issue(['buyer', 'foreignId'], 'Máximo 15 caracteres');
     }
     if (cfg.buyerMode !== 'none' && v.buyer.email && !z.string().email().safeParse(v.buyer.email).success) {
       issue(['buyer', 'email'], 'Correo electrónico no válido');
@@ -98,7 +103,7 @@ export const defaultValues = (type: EcfTypeCode = 'E31'): InvoiceFormValues => (
   incomeType: '01',
   paymentType: '1',
   paymentTermDays: undefined,
-  items: [emptyItem()],
+  items: [{ ...emptyItem(), itbisRate: type === 'E46' || type === 'E47' ? 0 : 18 }],
   retentions: { itbis: 0, isr: 0 },
   reference: { modifiedNcf: '', modifiedDate: '', modificationCode: '', reason: '' },
   notes: '',

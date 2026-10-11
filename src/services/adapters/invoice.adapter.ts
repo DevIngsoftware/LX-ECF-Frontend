@@ -2,7 +2,7 @@ import type { InvoiceDraft } from '@/types/ecf';
 
 /**
  * Adaptador hacia FacturaRequestDTO / ItemDTO del backend Spring Boot.
- * Los nombres de campo son PROVISIONALES: ajustar cuando se confirme el contrato OpenAPI.
+ * Contrato del portal de facturación (PortalInvoiceRequest).
  */
 export interface ItemDTO {
   codigo?: string;
@@ -20,6 +20,7 @@ export interface FacturaRequestDTO {
   razonSocialComprador?: string;
   correoComprador?: string;
   identificadorExtranjero?: string;
+  paisComprador?: string;
   tipoIngresos: string;
   tipoPago: string;
   plazoPagoDias?: number;
@@ -40,6 +41,7 @@ export function toFacturaRequestDTO(draft: InvoiceDraft): FacturaRequestDTO {
     razonSocialComprador: draft.buyer.name || undefined,
     correoComprador: draft.buyer.email || undefined,
     identificadorExtranjero: draft.buyer.foreignId || undefined,
+    paisComprador: draft.buyer.country || undefined,
     tipoIngresos: draft.incomeType,
     tipoPago: draft.paymentType,
     plazoPagoDias: draft.paymentTermDays,

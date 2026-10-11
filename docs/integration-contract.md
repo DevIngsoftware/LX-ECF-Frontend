@@ -44,6 +44,8 @@ La sesión humana debe devolver identidad, portal, rol, permisos, módulos y emp
 
 ### Emisión y consulta de comprobantes
 
+> Estado: esta sección documenta la brecha inicial. La implementación y sus límites de la etapa 4 están en [stage-4-invoices.md](stage-4-invoices.md).
+
 `toFacturaRequestDTO()` no coincide con `FacturaRequestDTO` e `ItemDTO` reales. Al implementar la emisión, la API expondrá un DTO de entrada compatible con el formulario del frontend y lo convertirá internamente al DTO fiscal existente:
 
 | Dato | Frontend actual | API actual | Adaptación necesaria |

@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, ChevronDown, FileCode2, FileDown, FileMinus2, FilePlus2, Loader2, Printer, RefreshCw } from 'lucide-react';
+import { ArrowLeft, ChevronDown, FileCode2, FileDown, FileMinus2, FilePlus2, Loader2, Printer, RefreshCw, Send } from 'lucide-react';
 import { CopyButton } from '@/components/shared/CopyButton';
 import { DgiiStatusBadge, InternalStatusBadge, PaymentStatusBadge } from '@/components/shared/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ECF_TYPE_MAP } from '@/constants/ecf';
+import { ENV } from '@/constants/env';
 import { ROUTES } from '@/constants/routes';
 import type { InvoiceDetail } from '@/types/ecf';
 import { formatDate, formatMoney } from '@/utils/format';
@@ -20,9 +21,11 @@ interface Props {
   onDownload: (kind: 'pdf' | 'xml') => void;
   onCheckStatus: () => void;
   onPrint: () => void;
+  onSend: () => void;
+  sending: boolean;
 }
 
-export function DetailHeader({ invoice, canEmit, downloading, checking, onDownload, onCheckStatus, onPrint }: Props) {
+export function DetailHeader({ invoice, canEmit, downloading, checking, onDownload, onCheckStatus, onPrint, onSend, sending }: Props) {
   const notesAllowed = canEmit && canCreateNoteFor(invoice);
   return (
     <motion.header initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="mb-6 space-y-4">
@@ -54,16 +57,22 @@ export function DetailHeader({ invoice, canEmit, downloading, checking, onDownlo
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {!ENV.invoicesUseMocks && canEmit && invoice.dgiiStatus === 'NO_ENVIADO'
+            && (invoice.internalStatus === 'CREADO' || invoice.internalStatus === 'XML_GENERADO') && (
+            <Button size="sm" onClick={onSend} disabled={sending}>
+              {sending ? <Loader2 className="animate-spin" /> : <Send />} Enviar a DGII
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={() => onDownload('pdf')} disabled={downloading.pdf}>
             {downloading.pdf ? <Loader2 className="animate-spin" /> : <FileDown />} PDF
           </Button>
-          <Button variant="outline" size="sm" onClick={() => onDownload('xml')} disabled={downloading.xml}>
+          <Button variant="outline" size="sm" onClick={() => onDownload('xml')} disabled={downloading.xml || (!ENV.invoicesUseMocks && !invoice.signedAt)}>
             {downloading.xml ? <Loader2 className="animate-spin" /> : <FileCode2 />} XML
           </Button>
           <Button variant="outline" size="sm" onClick={onPrint}>
             <Printer /> Imprimir
           </Button>
-          <Button variant="outline" size="sm" onClick={onCheckStatus} disabled={checking}>
+          <Button variant="outline" size="sm" onClick={onCheckStatus} disabled={checking || (!ENV.invoicesUseMocks && !invoice.trackId)}>
             {checking ? <Loader2 className="animate-spin" /> : <RefreshCw />} Consultar estado
           </Button>
           {notesAllowed && (

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { FileSearch } from 'lucide-react';
 import { PageTransition } from '@/components/animations/motion';
 import { ErrorState, StateView } from '@/components/shared/states';
@@ -11,12 +12,14 @@ import { ROUTES } from '@/constants/routes';
 import { useAuth } from '@/features/auth/auth-context';
 import { invoicesService } from '@/services/api/invoices';
 import { queryKeys } from '@/services/api/query-keys';
-import { toApiError } from '@/services/http/errors';
+import { errorMessage, toApiError } from '@/services/http/errors';
 import type { TrackStatusResult } from '@/types/ecf';
 import { EventTimeline } from '../components/EventTimeline';
 import { DetailHeader } from '../components/detail/DetailHeader';
 import { DgiiTab } from '../components/detail/DgiiTab';
 import { DocumentTab, PRINT_STYLES } from '../components/detail/DocumentTab';
+import { OfficialDocumentTab } from '../components/detail/OfficialDocumentTab';
+import { ENV } from '@/constants/env';
 import { SummaryTab } from '../components/detail/SummaryTab';
 import { isDetailTab, type DetailTab } from '../lib/invoice-routes';
 import { useCheckStatus, useInvoiceDownloads } from '../lib/use-invoice-actions';
@@ -41,8 +44,20 @@ export function InvoiceDetailPage() {
   const [params, setParams] = useSearchParams();
   const { hasPermission } = useAuth();
   const [lastCheck, setLastCheck] = useState<TrackStatusResult | null>(null);
+  const [printToken, setPrintToken] = useState(0);
   const downloads = useInvoiceDownloads();
   const check = useCheckStatus(setLastCheck);
+  const qc = useQueryClient();
+  const send = useMutation({
+    mutationFn: (invoiceId: string) => invoicesService.send(invoiceId),
+    retry: false,
+    onSuccess: () => {
+      toast.success('Comprobante enviado a la DGII');
+      void qc.invalidateQueries({ queryKey: queryKeys.invoice(id) });
+      void qc.invalidateQueries({ queryKey: ['invoices'] });
+    },
+    onError: (error) => toast.error(errorMessage(error)),
+  });
 
   const rawTab = params.get('tab');
   const tab: DetailTab = isDetailTab(rawTab) ? rawTab : 'resumen';
@@ -78,12 +93,13 @@ export function InvoiceDetailPage() {
   const onCheckStatus = () => check.mutate(invoice.id);
   const onPrint = () => {
     if (tab !== 'documento') setTab('documento');
-    window.setTimeout(() => window.print(), tab === 'documento' ? 0 : 400);
+    if (ENV.invoicesUseMocks) window.setTimeout(() => window.print(), tab === 'documento' ? 0 : 400);
+    else setPrintToken((value) => value + 1);
   };
 
   return (
     <PageTransition>
-      <style>{PRINT_STYLES}</style>
+      {ENV.invoicesUseMocks && <style>{PRINT_STYLES}</style>}
       <DetailHeader
         invoice={invoice}
         canEmit={hasPermission('invoices.emit')}
@@ -92,6 +108,8 @@ export function InvoiceDetailPage() {
         onDownload={onDownload}
         onCheckStatus={onCheckStatus}
         onPrint={onPrint}
+        onSend={() => send.mutate(invoice.id)}
+        sending={send.isPending}
       />
       <Tabs value={tab} onValueChange={setTab}>
         <div className="scrollbar-thin -mx-4 mb-6 overflow-x-auto px-4 sm:mx-0 sm:px-0">
@@ -106,7 +124,8 @@ export function InvoiceDetailPage() {
           <SummaryTab invoice={invoice} />
         </TabsContent>
         <TabsContent value="documento" className="mt-0">
-          <DocumentTab invoice={invoice} onDownload={onDownload} onPrint={onPrint} />
+          {ENV.invoicesUseMocks ? <DocumentTab invoice={invoice} onDownload={onDownload} onPrint={onPrint} />
+            : <OfficialDocumentTab invoice={invoice} onDownload={onDownload} printToken={printToken} />}
         </TabsContent>
         <TabsContent value="estado" className="mt-0">
           <DgiiTab invoice={invoice} lastCheck={lastCheck} checking={check.isPending} onCheckStatus={onCheckStatus} />

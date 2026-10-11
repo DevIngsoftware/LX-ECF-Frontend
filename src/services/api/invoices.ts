@@ -19,6 +19,7 @@ export interface InvoicesService {
   saveDraft(draft: InvoiceDraft): Promise<{ id: string }>;
   /** Nunca se reintenta automáticamente para evitar emisiones duplicadas. */
   emit(draft: InvoiceDraft, idempotencyKey: string): Promise<EmitResult>;
+  send(id: string): Promise<InvoiceDetail>;
   checkStatus(id: string): Promise<TrackStatusResult>;
   downloadPdf(id: string): Promise<Blob>;
   downloadXml(id: string): Promise<Blob>;
@@ -28,11 +29,19 @@ export interface InvoicesService {
 }
 
 const httpInvoices: InvoicesService = {
-  list: (params) => get(ENDPOINTS.invoices.list, { params }),
+  list: (params) => {
+    const localDate = (iso?: string) => {
+      if (!iso) return undefined;
+      const date = new Date(iso);
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    };
+    return get(ENDPOINTS.invoices.list, { params: { ...params, from: localDate(params.from), to: localDate(params.to) } });
+  },
   get: (id) => get(ENDPOINTS.invoices.detail(id)),
   validate: (draft) => post(ENDPOINTS.invoices.validate, toFacturaRequestDTO(draft)),
   saveDraft: (draft) => post(ENDPOINTS.invoices.draft, toFacturaRequestDTO(draft)),
   emit: (draft, key) => post(ENDPOINTS.invoices.emit, toFacturaRequestDTO(draft), { headers: { 'Idempotency-Key': key }, timeout: 60000 }),
+  send: (id) => post(ENDPOINTS.invoices.send(id), undefined, { timeout: 60000 }),
   checkStatus: (id) => get(ENDPOINTS.invoices.status(id)),
   downloadPdf: (id) => getBlob(ENDPOINTS.invoices.pdf(id)),
   downloadXml: (id) => getBlob(ENDPOINTS.invoices.xml(id)),
@@ -91,6 +100,7 @@ const mockInvoices: InvoicesService = {
     });
     return { id, internalStatus: 'CREADO', dgiiStatus: 'NO_ENVIADO', messages: [{ code: 'DEMO', message: 'Modo demostración: el comprobante se registró localmente y NO fue enviado a la DGII.' }] };
   },
+  async send() { throw new ApiError('validation', 'El envío DGII no está disponible en la demostración.', 400); },
   async checkStatus(id) {
     await delay(900);
     const inv = findInvoice(id);
@@ -122,9 +132,9 @@ const mockInvoices: InvoicesService = {
   },
 };
 
-export const invoicesService: InvoicesService = ENV.useMocks
-  ? { ...mockInvoices,
-      dgiiOverview: ENV.settingsUseMocks ? mockInvoices.dgiiOverview : httpInvoices.dgiiOverview,
-      track: ENV.settingsUseMocks ? mockInvoices.track : httpInvoices.track,
-    }
-  : httpInvoices;
+export const invoicesService: InvoicesService = {
+  ...(ENV.invoicesUseMocks ? mockInvoices : httpInvoices),
+  dashboard: ENV.useMocks ? mockInvoices.dashboard : httpInvoices.dashboard,
+  dgiiOverview: ENV.settingsUseMocks ? mockInvoices.dgiiOverview : httpInvoices.dgiiOverview,
+  track: ENV.settingsUseMocks ? mockInvoices.track : httpInvoices.track,
+};

@@ -58,6 +58,8 @@ export function SummaryTab({ invoice }: { invoice: InvoiceDetail }) {
 
       {invoice.reference && <ReferenceCard reference={invoice.reference} />}
 
+      {invoice.notes && <section className="surface p-5"><h2 className="mb-2 font-semibold">Notas</h2><p className="whitespace-pre-wrap text-sm">{invoice.notes}</p></section>}
+
       <section className="surface overflow-hidden" aria-labelledby="items-title">
         <div className="border-b px-5 py-4">
           <h2 id="items-title" className="font-semibold">Artículos</h2>

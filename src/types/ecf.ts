@@ -73,6 +73,7 @@ export interface InvoiceDetail extends InvoiceSummary {
   paymentType: string;
   paymentTermDays?: number;
   reference?: InvoiceReference;
+  notes?: string;
   securityCode?: string;
   signedAt?: ISODate;
   verificationUrl?: string;
