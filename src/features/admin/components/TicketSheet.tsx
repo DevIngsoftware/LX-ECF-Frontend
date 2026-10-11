@@ -25,6 +25,7 @@ export function TicketSheet({ ticket, onOpenChange }: { ticket: SupportTicket | 
   const [reply, setReply] = useState('');
   const [approveOpen, setApproveOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
+  const [environmentConfirmed, setEnvironmentConfirmed] = useState(false);
   const detail = useQuery({
     queryKey: ['admin', 'tickets', ticket?.id],
     queryFn: () => adminService.ticket(ticket!.id),
@@ -33,7 +34,10 @@ export function TicketSheet({ ticket, onOpenChange }: { ticket: SupportTicket | 
   const current = detail.data?.ticket ?? ticket;
 
   useEffect(() => {
-    if (ticket) setStatus(ticket.status);
+    if (ticket) {
+      setStatus(ticket.status);
+      setEnvironmentConfirmed(false);
+    }
   }, [ticket]);
 
   useEffect(() => {
@@ -90,9 +94,22 @@ export function TicketSheet({ ticket, onOpenChange }: { ticket: SupportTicket | 
     onSuccess: (blob) => saveBlob(blob, detail.data?.paymentRequest?.filename ?? 'comprobante'),
     onError: (err) => toast.error(errorMessage(err)),
   });
+  const approveEnvironment = useMutation({
+    mutationFn: (id: string) => adminService.approveEnvironmentRequest(id, environmentConfirmed),
+    onSuccess: () => {
+      setEnvironmentConfirmed(false);
+      toast.success('Ambiente DGII activado; solicitud resuelta');
+      void qc.invalidateQueries({ queryKey: ['admin', 'tickets'] });
+      void qc.invalidateQueries({ queryKey: ['admin', 'companies'] });
+      void qc.invalidateQueries({ queryKey: ['admin', 'dashboard'] });
+    },
+    onError: (err) => toast.error(errorMessage(err)),
+  });
+
+  const environmentLabel = (environment?: string) => ({ TesteCF: 'Pruebas', CerteCF: 'Certificación', eCF: 'Producción' })[environment as 'TesteCF' | 'CerteCF' | 'eCF'] ?? environment;
 
   return (
-    <Sheet open={!!ticket} onOpenChange={(o) => !update.isPending && !send.isPending && !approve.isPending && onOpenChange(o)}>
+    <Sheet open={!!ticket} onOpenChange={(o) => !update.isPending && !send.isPending && !approve.isPending && !approveEnvironment.isPending && onOpenChange(o)}>
       <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-lg">
         {current && (
           <>
@@ -152,6 +169,36 @@ export function TicketSheet({ ticket, onOpenChange }: { ticket: SupportTicket | 
                 </section>
               )}
 
+              {detail.data?.environmentRequest && (
+                <section className="space-y-3 rounded-xl border border-brand/30 bg-brand-soft/30 p-4 text-sm">
+                  <h3 className="font-semibold">Cambio de ambiente DGII</h3>
+                  <p><strong>Activo:</strong> {environmentLabel(detail.data.environmentRequest.activeEnvironment)}</p>
+                  <p><strong>Solicitado:</strong> {environmentLabel(detail.data.environmentRequest.environment)}</p>
+                  <p><strong>RNC:</strong> {detail.data.environmentRequest.rnc}</p>
+                  {detail.data.environmentRequest.pending && canValidate && (
+                    <div className="space-y-3 border-t pt-3">
+                      {detail.data.environmentRequest.environment !== 'TesteCF' && (
+                        <label className="flex items-start gap-2">
+                          <input type="checkbox" className="mt-1" checked={environmentConfirmed}
+                            onChange={(event) => setEnvironmentConfirmed(event.target.checked)} />
+                          Confirmo que la empresa está habilitada por la DGII para este ambiente.
+                        </label>
+                      )}
+                      <Button type="button" disabled={approveEnvironment.isPending ||
+                        (detail.data.environmentRequest.environment !== 'TesteCF' && !environmentConfirmed)}
+                        onClick={() => approveEnvironment.mutate(current.id)}>
+                        {approveEnvironment.isPending && <Loader2 className="animate-spin" />}
+                        Aprobar y activar ambiente
+                      </Button>
+                    </div>
+                  )}
+                  {detail.data.environmentRequest.pending && !canValidate &&
+                    <p className="text-muted-foreground">Solo el superadministrador puede aprobar este cambio.</p>}
+                  {!detail.data.environmentRequest.pending &&
+                    <p className="text-success">Solicitud cerrada.</p>}
+                </section>
+              )}
+
               <section aria-labelledby="conv-title" className="space-y-3">
                 <h3 id="conv-title" className="text-sm font-semibold">Conversación</h3>
                 {detail.isLoading && <p className="text-sm text-muted-foreground">Cargando conversación…</p>}
@@ -178,6 +225,9 @@ export function TicketSheet({ ticket, onOpenChange }: { ticket: SupportTicket | 
                 <Label htmlFor="ticket-status">Cambiar estado</Label>
                 {detail.data?.moduleRequest && (
                   <p className="text-xs text-muted-foreground">Cambiar el estado del ticket no habilita el módulo. Primero debe validarse el comprobante del depósito.</p>
+                )}
+                {detail.data?.environmentRequest?.pending && (
+                  <p className="text-xs text-muted-foreground">Cerrar el ticket no activa el ambiente. Usa «Aprobar y activar ambiente» después de verificar la habilitación ante la DGII.</p>
                 )}
                 <Select value={status} onValueChange={setStatus}>
                   <SelectTrigger id="ticket-status"><SelectValue /></SelectTrigger>

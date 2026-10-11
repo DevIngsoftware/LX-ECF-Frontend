@@ -38,6 +38,7 @@ export interface AdminService {
   updateTicket(id: string, status: string): Promise<SupportTicketDetail>;
   replyTicket(id: string, body: string): Promise<SupportTicketDetail>;
   approveModuleRequest(ticketId: string): Promise<SupportTicketDetail>;
+  approveEnvironmentRequest(ticketId: string, authorizationConfirmed: boolean): Promise<SupportTicketDetail>;
   approveDeposit(ticketId: string): Promise<SupportTicketDetail>;
   rejectDeposit(ticketId: string, reason: string): Promise<SupportTicketDetail>;
   depositProof(ticketId: string): Promise<Blob>;
@@ -80,6 +81,7 @@ const http = {
     updateTicket: (id, status) => patch(`${ENDPOINTS.admin.tickets}/${id}`, { status }),
     replyTicket: (id, body) => post(`${ENDPOINTS.admin.tickets}/${id}/mensajes`, { body }),
     approveModuleRequest: (ticketId) => post(`/admin/modulos/solicitudes/${ticketId}/aprobar`),
+    approveEnvironmentRequest: (ticketId, authorizationConfirmed) => post(`/admin/soporte/${ticketId}/ambiente/aprobar`, { authorizationConfirmed }),
     approveDeposit: (ticketId) => post(`/admin/soporte/${ticketId}/validar-deposito`),
     rejectDeposit: (ticketId, reason) => post(`/admin/soporte/${ticketId}/rechazar-deposito`, { reason }),
     depositProof: (ticketId) => getBlob(`/admin/soporte/${ticketId}/comprobante`),
@@ -191,6 +193,7 @@ const mock = {
     updateTicket: (id, status) => http.admin.updateTicket(id, status),
     replyTicket: (id, body) => http.admin.replyTicket(id, body),
     approveModuleRequest: (ticketId) => http.admin.approveModuleRequest(ticketId),
+    approveEnvironmentRequest: (ticketId, authorizationConfirmed) => http.admin.approveEnvironmentRequest(ticketId, authorizationConfirmed),
     approveDeposit: (ticketId) => http.admin.approveDeposit(ticketId),
     rejectDeposit: (ticketId, reason) => http.admin.rejectDeposit(ticketId, reason),
     depositProof: (ticketId) => http.admin.depositProof(ticketId),
@@ -238,6 +241,7 @@ export const adminService: AdminService = {
   updateTicket: http.admin.updateTicket,
   replyTicket: http.admin.replyTicket,
   approveModuleRequest: http.admin.approveModuleRequest,
+  approveEnvironmentRequest: http.admin.approveEnvironmentRequest,
   approveDeposit: http.admin.approveDeposit,
   rejectDeposit: http.admin.rejectDeposit,
   depositProof: http.admin.depositProof,

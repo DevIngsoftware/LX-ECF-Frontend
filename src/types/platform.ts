@@ -114,6 +114,12 @@ export interface SupportTicketDetail {
   ticket: SupportTicket;
   messages: SupportMessage[];
   moduleRequest?: { key: ModuleKey; enabled: boolean; subscriptionActive: boolean } | null;
+  environmentRequest?: {
+    environment: 'TesteCF' | 'CerteCF' | 'eCF';
+    activeEnvironment: 'TesteCF' | 'CerteCF' | 'eCF';
+    rnc: string;
+    pending: boolean;
+  } | null;
   paymentRequest?: {
     id: Id;
     kind: 'PLAN' | 'MODULE';
