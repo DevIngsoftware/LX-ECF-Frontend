@@ -4,8 +4,8 @@ const apiBaseUrl = (raw.VITE_API_BASE_URL as string | undefined)?.trim() ?? '';
 
 export const ENV = {
   apiBaseUrl,
-  /** Los módulos pendientes conservan su demostración hasta que se integren uno por uno. */
-  useMocks: raw.VITE_USE_MOCKS !== 'false' || apiBaseUrl === '',
+  /** La demostración solo se habilita explícitamente o cuando falta la URL de la API. */
+  useMocks: raw.VITE_USE_MOCKS === 'true' || apiBaseUrl === '',
   /** Autenticación y usuarios ya tienen contratos propios con la API. */
   authUseMocks: raw.VITE_USE_MOCKS === 'true' || apiBaseUrl === '',
   /** Configuración fiscal y asistente conectados de forma independiente. */

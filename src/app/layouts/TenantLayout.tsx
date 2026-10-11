@@ -3,7 +3,6 @@ import { ArrowRight, Settings2 } from 'lucide-react';
 import { useAuth } from '@/features/auth/auth-context';
 import { NotificationBell } from '@/features/notifications/components/NotificationBell';
 import { ROUTES } from '@/constants/routes';
-import { ENV } from '@/constants/env';
 import { AppShell } from './shell/AppShell';
 import { UserMenu } from './shell/UserMenu';
 import { TENANT_NAV } from './navigation';
@@ -20,15 +19,6 @@ function OnboardingNotice() {
           Continuar configuración <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>
-    </div>
-  );
-}
-
-function IntegrationNotice() {
-  if (ENV.authUseMocks || !ENV.useMocks) return null;
-  return (
-    <div className="border-b bg-muted/70 px-4 py-2 text-center text-xs text-muted-foreground sm:px-6">
-      La cuenta, la configuración fiscal, los clientes, los comprobantes, el panel y soporte ya usan la API. Otros módulos aún muestran datos de demostración.
     </div>
   );
 }
@@ -52,7 +42,7 @@ export function TenantLayout() {
       rootLabel="Inicio"
       chatContext="tenant"
       sidebarFooter={<TenantCard />}
-      topNotice={<><IntegrationNotice /><OnboardingNotice /></>}
+      topNotice={<OnboardingNotice />}
       headerActions={
         <>
           <NotificationBell allTo={ROUTES.app.notifications} />
