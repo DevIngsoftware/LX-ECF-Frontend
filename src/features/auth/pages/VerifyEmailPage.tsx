@@ -61,7 +61,7 @@ function TokenVerification({ token }: { token: string }) {
   );
 }
 
-function CheckInbox({ initialEmail }: { initialEmail: string }) {
+function CheckInbox({ initialEmail, emailSent = true }: { initialEmail: string; emailSent?: boolean }) {
   const [email, setEmail] = useState(initialEmail);
   const [cooldown, setCooldown] = useState(0);
   const [touched, setTouched] = useState(false);
@@ -88,7 +88,9 @@ function CheckInbox({ initialEmail }: { initialEmail: string }) {
         icon={MailCheck}
         title="Revisa tu correo"
         description={
-          initialEmail ? (
+          !emailSent ? (
+            'Tu cuenta fue creada, pero no pudimos enviar el enlace. Solicita uno nuevo aquí.'
+          ) : initialEmail ? (
             <>Enviamos un enlace de verificación a <span className="font-semibold text-foreground">{initialEmail}</span>. Ábrelo para activar tu cuenta.</>
           ) : (
             'Te enviamos un enlace de verificación. Ábrelo para activar tu cuenta.'
@@ -129,5 +131,6 @@ export function VerifyEmailPage() {
   const [params] = useSearchParams();
   const location = useLocation();
   const token = params.get('token');
-  return token ? <TokenVerification token={token} /> : <CheckInbox initialEmail={readEmail(location.state)} />;
+  const emailSent = !(location.state && typeof location.state === 'object' && 'emailSent' in location.state && location.state.emailSent === false);
+  return token ? <TokenVerification token={token} /> : <CheckInbox initialEmail={readEmail(location.state)} emailSent={emailSent} />;
 }

@@ -4,8 +4,10 @@ const apiBaseUrl = (raw.VITE_API_BASE_URL as string | undefined)?.trim() ?? '';
 
 export const ENV = {
   apiBaseUrl,
-  /** Sin URL de API configurada, la interfaz funciona con datos de demostración. */
-  useMocks: raw.VITE_USE_MOCKS === 'true' || apiBaseUrl === '',
+  /** Los módulos pendientes conservan su demostración hasta que se integren uno por uno. */
+  useMocks: raw.VITE_USE_MOCKS !== 'false' || apiBaseUrl === '',
+  /** Autenticación y usuarios ya tienen contratos propios con la API. */
+  authUseMocks: raw.VITE_USE_MOCKS === 'true' || apiBaseUrl === '',
   requestTimeoutMs: Number(raw.VITE_API_TIMEOUT_MS ?? 30000),
   chatApiPath: (raw.VITE_CHAT_API_PATH as string | undefined) ?? '',
 } as const;

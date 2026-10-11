@@ -46,8 +46,9 @@ export function RegisterPage() {
   const mutation = useMutation({
     mutationFn: (v: FormOutput) => authService.register({ companyName: v.companyName, rnc: v.rnc, ownerName: v.ownerName, email: v.email, password: v.password }),
     onSuccess: (res, v) => {
-      toast.success('Cuenta creada. Revisa tu correo para verificarla.');
-      navigate(ROUTES.verifyEmail, { state: { email: res.email || v.email } });
+      if (res.emailSent === false) toast.warning('Cuenta creada, pero el correo no salió. Solicita un nuevo enlace.');
+      else toast.success('Cuenta creada. Revisa tu correo para verificarla.');
+      navigate(ROUTES.verifyEmail, { state: { email: res.email || v.email, emailSent: res.emailSent !== false } });
     },
     onError: (err) => toast.error(errorMessage(err)),
   });

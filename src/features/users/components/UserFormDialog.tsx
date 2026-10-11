@@ -47,8 +47,9 @@ export function UserFormDialog({ open, onOpenChange, user, lockAdmin }: Props) {
   const save = useMutation({
     mutationFn: (v: Values) =>
       user ? usersService.update(user.id, { ...v, active: user.active }) : usersService.create({ ...v, active: true }),
-    onSuccess: (_, v) => {
-      toast.success(editing ? `Rol actualizado a ${ROLE_META[v.role].label}` : `Invitación enviada a ${v.email}`);
+    onSuccess: (result, v) => {
+      if (!editing && 'emailSent' in result && result.emailSent === false) toast.warning(`Usuario creado, pero no se envió el correo a ${v.email}. Puedes reenviarlo desde su ficha.`);
+      else toast.success(editing ? `Rol actualizado a ${ROLE_META[v.role].label}` : `Invitación enviada a ${v.email}`);
       void qc.invalidateQueries({ queryKey: queryKeys.users });
       onOpenChange(false);
     },

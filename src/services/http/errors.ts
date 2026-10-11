@@ -82,7 +82,7 @@ export function toApiError(error: unknown): ApiError {
       field: e.field ?? '',
       message: e.defaultMessage ?? e.message ?? '',
     }));
-    return new ApiError(kind, body.message ?? body.detail ?? FALLBACK[kind], status, body.code, fieldErrors);
+    return new ApiError(kind, body.message ?? body.detail ?? body.error ?? FALLBACK[kind], status, body.code, fieldErrors);
   }
   if (error instanceof Error) return new ApiError('unknown', error.message);
   return new ApiError('unknown', FALLBACK.unknown);

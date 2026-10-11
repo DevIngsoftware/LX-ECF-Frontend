@@ -13,7 +13,7 @@ import { AuthContext, type AuthStatus } from './auth-context';
  * el backend (cookie httpOnly + /auth/me).
  */
 function readDemoSession(): SessionUser | null {
-  if (!ENV.useMocks) return null;
+  if (!ENV.authUseMocks) return null;
   try {
     const raw = sessionStorage.getItem(STORAGE_KEYS.demoSession);
     return raw ? (JSON.parse(raw) as SessionUser) : null;
@@ -25,17 +25,17 @@ function readDemoSession(): SessionUser | null {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const [user, setUser] = useState<SessionUser | null>(readDemoSession);
-  const [status, setStatus] = useState<AuthStatus>(() => (ENV.useMocks ? (readDemoSession() ? 'authenticated' : 'anonymous') : 'loading'));
+  const [status, setStatus] = useState<AuthStatus>(() => (ENV.authUseMocks ? (readDemoSession() ? 'authenticated' : 'anonymous') : 'loading'));
   const [sessionExpired, setSessionExpired] = useState(false);
   const rememberDemoSession = useRef(Boolean(readDemoSession()));
 
   useEffect(() => {
-    if (ENV.useMocks) return;
+    if (ENV.authUseMocks) return;
     authService
-      .me()
-      .then((u) => {
-        tokenStore.restoreSession();
-        setUser(u);
+      .refresh()
+      .then((session) => {
+        tokenStore.set(session.tokens);
+        setUser(session.user);
         setStatus('authenticated');
       })
       .catch(() => setStatus('anonymous'));
@@ -53,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const persist = (u: SessionUser | null) => {
-    if (!ENV.useMocks) return;
+    if (!ENV.authUseMocks) return;
     if (u && rememberDemoSession.current) sessionStorage.setItem(STORAGE_KEYS.demoSession, JSON.stringify(u));
     else sessionStorage.removeItem(STORAGE_KEYS.demoSession);
   };

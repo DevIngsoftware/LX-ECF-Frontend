@@ -29,7 +29,7 @@ export interface NotificationsService {
 
 export interface UsersService {
   list(): Promise<TenantUser[]>;
-  create(input: TenantUserInput): Promise<TenantUser>;
+  create(input: TenantUserInput): Promise<TenantUser & { emailSent?: boolean }>;
   update(id: string, input: TenantUserInput): Promise<TenantUser>;
   setActive(id: string, active: boolean): Promise<void>;
   sendPasswordReset(id: string): Promise<void>;
@@ -217,5 +217,5 @@ const impl = ENV.useMocks ? mock : http;
 export const billingService: BillingService = impl.billing;
 export const modulesService: ModulesService = impl.modules;
 export const notificationsService: NotificationsService = impl.notifications;
-export const usersService: UsersService = impl.users;
+export const usersService: UsersService = ENV.authUseMocks ? mock.users : http.users;
 export const settingsService: SettingsService = impl.settings;

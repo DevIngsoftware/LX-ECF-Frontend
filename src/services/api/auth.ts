@@ -12,7 +12,8 @@ export interface LoginResponse {
 
 export interface AuthService {
   login(input: LoginInput): Promise<LoginResponse>;
-  register(input: Omit<RegisterInput, 'acceptTerms'>): Promise<{ email: string }>;
+  refresh(): Promise<LoginResponse>;
+  register(input: Omit<RegisterInput, 'acceptTerms'>): Promise<{ email: string; emailSent?: boolean }>;
   me(): Promise<SessionUser>;
   logout(): Promise<void>;
   forgotPassword(email: string): Promise<void>;
@@ -23,6 +24,7 @@ export interface AuthService {
 
 const httpAuth: AuthService = {
   login: (input) => post<LoginResponse>(ENDPOINTS.auth.login, input),
+  refresh: () => post<LoginResponse>(ENDPOINTS.auth.refresh),
   register: (input) => post(ENDPOINTS.auth.register, input),
   me: () => get<SessionUser>(ENDPOINTS.auth.me),
   logout: () => post(ENDPOINTS.auth.logout),
@@ -69,6 +71,9 @@ const mockAuth: AuthService = {
     await delay(800);
     return { email };
   },
+  async refresh() {
+    throw new ApiError('unauthorized', 'Sin sesión', 401);
+  },
   async me() {
     await delay(200);
     throw new ApiError('unauthorized', 'Sin sesión', 401);
@@ -86,4 +91,4 @@ const mockAuth: AuthService = {
   resendVerification: () => delay(600),
 };
 
-export const authService: AuthService = ENV.useMocks ? mockAuth : httpAuth;
+export const authService: AuthService = ENV.authUseMocks ? mockAuth : httpAuth;
