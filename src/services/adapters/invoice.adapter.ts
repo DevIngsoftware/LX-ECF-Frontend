@@ -6,7 +6,7 @@ import type { EcfTypeCode, InvoiceDraft } from '@/types/ecf';
  * Contrato del portal de facturación (PortalInvoiceRequest).
  */
 export interface ItemDTO {
-  codigo?: string;
+  codigo?: string | null;
   descripcion: string;
   indicadorBienServicio: string;
   cantidad: number;
@@ -80,7 +80,7 @@ export function fromFacturaRequestDTO(saved: FacturaRequestDTO): InvoiceDraft {
     paymentType: saved.tipoPago ?? '1',
     paymentTermDays: saved.plazoPagoDias ?? undefined,
     items: (saved.items ?? []).map((item) => ({
-      code: item.codigo, description: item.descripcion ?? '',
+      code: item.codigo ?? undefined, description: item.descripcion ?? '',
       kind: item.indicadorBienServicio === '1' ? 'BIEN' : 'SERVICIO',
       quantity: item.cantidad == null ? 1 : amount(item.cantidad), unitPrice: amount(item.precioUnitario),
       discount: amount(item.descuento), itbisRate: amount(item.tasaItbis),
