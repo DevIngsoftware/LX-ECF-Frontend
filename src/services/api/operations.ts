@@ -223,13 +223,14 @@ const portalCustomers: PartiesService = {
     }
   },
 };
-export const partiesService: PartiesService = ENV.invoicesUseMocks ? impl.parties : {
-  list: (kind, query) => kind === 'customers' ? portalCustomers.list(kind, query) : impl.parties.list(kind, query),
-  get: (kind, id) => kind === 'customers' ? portalCustomers.get(kind, id) : impl.parties.get(kind, id),
-  create: (kind, input) => kind === 'customers' ? portalCustomers.create(kind, input) : impl.parties.create(kind, input),
-  update: (kind, id, input) => kind === 'customers' ? portalCustomers.update(kind, id, input) : impl.parties.update(kind, id, input),
-  setActive: (kind, id, active) => kind === 'customers' ? portalCustomers.setActive(kind, id, active) : impl.parties.setActive(kind, id, active),
-  history: (kind, id) => kind === 'customers' ? portalCustomers.history(kind, id) : impl.parties.history(kind, id),
+const activeCustomers = ENV.invoicesUseMocks ? impl.parties : portalCustomers;
+export const partiesService: PartiesService = {
+  list: (kind, query) => kind === 'customers' ? activeCustomers.list(kind, query) : http.parties.list(kind, query),
+  get: (kind, id) => kind === 'customers' ? activeCustomers.get(kind, id) : http.parties.get(kind, id),
+  create: (kind, input) => kind === 'customers' ? activeCustomers.create(kind, input) : http.parties.create(kind, input),
+  update: (kind, id, input) => kind === 'customers' ? activeCustomers.update(kind, id, input) : http.parties.update(kind, id, input),
+  setActive: (kind, id, active) => kind === 'customers' ? activeCustomers.setActive(kind, id, active) : http.parties.setActive(kind, id, active),
+  history: (kind, id) => kind === 'customers' ? activeCustomers.history(kind, id) : http.parties.history(kind, id),
   lookupRnc: portalCustomers.lookupRnc,
 };
 export const catalogService: CatalogService = http.catalog;

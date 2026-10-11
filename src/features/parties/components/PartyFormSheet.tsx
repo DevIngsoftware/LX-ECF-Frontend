@@ -146,7 +146,7 @@ export function PartyFormSheet({ kind, open, onOpenChange, party, onSaved }: Par
                       </Button>
                     </div>
                     <FormMessage />
-                    {(kind === 'customers' ? ENV.invoicesUseMocks : ENV.useMocks) && (
+                    {ENV.invoicesUseMocks && (
                       <FormDescription className="flex items-center gap-1.5">
                         <Info className="h-3.5 w-3.5" aria-hidden /> Consulta ilustrativa: en modo demostración no se consulta el padrón real.
                       </FormDescription>
