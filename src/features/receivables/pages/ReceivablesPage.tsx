@@ -22,9 +22,7 @@ import { AgingChart } from '../components/AgingChart';
 import { FiscalStatusCell } from '../components/FiscalStatus';
 import { PaymentDialog } from '../components/PaymentDialog';
 import { ReceivableSheet } from '../components/ReceivableSheet';
-import { computeAging, daysOverdue, summarize } from '../components/receivables-utils';
-
-const SUMMARY_QUERY = { page: 0, size: 1000, scope: 'summary' } as const;
+import { daysOverdue } from '../components/receivables-utils';
 
 export function ReceivablesPage() {
   const { hasPermission } = useAuth();
@@ -41,16 +39,11 @@ export function ReceivablesPage() {
     queryFn: () => receivablesService.list(query),
     placeholderData: keepPreviousData,
   });
-  const all = useQuery({
-    queryKey: queryKeys.receivables(SUMMARY_QUERY),
-    queryFn: () => receivablesService.list({ page: 0, size: 1000 }),
-  });
+  const all = useQuery({ queryKey: ['receivables', 'summary'], queryFn: receivablesService.summary });
   const payments = useQuery({ queryKey: queryKeys.payments, queryFn: () => receivablesService.payments() });
 
-  const allItems = useMemo(() => all.data?.content ?? [], [all.data]);
-  const summary = useMemo(() => summarize(allItems, payments.data ?? []), [allItems, payments.data]);
-  const aging = useMemo(() => computeAging(allItems), [allItems]);
-  const selected = selectedId ? list.data?.content.find((r) => r.id === selectedId) ?? allItems.find((r) => r.id === selectedId) ?? null : null;
+  const summary = all.data ?? { outstanding: 0, overdue: 0, overdueCount: 0, collectedMonth: 0, openCount: 0, aging: [] };
+  const selected = selectedId ? list.data?.content.find((r) => r.id === selectedId) ?? null : null;
 
   const columns = useMemo<ColumnDef<Receivable, unknown>[]>(() => {
     const cols: ColumnDef<Receivable, unknown>[] = [
@@ -112,7 +105,7 @@ export function ReceivablesPage() {
             <StatCard index={2} label="Cobrado este mes" value={formatMoney(summary.collectedMonth)} icon={TrendingUp} tone="success" loading={all.isLoading || payments.isLoading} hint="Según cobros registrados" />
           </div>
           <div className="mb-6">
-            <AgingChart data={aging} loading={all.isLoading} />
+            <AgingChart data={summary.aging} loading={all.isLoading} />
           </div>
         </>
       )}

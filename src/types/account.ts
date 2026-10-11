@@ -21,6 +21,7 @@ export type Permission =
   | 'support.access'
   | 'catalog.read'
   | 'expenses.read'
+  | 'receivables.read'
   | 'admin.access'
   | 'admin.companies'
   | 'admin.plans'

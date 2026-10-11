@@ -8,7 +8,7 @@ import type { InvoiceSummary } from '@/types/ecf';
 import { get, getBlob, patch, post, put } from '../http/client';
 import { ApiError, toApiError } from '../http/errors';
 import { ENDPOINTS } from './endpoints';
-import { customers, invoices, payments, receivables, receivedDocuments, suppliers } from '../mocks/data';
+import { customers, invoices, receivedDocuments, suppliers } from '../mocks/data';
 import { buildReport } from '../mocks/reports';
 import { delay, paginate, uid } from '../mocks/utils';
 
@@ -38,8 +38,18 @@ export interface ReceptionService {
 
 export interface ReceivablesService {
   list(query: PageQuery & { status?: string }): Promise<Page<Receivable>>;
+  summary(): Promise<ReceivablesSummary>;
   payments(): Promise<ReceivablePayment[]>;
   registerPayment(input: PaymentInput): Promise<ReceivablePayment>;
+}
+
+export interface ReceivablesSummary {
+  outstanding: number;
+  overdue: number;
+  overdueCount: number;
+  collectedMonth: number;
+  openCount: number;
+  aging: { key: string; label: string; amount: number; count: number }[];
 }
 
 export interface ExpensesService {
@@ -83,6 +93,7 @@ const http = {
   } satisfies ReceptionService,
   receivables: {
     list: (params) => get(ENDPOINTS.receivables.list, { params }),
+    summary: () => get(`${ENDPOINTS.receivables.list}/resumen`),
     payments: () => get(ENDPOINTS.receivables.payments),
     registerPayment: (input) => post(ENDPOINTS.receivables.payments, input),
   } satisfies ReceivablesService,
@@ -160,27 +171,10 @@ const mock = {
     },
   } satisfies ReceptionService,
   receivables: {
-    async list(q) {
-      await delay();
-      const list = q.status && q.status !== 'ALL' ? receivables.filter((r) => r.status === q.status) : receivables;
-      return paginate(list, { sort: 'dueDate', direction: 'asc', ...q }, ['encf', 'customerName']);
-    },
-    async payments() {
-      await delay(400);
-      return [...payments].sort((a, b) => (a.date < b.date ? 1 : -1));
-    },
-    async registerPayment(input) {
-      await delay(700);
-      const r = receivables.find((x) => x.id === input.receivableId);
-      if (!r) throw new ApiError('not_found', 'La cuenta por cobrar no existe.', 404);
-      if (input.amount > r.balance) throw new ApiError('validation', 'El monto supera el saldo pendiente.', 400);
-      r.paid += input.amount;
-      r.balance -= input.amount;
-      r.status = r.balance <= 0 ? 'PAGADA' : 'PARCIAL';
-      const p = { ...input, id: uid(), encf: r.encf };
-      payments.unshift(p);
-      return p;
-    },
+    list: (params) => http.receivables.list(params),
+    summary: () => http.receivables.summary(),
+    payments: () => http.receivables.payments(),
+    registerPayment: (input) => http.receivables.registerPayment(input),
   } satisfies ReceivablesService,
   expenses: {
     list: (params) => http.expenses.list(params),
@@ -230,6 +224,6 @@ export const partiesService: PartiesService = {
 };
 export const catalogService: CatalogService = http.catalog;
 export const receptionService: ReceptionService = impl.reception;
-export const receivablesService: ReceivablesService = impl.receivables;
+export const receivablesService: ReceivablesService = http.receivables;
 export const expensesService: ExpensesService = http.expenses;
 export const reportsService: ReportsService = impl.reports;

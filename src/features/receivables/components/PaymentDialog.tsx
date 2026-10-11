@@ -14,7 +14,7 @@ import { receivablesService } from '@/services/api/operations';
 import { queryKeys } from '@/services/api/query-keys';
 import { errorMessage } from '@/services/http/errors';
 import type { Receivable } from '@/types/business';
-import { fromInputDate, toInputDate } from '@/utils/dates';
+import { toInputDate } from '@/utils/dates';
 import { formatMoney } from '@/utils/format';
 import { PAYMENT_METHODS } from './receivables-utils';
 
@@ -70,7 +70,7 @@ function PaymentForm({ receivable, onClose }: { receivable: Receivable; onClose:
         receivableId: receivable.id,
         amount: Math.round(v.amount * 100) / 100,
         method: v.method,
-        date: fromInputDate(v.date),
+        date: v.date,
         reference: v.reference.trim() || undefined,
       }),
     onSuccess: () => {

@@ -5,7 +5,12 @@ export const PAYMENT_METHODS = ['Transferencia', 'Efectivo', 'Cheque', 'Tarjeta'
 const DAY = 86400000;
 
 /** Días de atraso respecto al vencimiento (negativo si aún no vence). */
-export const daysOverdue = (dueDate: string, now = Date.now()) => Math.floor((now - new Date(dueDate).getTime()) / DAY);
+export const daysOverdue = (dueDate: string, now = Date.now()) => {
+  const due = /^\d{4}-\d{2}-\d{2}$/.test(dueDate) ? new Date(`${dueDate}T00:00:00`) : new Date(dueDate);
+  const today = new Date(now);
+  today.setHours(0, 0, 0, 0);
+  return Math.round((today.getTime() - due.getTime()) / DAY);
+};
 
 export const isOverdue = (r: Receivable) => r.balance > 0 && (r.status === 'VENCIDA' || daysOverdue(r.dueDate) > 0);
 
