@@ -33,8 +33,8 @@ const STEPS = [
   },
 ];
 
-const FIRST_CALL = `curl -X GET "https://{BASE_URL_PRUEBAS}/v1/ecf?size=5" \\
-  -H "Authorization: Bearer $LX_API_KEY" \\
+const FIRST_CALL = `curl -X GET "https://{BASE_URL_PRUEBAS}/v1/api-client/facturas?size=5" \\
+  -H "Authorization: Bearer $LX_ACCESS_TOKEN" \\
   -H "Accept: application/json"`;
 
 export function GettingStartedSection() {
@@ -69,10 +69,10 @@ export function GettingStartedSection() {
       </DocBlock>
 
       <DocBlock title="Tu primera llamada" description="Lista los comprobantes más recientes para verificar que tu credencial funciona.">
-        <CodeBlock lang="bash" title="cURL — Ejemplo ilustrativo" code={FIRST_CALL} />
+        <CodeBlock lang="bash" title="cURL — Lista de comprobantes" code={FIRST_CALL} />
         <p className="text-sm text-muted-foreground">
           Reemplaza <InlineCode>{'{BASE_URL_PRUEBAS}'}</InlineCode> por la URL del ambiente de pruebas cuando sea publicada y define la variable{' '}
-          <InlineCode>LX_API_KEY</InlineCode> en tu servidor.
+          <InlineCode>LX_ACCESS_TOKEN</InlineCode> con el token obtenido al intercambiar tu API Key y API Secret en tu servidor.
         </p>
         <Callout tone="info">Usa siempre el ambiente de pruebas hasta validar tu integración de extremo a extremo.</Callout>
       </DocBlock>

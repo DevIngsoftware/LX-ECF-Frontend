@@ -12,8 +12,8 @@ export function ReferenceSection() {
       <DocHeader eyebrow="Referencia" title="Documentación de endpoints" description="Operaciones disponibles para emitir y consultar comprobantes fiscales electrónicos." />
 
       <div className="mb-8">
-        <Callout tone="warning" icon={FileWarning} title="Contratos ilustrativos hasta la publicación de OpenAPI oficial">
-          Rutas, nombres de campos y códigos pueden cambiar. Valida tu integración contra la especificación oficial cuando esté disponible.
+        <Callout tone="warning" icon={FileWarning} title="Ambiente fiscal de la empresa">
+          La credencial técnica usa el ambiente DGII configurado para su empresa. Crear un comprobante reserva un e-NCF; enviarlo a la DGII es una llamada separada.
         </Callout>
       </div>
 
@@ -62,7 +62,7 @@ export function ReferenceSection() {
 
       <DocBlock title="Idempotencia en la emisión">
         <p className="text-sm leading-relaxed text-muted-foreground">
-          Toda solicitud <InlineCode>POST /v1/ecf</InlineCode> debe incluir el encabezado <InlineCode>Idempotency-Key</InlineCode> con un
+          Toda solicitud <InlineCode>POST /v1/api-client/facturas</InlineCode> debe incluir el encabezado <InlineCode>Idempotency-Key</InlineCode> con un
           identificador único (por ejemplo, un UUID v4) generado por tu sistema para cada comprobante. Si la conexión falla y repites la solicitud
           con la misma clave, la API devuelve el resultado original en lugar de emitir un comprobante duplicado.
         </p>

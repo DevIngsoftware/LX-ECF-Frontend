@@ -1,4 +1,4 @@
-/** Contratos ilustrativos hasta la publicación de la especificación OpenAPI oficial. */
+/** Contrato técnico verificado contra PortalInvoiceRequest y DeveloperInvoicesController. */
 export interface EndpointDoc {
   id: string;
   method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
@@ -11,116 +11,81 @@ export interface EndpointDoc {
   responseStatus: number;
 }
 
-const AUTH_HEADER = { name: 'Authorization', value: 'Bearer {token}', required: true, note: 'Token de acceso vigente.' };
+const AUTH_HEADER = { name: 'Authorization', value: 'Bearer {accessToken}', required: true, note: 'Token técnico obtenido en POST /v1/api-keys/token.' };
+const BASE = '/v1/api-client/facturas';
 
 export const EMIT_REQUEST = `{
   "tipoEcf": "E31",
-  "comprador": {
-    "rnc": "101000000",
-    "razonSocial": "Cliente Ejemplo, S.R.L."
-  },
-  "tipoIngreso": "01",
+  "rncComprador": "101123456",
+  "razonSocialComprador": "Cliente de prueba",
+  "tipoIngresos": "01",
   "tipoPago": "1",
   "items": [
     {
       "descripcion": "Servicio de ejemplo",
+      "indicadorBienServicio": "2",
       "cantidad": 1,
       "precioUnitario": 1000.00,
-      "itbis": 18
+      "descuento": 0,
+      "tasaItbis": 18
     }
   ]
 }`;
 
 export const EMIT_RESPONSE = `{
-  "id": "8f1c2b7e-0000-0000-0000-000000000000",
-  "encf": "E310000000001",
-  "estadoInterno": "CREADO",
-  "estadoDgii": "EN_PROCESO",
-  "trackId": "00000000-0000-0000-0000-000000000000",
-  "fechaEmision": "2026-01-15T14:32:10-04:00",
-  "total": 1180.00
+  "id": "E317000000001",
+  "encf": "E317000000001",
+  "internalStatus": "CREADO",
+  "dgiiStatus": "NO_ENVIADO",
+  "messages": []
 }`;
 
 export const ENDPOINTS_DOC: EndpointDoc[] = [
   {
-    id: 'emit',
-    method: 'POST',
-    path: '/v1/ecf',
-    summary: 'Emitir comprobante',
-    description: 'Crea, firma y envía un e-CF a la DGII. La respuesta es inmediata; el estado DGII puede quedar en proceso.',
-    headers: [
-      AUTH_HEADER,
-      { name: 'Idempotency-Key', value: '{uuid}', required: true, note: 'Identificador único por intento lógico de emisión. Reutilízalo en los reintentos.' },
-      { name: 'Content-Type', value: 'application/json', required: true, note: 'Cuerpo en JSON.' },
-    ],
+    id: 'validate', method: 'POST', path: `${BASE}/validar`, summary: 'Validar formulario',
+    description: 'Valida los datos antes de reservar un e-NCF. No envía el comprobante.',
+    headers: [AUTH_HEADER, { name: 'Content-Type', value: 'application/json', required: true, note: 'Cuerpo en JSON.' }],
     request: EMIT_REQUEST,
-    response: EMIT_RESPONSE,
-    responseStatus: 201,
+    response: `{ "valid": true, "messages": [] }`, responseStatus: 200,
   },
   {
-    id: 'list',
-    method: 'GET',
-    path: '/v1/ecf',
-    summary: 'Listar comprobantes',
-    description: 'Devuelve los comprobantes emitidos de forma paginada. Admite los parámetros page, size, desde, hasta y tipoEcf.',
+    id: 'emit', method: 'POST', path: BASE, summary: 'Crear comprobante',
+    description: 'Crea un comprobante para la empresa de la credencial. Devuelve un e-NCF; el envío a la DGII es una operación separada.',
+    headers: [AUTH_HEADER,
+      { name: 'Idempotency-Key', value: '{uuid}', required: true, note: 'Reutiliza la misma clave al reintentar la misma emisión.' },
+      { name: 'Content-Type', value: 'application/json', required: true, note: 'Cuerpo en JSON.' }],
+    request: EMIT_REQUEST, response: EMIT_RESPONSE, responseStatus: 200,
+  },
+  {
+    id: 'list', method: 'GET', path: BASE, summary: 'Listar comprobantes',
+    description: 'Devuelve los comprobantes de la empresa de forma paginada. Admite page, size, search, type, internalStatus, dgiiStatus, sort, direction, from y to.',
     headers: [AUTH_HEADER],
-    response: `{
-  "content": [ { "id": "8f1c2b7e-...", "encf": "E310000000001", "estadoDgii": "ACEPTADO" } ],
-  "page": 0,
-  "size": 20,
-  "totalElements": 1,
-  "totalPages": 1
-}`,
+    response: `{\n  "content": [{ "id": "E317000000001", "encf": "E317000000001", "dgiiStatus": "NO_ENVIADO" }],\n  "page": 0,\n  "size": 20,\n  "totalElements": 1,\n  "totalPages": 1\n}`,
     responseStatus: 200,
   },
   {
-    id: 'detail',
-    method: 'GET',
-    path: '/v1/ecf/{id}',
-    summary: 'Consultar comprobante',
-    description: 'Obtiene el detalle completo de un comprobante, incluyendo montos, comprador y estados.',
-    headers: [AUTH_HEADER],
-    response: EMIT_RESPONSE,
-    responseStatus: 200,
+    id: 'detail', method: 'GET', path: `${BASE}/{eNcf}`, summary: 'Consultar comprobante',
+    description: 'Obtiene detalle, comprador, artículos y estados del e-NCF indicado. Solo devuelve comprobantes de la empresa de la credencial.',
+    headers: [AUTH_HEADER], response: `{ "id": "E317000000001", "encf": "E317000000001", "buyer": { "name": "Cliente de prueba", "rnc": "101123456" }, "items": [], "internalStatus": "CREADO", "dgiiStatus": "NO_ENVIADO" }`, responseStatus: 200,
   },
   {
-    id: 'status',
-    method: 'GET',
-    path: '/v1/ecf/{id}/estado',
-    summary: 'Consultar estado DGII',
-    description: 'Devuelve el estado interno, el estado DGII y los mensajes de validación más recientes.',
-    headers: [AUTH_HEADER],
-    response: `{
-  "estadoInterno": "ACEPTADO",
-  "estadoDgii": "ACEPTADO_CONDICIONAL",
-  "mensajes": [
-    { "codigo": "0", "valor": "Mensaje de validación de ejemplo" }
-  ],
-  "actualizadoEn": "2026-01-15T14:35:02-04:00"
-}`,
-    responseStatus: 200,
+    id: 'send', method: 'POST', path: `${BASE}/{eNcf}/enviar`, summary: 'Enviar a la DGII',
+    description: 'Genera y firma el XML si es necesario y lo envía a la DGII usando el ambiente fiscal configurado para la empresa.',
+    headers: [AUTH_HEADER], response: `{ "id": "E317000000001", "encf": "E317000000001", "internalStatus": "EN_PROCESO", "dgiiStatus": "EN_PROCESO" }`, responseStatus: 200,
   },
   {
-    id: 'pdf',
-    method: 'GET',
-    path: '/v1/ecf/{id}/pdf',
-    summary: 'Descargar representación impresa',
-    description: 'Devuelve el PDF del comprobante. Responde con Content-Type application/pdf.',
-    headers: [AUTH_HEADER],
-    response: `HTTP/1.1 200 OK
-Content-Type: application/pdf
-Content-Disposition: attachment; filename="E310000000001.pdf"`,
-    responseStatus: 200,
+    id: 'status', method: 'GET', path: `${BASE}/{eNcf}/estado`, summary: 'Consultar estado DGII',
+    description: 'Consulta la DGII usando el track ID guardado por la API. Requiere que el comprobante ya haya sido enviado.',
+    headers: [AUTH_HEADER], response: `{ "trackId": "track-id-de-la-dgii", "dgiiStatus": "ACEPTADO", "messages": [], "checkedAt": "2026-10-11T12:00:00Z" }`, responseStatus: 200,
   },
   {
-    id: 'xml',
-    method: 'GET',
-    path: '/v1/ecf/{id}/xml',
-    summary: 'Descargar XML firmado',
-    description: 'Devuelve el XML firmado digitalmente tal como fue enviado a la DGII.',
-    headers: [AUTH_HEADER],
-    response: `HTTP/1.1 200 OK
-Content-Type: application/xml`,
-    responseStatus: 200,
+    id: 'pdf', method: 'GET', path: `${BASE}/{eNcf}/pdf`, summary: 'Ver PDF',
+    description: 'Devuelve la representación impresa actual del backend.', headers: [AUTH_HEADER],
+    response: `HTTP/1.1 200 OK\nContent-Type: application/pdf\nContent-Disposition: inline; filename="E317000000001.pdf"`, responseStatus: 200,
+  },
+  {
+    id: 'xml', method: 'GET', path: `${BASE}/{eNcf}/xml`, summary: 'Descargar XML firmado',
+    description: 'Devuelve el XML firmado. Requiere que el comprobante ya esté firmado.', headers: [AUTH_HEADER],
+    response: `HTTP/1.1 200 OK\nContent-Type: application/xml`, responseStatus: 200,
   },
 ];

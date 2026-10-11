@@ -9,10 +9,12 @@ Accept: application/json`;
 
 const API_KEY = `curl -X POST "https://{BASE_URL}/v1/api-keys/token" \\
   -H "Content-Type: application/json" \\
-  -d '{
-    "apiKey": "lxk_XXXX",
+  -d @- <<JSON
+  {
+    "apiKey": "$LX_API_KEY",
     "apiSecret": "$LX_API_SECRET"
-  }'`;
+  }
+JSON`;
 
 const TOKEN_RESPONSE = `{
   "accessToken": "<JWT>",
@@ -73,7 +75,7 @@ export function AuthSection() {
           <li>Revoca de inmediato cualquier credencial que sospeches comprometida.</li>
         </ul>
         <Callout tone="info" title="Alcance actual">
-          El intercambio de credenciales y la consulta de identidad ya funcionan. Los endpoints fiscales para este token se conectarán en la siguiente etapa.
+          El token técnico permite consultar, crear y enviar comprobantes de la empresa asociada mediante las rutas de <InlineCode>/v1/api-client/facturas</InlineCode>.
         </Callout>
       </DocBlock>
     </>

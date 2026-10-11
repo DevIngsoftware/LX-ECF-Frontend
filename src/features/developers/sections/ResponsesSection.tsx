@@ -5,13 +5,11 @@ import { Callout, DocBlock, DocHeader, DocTable, InlineCode } from '../component
 import { EMIT_RESPONSE } from './reference-data';
 
 const FIELDS: [string, string, string][] = [
-  ['id', 'string (UUID)', 'Identificador interno del comprobante en la plataforma.'],
+  ['id', 'string (e-NCF)', 'Identificador del comprobante en la API.'],
   ['encf', 'string', 'Número de comprobante fiscal electrónico asignado.'],
-  ['estadoInterno', 'string', 'Estado del procesamiento dentro de la plataforma.'],
-  ['estadoDgii', 'string', 'Último estado informado por la DGII.'],
-  ['trackId', 'string', 'Identificador de seguimiento devuelto por la DGII.'],
-  ['fechaEmision', 'string (ISO 8601)', 'Fecha y hora de emisión con zona horaria.'],
-  ['total', 'number', 'Monto total del comprobante en RD$.'],
+  ['internalStatus', 'string', 'Estado del procesamiento dentro de la plataforma.'],
+  ['dgiiStatus', 'string', 'NO_ENVIADO al crearlo. Se actualiza al enviarlo y consultarlo.'],
+  ['messages', 'array', 'Mensajes de la operación.'],
 ];
 
 const INTERNAL_NOTES: Record<string, string> = {
@@ -34,7 +32,7 @@ export function ResponsesSection() {
       <DocHeader eyebrow="Referencia" title="Respuestas" description="Estructura de las respuestas y significado de los estados de un comprobante." />
 
       <DocBlock title="Respuesta de emisión">
-        <CodeBlock lang="json" title="201 Created — Ejemplo ilustrativo" code={EMIT_RESPONSE} />
+        <CodeBlock lang="json" title="200 OK — Ejemplo de respuesta" code={EMIT_RESPONSE} />
         <DocTable
           headers={['Campo', 'Tipo', 'Descripción']}
           rows={FIELDS.map(([f, t, d]) => [
@@ -51,7 +49,7 @@ export function ResponsesSection() {
       >
         <div className="grid gap-6 lg:grid-cols-2">
           <div className="space-y-2">
-            <h3 className="text-sm font-semibold">Estado interno (estadoInterno)</h3>
+            <h3 className="text-sm font-semibold">Estado interno (internalStatus)</h3>
             <DocTable
               minWidth={360}
               headers={['Valor', 'Significado']}
@@ -65,7 +63,7 @@ export function ResponsesSection() {
             />
           </div>
           <div className="space-y-2">
-            <h3 className="text-sm font-semibold">Estado DGII (estadoDgii)</h3>
+            <h3 className="text-sm font-semibold">Estado DGII (dgiiStatus)</h3>
             <DocTable
               minWidth={360}
               headers={['Valor', 'Significado']}
