@@ -27,6 +27,7 @@ export const TENANT_NAV: NavGroup[] = [
       { label: 'Nueva factura', to: ROUTES.app.newInvoice, icon: FilePlus2, permission: 'invoices.emit' },
       { label: 'Comprobantes', to: ROUTES.app.invoices, icon: FileText, permission: 'invoices.read' },
       { label: 'Centro DGII', to: ROUTES.app.dgii, icon: ShieldCheck, permission: 'invoices.read' },
+      { label: 'Certificación DGII', to: ROUTES.app.certification, icon: ShieldCheck, permission: 'dgii.manage' },
     ],
   },
   {

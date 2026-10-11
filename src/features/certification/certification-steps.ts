@@ -1,0 +1,17 @@
+export const CERTIFICATION_STEPS = [
+  'Registrado',
+  'Pruebas de Datos e-CF',
+  'Pruebas de Datos Aprobación Comercial',
+  'Pruebas Simulación e-CF',
+  'Pruebas Simulación Representación Impresa',
+  'Validación Representación Impresa',
+  'URL Servicios Prueba',
+  'Inicio Prueba Recepción e-CF',
+  'Recepción e-CF',
+  'Inicio Prueba Recepción Aprobación Comercial',
+  'Recepción Aprobación Comercial',
+  'URL Servicios Producción',
+  'Declaración Jurada',
+  'Verificación Estatus',
+  'Finalizado',
+] as const;

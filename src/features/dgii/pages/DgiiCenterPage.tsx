@@ -24,7 +24,8 @@ export function DgiiCenterPage() {
   const data = overview.data;
 
   return <PageTransition>
-    <PageHeader eyebrow="Facturación electrónica" title="Centro DGII" description="Consulta el ambiente, las secuencias y los eventos de tus comprobantes." />
+    <PageHeader eyebrow="Facturación electrónica" title="Centro DGII" description="Consulta el ambiente, las secuencias y los eventos de tus comprobantes."
+      actions={<Button asChild variant="outline"><Link to={ROUTES.app.certification}><ShieldCheck /> Certificación</Link></Button>} />
     {overview.error ? <ErrorState error={overview.error} onRetry={() => void overview.refetch()} /> : <>
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
         <StatCard label="Ambiente" value={data?.environment ?? 'Sin configurar'} icon={ShieldCheck} tone="brand" loading={overview.isLoading} />

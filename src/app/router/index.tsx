@@ -31,6 +31,7 @@ const NewInvoicePage = page(() => import('@/features/invoices/pages/NewInvoicePa
 const InvoicesPage = page(() => import('@/features/invoices/pages/InvoicesPage'), 'InvoicesPage');
 const InvoiceDetailPage = page(() => import('@/features/invoices/pages/InvoiceDetailPage'), 'InvoiceDetailPage');
 const DgiiCenterPage = page(() => import('@/features/dgii/pages/DgiiCenterPage'), 'DgiiCenterPage');
+const CertificationPage = page(() => import('@/features/certification/pages/CertificationPage'), 'CertificationPage');
 const PartiesPage = page(() => import('@/features/parties/pages/PartiesPage'), 'PartiesPage');
 const PartyDetailPage = page(() => import('@/features/parties/pages/PartyDetailPage'), 'PartyDetailPage');
 const CatalogPage = page(() => import('@/features/catalog/pages/CatalogPage'), 'CatalogPage');
@@ -98,6 +99,7 @@ export const router = createBrowserRouter([
           { path: 'comprobantes', element: perm('invoices.read', <InvoicesPage />) },
           { path: 'comprobantes/:id', element: perm('invoices.read', <InvoiceDetailPage />) },
           { path: 'dgii', element: perm('invoices.read', <DgiiCenterPage />) },
+          { path: 'certificacion', element: perm('dgii.manage', <CertificationPage />) },
           { path: 'clientes', element: perm('parties.read', <PartiesPage kind="customers" />) },
           { path: 'clientes/:id', element: perm('parties.read', <PartyDetailPage kind="customers" />) },
           { path: 'proveedores', element: perm('parties.read', <PartiesPage kind="suppliers" />) },

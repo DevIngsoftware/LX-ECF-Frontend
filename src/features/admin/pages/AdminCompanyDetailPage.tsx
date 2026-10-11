@@ -18,9 +18,12 @@ import { errorMessage } from '@/services/http/errors';
 import { formatDate, formatNumber } from '@/utils/format';
 import { MODULE_LABELS } from '../components/admin-meta';
 import { CompanySubscriptionCard } from '../components/CompanySubscriptionCard';
+import { CompanyCertificationCard } from '../components/CompanyCertificationCard';
+import { useAuth } from '@/features/auth/auth-context';
 
 export function AdminCompanyDetailPage() {
   const { id = '' } = useParams<{ id: string }>();
+  const { user } = useAuth();
   const qc = useQueryClient();
   const [confirm, setConfirm] = useState<'SUSPENDIDA' | 'ACTIVA' | null>(null);
   const { data: company, isLoading, error, refetch } = useQuery({
@@ -113,6 +116,8 @@ export function AdminCompanyDetailPage() {
         </section>
 
         <CompanySubscriptionCard company={company} />
+
+        {user?.role === 'SUPERADMIN' && <CompanyCertificationCard companyId={id} />}
 
         <section className="surface p-5 lg:col-span-2" aria-labelledby="users-title">
           <h2 id="users-title" className="mb-2 font-semibold">Usuarios de la empresa</h2>

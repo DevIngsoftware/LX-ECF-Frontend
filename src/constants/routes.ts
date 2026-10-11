@@ -14,6 +14,7 @@ export const ROUTES = {
     invoices: '/app/comprobantes',
     invoice: (id: string) => `/app/comprobantes/${id}`,
     dgii: '/app/dgii',
+    certification: '/app/certificacion',
     customers: '/app/clientes',
     customer: (id: string) => `/app/clientes/${id}`,
     suppliers: '/app/proveedores',
