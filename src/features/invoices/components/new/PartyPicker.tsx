@@ -5,19 +5,21 @@ import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useDebounce } from '@/hooks/use-debounce';
+import { ENV } from '@/constants/env';
 import { partiesService } from '@/services/api/operations';
+import { invoiceCustomersService, type SavedInvoiceCustomer } from '@/services/api/invoices';
 import { queryKeys } from '@/services/api/query-keys';
 import { errorMessage } from '@/services/http/errors';
-import type { Party, PartyKind } from '@/types/business';
+import type { PartyKind } from '@/types/business';
 
-export function PartyPicker({ kind, onSelect, label }: { kind: PartyKind; onSelect: (p: Party) => void; label: string }) {
+export function PartyPicker({ kind, onSelect, label }: { kind: PartyKind; onSelect: (p: SavedInvoiceCustomer) => void; label: string }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const debounced = useDebounce(search);
   const query = { page: 0, size: 8, search: debounced || undefined, active: 'active' as const };
   const { data, isLoading, error } = useQuery({
-    queryKey: queryKeys.parties(kind, query),
-    queryFn: () => partiesService.list(kind, query),
+    queryKey: ENV.invoicesUseMocks ? queryKeys.parties(kind, query) : ['invoice-customers', query],
+    queryFn: () => ENV.invoicesUseMocks ? partiesService.list(kind, query) : invoiceCustomersService.list(debounced),
     enabled: open,
   });
 

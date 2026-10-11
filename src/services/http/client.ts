@@ -48,6 +48,11 @@ http.interceptors.response.use(
         }
       }
     }
+    if (axios.isAxiosError(error) && error.response?.data instanceof Blob
+      && error.response.data.type.includes('json')) {
+      try { error.response.data = JSON.parse(await error.response.data.text()); }
+      catch { /* conservar la respuesta original si no es JSON válido */ }
+    }
     return Promise.reject(toApiError(error));
   },
 );

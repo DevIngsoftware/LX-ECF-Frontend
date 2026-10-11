@@ -14,6 +14,7 @@ export const ENDPOINTS = {
     verifyEmail: '/auth/verify-email',
   },
   dashboard: '/dashboard/summary',
+  invoiceCustomers: '/portal/clientes',
   invoices: {
     list: '/portal/facturas',
     detail: (id: string) => `/portal/facturas/${encodeURIComponent(id)}`,

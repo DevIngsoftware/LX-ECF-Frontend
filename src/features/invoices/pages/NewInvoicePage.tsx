@@ -110,9 +110,9 @@ export function NewInvoicePage() {
       <form onSubmit={form.handleSubmit((values) => emit.mutate(values))} noValidate className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 space-y-6">
           <TypeSection step={1} locked={!!noteType && !!reference.data} />
-          <FormSection id="sec-comprador" step={2} title={config.buyerLabel} description="Identifica al receptor del comprobante.">
+          <FormSection id="sec-comprador" step={2} title={config.buyerLabel} description="Elige un cliente guardado o escribe sus datos directamente.">
             {config.buyerMode === 'none' ? <p className="text-sm text-muted-foreground">Este tipo de e-CF no requiere datos de receptor.</p> : <div className="space-y-4">
-              {ENV.invoicesUseMocks && config.buyerMode !== 'foreign' && <PartyPicker kind={config.buyerMode === 'supplier' ? 'suppliers' : 'customers'} label="Buscar en directorio" onSelect={(party) => {
+              {config.buyerMode !== 'foreign' && (ENV.invoicesUseMocks || config.buyerMode !== 'supplier') && <PartyPicker kind={config.buyerMode === 'supplier' ? 'suppliers' : 'customers'} label="Elegir cliente guardado" onSelect={(party) => {
                 form.setValue('buyer.partyId', party.id);
                 form.setValue('buyer.rnc', party.rnc);
                 form.setValue('buyer.name', party.legalName);

@@ -43,11 +43,27 @@ const httpInvoices: InvoicesService = {
   emit: (draft, key) => post(ENDPOINTS.invoices.emit, toFacturaRequestDTO(draft), { headers: { 'Idempotency-Key': key }, timeout: 60000 }),
   send: (id) => post(ENDPOINTS.invoices.send(id), undefined, { timeout: 60000 }),
   checkStatus: (id) => get(ENDPOINTS.invoices.status(id)),
-  downloadPdf: (id) => getBlob(ENDPOINTS.invoices.pdf(id)),
-  downloadXml: (id) => getBlob(ENDPOINTS.invoices.xml(id)),
+  downloadPdf: (id) => getBlob(ENDPOINTS.invoices.pdf(id), { headers: { Accept: 'application/pdf, application/json' } }),
+  downloadXml: (id) => getBlob(ENDPOINTS.invoices.xml(id), { headers: { Accept: 'application/xml, application/json' } }),
   dashboard: (range) => get(ENDPOINTS.dashboard, { params: range }),
   dgiiOverview: () => get(ENDPOINTS.dgii.overview),
   track: (trackId) => get(ENDPOINTS.dgii.track(trackId)),
+};
+
+export interface SavedInvoiceCustomer {
+  id: string;
+  rnc: string;
+  legalName: string;
+  email?: string;
+}
+
+export const invoiceCustomersService = {
+  async list(search?: string): Promise<Page<SavedInvoiceCustomer>> {
+    const page = await get<Page<Omit<SavedInvoiceCustomer, 'id'> & { id: number }>>(ENDPOINTS.invoiceCustomers, {
+      params: { page: 0, size: 8, search: search || undefined },
+    });
+    return { ...page, content: page.content.map((customer) => ({ ...customer, id: String(customer.id) })) };
+  },
 };
 
 const DEMO_NOTICE = { code: 'DEMO', message: 'Respuesta de demostración. No proviene de la DGII.' };
