@@ -55,7 +55,7 @@ export function DgiiCenterPage() {
         <section className="surface mt-6 overflow-hidden" aria-labelledby="rejections-title">
           <div className="flex items-center gap-2 border-b p-5">
             <AlertTriangle className="h-4 w-4 text-destructive" aria-hidden />
-            <h2 id="rejections-title" className="font-semibold">Rechazos recientes</h2>
+            <h2 id="rejections-title" className="font-semibold">Comprobantes rechazados</h2>
           </div>
           <ul className="divide-y">
             {data.recentRejections.map((invoice) => (
