@@ -8,7 +8,7 @@ import type {
 import { get, patch, post, put } from '../http/client';
 import { ApiError } from '../http/errors';
 import { ENDPOINTS } from './endpoints';
-import { adminCompanies, adminSubscriptions, auditEvents, credentials, internalUsers, plans } from '../mocks/data';
+import { adminCompanies, adminSubscriptions, credentials, internalUsers, plans } from '../mocks/data';
 import { daysAgo, delay, paginate, uid } from '../mocks/utils';
 
 export interface DevelopersService {
@@ -171,11 +171,7 @@ const mock = {
     ticket: (id) => http.admin.ticket(id),
     updateTicket: (id, status) => http.admin.updateTicket(id, status),
     replyTicket: (id, body) => http.admin.replyTicket(id, body),
-    async audit(q) {
-      await delay();
-      const list = q.category && q.category !== 'ALL' ? auditEvents.filter((a) => a.category === q.category) : auditEvents;
-      return paginate(list, q, ['actor', 'action', 'target']);
-    },
+    audit: (params) => http.admin.audit(params),
     settings: () => http.admin.settings(),
     saveSettings: (s) => http.admin.saveSettings(s),
   } satisfies AdminService,
@@ -215,7 +211,7 @@ export const adminService: AdminService = {
   ticket: http.admin.ticket,
   updateTicket: http.admin.updateTicket,
   replyTicket: http.admin.replyTicket,
-  audit: ENV.authUseMocks ? mock.admin.audit : http.admin.audit,
+  audit: http.admin.audit,
   settings: http.admin.settings,
   saveSettings: http.admin.saveSettings,
 };

@@ -1,7 +1,7 @@
 import type { EcfTypeCode, InvoiceDetail, InvoiceSummary } from '@/types/ecf';
 import type { Expense, Party, Product, Receivable, ReceivablePayment } from '@/types/business';
-import type { AppNotification, Plan, ServiceInvoice, TenantUser } from '@/types/account';
-import type { AdminCompany, ApiCredential, AuditEvent, InternalUser, AdminSubscription } from '@/types/platform';
+import type { Plan, ServiceInvoice, TenantUser } from '@/types/account';
+import type { AdminCompany, ApiCredential, InternalUser, AdminSubscription } from '@/types/platform';
 import { daysAgo, daysAhead, seeded } from './utils';
 
 /** TODOS los registros de este archivo son ficticios y solo existen para demostración. */
@@ -181,16 +181,6 @@ export const serviceInvoices: ServiceInvoice[] = Array.from({ length: 6 }, (_, i
   status: i === 0 ? 'PENDIENTE' : 'PAGADA',
 }));
 
-export const notifications: AppNotification[] = [
-  { id: 'n1', category: 'DGII', severity: 'error', title: 'Comprobante rechazado', message: 'Un comprobante de demostración figura como rechazado. Revisa los mensajes de validación.', createdAt: daysAgo(0, 9), read: false, link: '/app/dgii' },
-  { id: 'n2', category: 'CERTIFICADO', severity: 'warning', title: 'Certificado próximo a vencer', message: 'El certificado digital de demostración vence en 38 días.', createdAt: daysAgo(1), read: false, link: '/app/configuracion/certificado' },
-  { id: 'n3', category: 'SECUENCIAS', severity: 'warning', title: 'Secuencia E32 por agotarse', message: 'Quedan pocos números disponibles en la secuencia de consumo (demo).', createdAt: daysAgo(2), read: false, link: '/app/dgii' },
-  { id: 'n4', category: 'DGII', severity: 'info', title: 'Comprobantes pendientes', message: 'Hay comprobantes en proceso de validación (demo).', createdAt: daysAgo(3), read: true, link: '/app/comprobantes' },
-  { id: 'n5', category: 'SUSCRIPCION', severity: 'info', title: 'Renovación de suscripción', message: 'Tu suscripción se renovará próximamente (demo).', createdAt: daysAgo(5), read: true, link: '/app/suscripcion' },
-  { id: 'n6', category: 'SEGURIDAD', severity: 'success', title: 'Nuevo inicio de sesión', message: 'Se detectó un inicio de sesión desde un nuevo dispositivo (demo).', createdAt: daysAgo(6), read: true },
-  { id: 'n7', category: 'ADMIN', severity: 'info', title: 'Aviso de mantenimiento', message: 'Mantenimiento programado de la plataforma (demo).', createdAt: daysAgo(9), read: true },
-];
-
 export const tenantUsers: TenantUser[] = [
   { id: 'u1', name: 'Usuario Demo', email: 'demo@ejemplo.test', role: 'ADMIN', active: true, lastLoginAt: daysAgo(0) },
   { id: 'u2', name: 'Ana Facturación (demo)', email: 'facturacion@ejemplo.test', role: 'FACTURACION', active: true, lastLoginAt: daysAgo(1) },
@@ -232,13 +222,3 @@ export const internalUsers: InternalUser[] = [
   { id: 'iu3', name: 'Comercial LX (demo)', email: 'comercial@loadexpress.test', role: 'COMERCIAL', active: true, lastLoginAt: daysAgo(3) },
   { id: 'iu4', name: 'Finanzas LX (demo)', email: 'finanzas@loadexpress.test', role: 'FINANZAS', active: false },
 ];
-
-export const auditEvents: AuditEvent[] = Array.from({ length: 30 }, (_, i) => ({
-  id: `a${i}`,
-  at: daysAgo(Math.floor(i / 3), 8 + (i % 10)),
-  actor: pick(internalUsers).email,
-  action: pick(['Inicio de sesión', 'Cambio de plan', 'Suspensión de empresa', 'Edición de plan', 'Creación de usuario interno', 'Actualización de parámetros']),
-  target: pick(adminCompanies).name,
-  ip: `10.0.${i % 5}.${20 + i}`,
-  category: pick(['ACCESO', 'CAMBIO', 'EVENTO'] as const),
-}));
