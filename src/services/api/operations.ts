@@ -8,7 +8,7 @@ import type { InvoiceSummary } from '@/types/ecf';
 import { get, getBlob, patch, post, put } from '../http/client';
 import { ApiError, toApiError } from '../http/errors';
 import { ENDPOINTS } from './endpoints';
-import { customers, expenseCategories, expenses, invoices, payments, products, receivables, receivedDocuments, suppliers } from '../mocks/data';
+import { customers, expenseCategories, expenses, invoices, payments, receivables, receivedDocuments, suppliers } from '../mocks/data';
 import { buildReport } from '../mocks/reports';
 import { daysAgo, delay, paginate, uid } from '../mocks/utils';
 
@@ -134,29 +134,10 @@ const mock = {
     },
   } satisfies PartiesService,
   catalog: {
-    async list(q) {
-      await delay();
-      let list = byActive(products, q.active);
-      if (q.kind && q.kind !== 'ALL') list = list.filter((p) => p.kind === q.kind);
-      return paginate(list, q, ['code', 'name', 'category']);
-    },
-    async create(input) {
-      await delay(500);
-      const p = { ...input, id: uid() };
-      products.unshift(p);
-      return p;
-    },
-    async update(id, input) {
-      await delay(500);
-      const idx = products.findIndex((p) => p.id === id);
-      products[idx] = { ...products[idx], ...input };
-      return products[idx];
-    },
-    async setActive(id, active) {
-      await delay(300);
-      const p = products.find((x) => x.id === id);
-      if (p) p.active = active;
-    },
+    list: (query) => http.catalog.list(query),
+    create: (input) => http.catalog.create(input),
+    update: (id, input) => http.catalog.update(id, input),
+    setActive: (id, active) => http.catalog.setActive(id, active),
   } satisfies CatalogService,
   reception: {
     async list(q) {
@@ -251,7 +232,7 @@ export const partiesService: PartiesService = ENV.invoicesUseMocks ? impl.partie
   history: (kind, id) => kind === 'customers' ? portalCustomers.history(kind, id) : impl.parties.history(kind, id),
   lookupRnc: portalCustomers.lookupRnc,
 };
-export const catalogService: CatalogService = impl.catalog;
+export const catalogService: CatalogService = http.catalog;
 export const receptionService: ReceptionService = impl.reception;
 export const receivablesService: ReceivablesService = impl.receivables;
 export const expensesService: ExpensesService = impl.expenses;

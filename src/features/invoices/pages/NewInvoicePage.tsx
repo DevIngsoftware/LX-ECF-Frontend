@@ -17,6 +17,7 @@ import { ROUTES } from '@/constants/routes';
 import { DgiiMessages } from '../components/DgiiMessages';
 import { TotalsList } from '../components/TotalsList';
 import { PartyPicker } from '../components/new/PartyPicker';
+import { ProductPicker } from '../components/new/ProductPicker';
 import { TypeSection } from '../components/new/TypeSection';
 import { Field, FormSection } from '../components/new/form-ui';
 import { defaultValues, emptyItem, invoiceFormSchema, isEcfCode, toDraft, type InvoiceFormValues } from '../components/new/schema';
@@ -25,6 +26,7 @@ import { invoicesService } from '@/services/api/invoices';
 import { partiesService } from '@/services/api/operations';
 import { queryKeys } from '@/services/api/query-keys';
 import { errorMessage } from '@/services/http/errors';
+import { useAuth } from '@/features/auth/auth-context';
 import type { PreValidationResult } from '@/types/ecf';
 
 const selectClass = 'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
@@ -41,6 +43,7 @@ function savedPendingRequest(): { payload: string; key: string } | null {
 }
 
 export function NewInvoicePage() {
+  const { hasModule } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const qc = useQueryClient();
@@ -143,7 +146,16 @@ export function NewInvoicePage() {
           </FormSection>
           <FormSection id="sec-articulos" step={3} title="Artículos y servicios" description="Agrega los conceptos del comprobante." aside={<Button type="button" variant="outline" size="sm" onClick={() => append({ ...emptyItem(), itbisRate: type === 'E46' || type === 'E47' ? 0 : 18 })}><Plus /> Agregar línea</Button>}>
             <div className="space-y-4">{fields.map((field, index) => <div key={field.id} className="rounded-xl border bg-background/50 p-4">
-              <div className="mb-3 flex items-center justify-between"><h3 className="text-sm font-semibold">Línea {index + 1}</h3><Button type="button" variant="ghost" size="icon-sm" aria-label={`Eliminar línea ${index + 1}`} disabled={fields.length === 1} onClick={() => remove(index)}><Trash2 /></Button></div>
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2"><h3 className="text-sm font-semibold">Línea {index + 1}</h3><div className="flex items-center gap-2">
+                {hasModule('catalog') && <ProductPicker onSelect={(product) => {
+                  form.setValue(`items.${index}.code`, product.code);
+                  form.setValue(`items.${index}.description`, product.name);
+                  form.setValue(`items.${index}.kind`, product.kind);
+                  form.setValue(`items.${index}.unitPrice`, product.price);
+                  form.setValue(`items.${index}.itbisRate`, type === 'E46' || type === 'E47' ? 0 : product.itbisRate);
+                }} />}
+                <Button type="button" variant="ghost" size="icon-sm" aria-label={`Eliminar línea ${index + 1}`} disabled={fields.length === 1} onClick={() => remove(index)}><Trash2 /></Button>
+              </div></div>
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <Field id={`description-${index}`} label="Descripción" error={errors.items?.[index]?.description?.message} className="sm:col-span-2 xl:col-span-3"><Input id={`description-${index}`} {...form.register(`items.${index}.description`)} /></Field>
                 <Field id={`kind-${index}`} label="Tipo"><select id={`kind-${index}`} className={selectClass} {...form.register(`items.${index}.kind`)}><option value="SERVICIO">Servicio</option><option value="BIEN">Bien</option></select></Field>

@@ -19,6 +19,7 @@ export type Permission =
   | 'billing.manage'
   | 'developers.manage'
   | 'support.access'
+  | 'catalog.read'
   | 'admin.access'
   | 'admin.companies'
   | 'admin.plans'
