@@ -49,7 +49,7 @@ export function BackupSection() {
   return <SectionShell title="Copia de seguridad de la empresa" description="Descarga tus datos y archivos en un ZIP cifrado con AES-256.">
     {company.isLoading ? <SectionLoading /> : company.error ? <SectionError error={company.error} onRetry={() => void company.refetch()} /> : <div className="space-y-6">
       <div className="grid gap-4 text-sm sm:grid-cols-2">
-        <div className="rounded-xl border p-4"><Archive className="mb-2 h-5 w-5 text-brand" /><p className="font-medium">Contenido</p><p className="mt-1 text-muted-foreground">Datos de {company.data?.legalName}, comprobantes, XML, representaciones PDF, clientes, catálogo, pagos y archivos asociados.</p></div>
+        <div className="rounded-xl border p-4"><Archive className="mb-2 h-5 w-5 text-brand" /><p className="font-medium">Contenido</p><p className="mt-1 text-muted-foreground">Datos de {company.data?.legalName}, comprobantes, XML, representaciones PDF disponibles, clientes, catálogo, pagos y archivos asociados. El manifiesto indica si algún PDF no se pudo generar.</p></div>
         <div className="rounded-xl border p-4"><LockKeyhole className="mb-2 h-5 w-5 text-brand" /><p className="font-medium">Protección</p><p className="mt-1 text-muted-foreground">La copia no incluye contraseñas, tokens, secretos de API ni el certificado digital. Guarda la contraseña elegida: LX no podrá recuperarla.</p></div>
       </div>
       {hasPermission('settings.manage') ? <form onSubmit={submit} className="max-w-xl space-y-4" noValidate>
