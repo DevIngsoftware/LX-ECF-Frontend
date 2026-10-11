@@ -2,7 +2,7 @@ import { ENV } from '@/constants/env';
 import type { Page, PageQuery } from '@/types/common';
 import type { Plan } from '@/types/account';
 import type {
-  AdminCompany, AdminDashboard, AdminSubscription, ApiCredential, ApiLogEntry, ApiUsagePoint, AuditEvent, ChatMessage,
+  AdminCompany, AdminDashboardOverview, AdminSubscription, ApiCredential, ApiLogEntry, ApiUsagePoint, AuditEvent, ChatMessage,
   CreatedCredential, InternalUser, PlatformSettings, SupportTicket,
 } from '@/types/platform';
 import { get, patch, post, put } from '../http/client';
@@ -20,7 +20,7 @@ export interface DevelopersService {
 }
 
 export interface AdminService {
-  dashboard(): Promise<AdminDashboard>;
+  dashboard(): Promise<AdminDashboardOverview>;
   companies(query: PageQuery & { status?: string }): Promise<Page<AdminCompany>>;
   company(id: string): Promise<AdminCompany>;
   setCompanyStatus(id: string, status: string): Promise<void>;
@@ -109,14 +109,9 @@ const mock = {
       await delay();
       return {
         companies: adminCompanies.length,
-        activeCompanies: adminCompanies.filter((c) => c.status === 'ACTIVA').length,
-        activeSubscriptions: adminSubscriptions.filter((s) => s.status === 'ACTIVA').length,
-        documentsProcessed: adminCompanies.reduce((s, c) => s + c.documentsThisMonth, 0),
-        apiRequests: 48210,
-        subscriptionRevenue: 0,
-        openIncidents: tickets.filter((t) => t.status === 'ABIERTO' || t.status === 'EN_PROGRESO').length,
-        trend: Array.from({ length: 12 }, (_, i) => ({ date: daysAgo((11 - i) * 30), documents: 4000 + i * 900 + Math.round(Math.sin(i) * 700), api: 2000 + i * 600 })),
-        planDistribution: plans.map((p) => ({ plan: p.name, companies: adminCompanies.filter((c) => c.plan === p.name).length })),
+        configuredCompanies: adminCompanies.filter((c) => c.status === 'ACTIVA').length,
+        documentsThisMonth: adminCompanies.reduce((s, c) => s + c.documentsThisMonth, 0),
+        trend: Array.from({ length: 12 }, (_, i) => ({ date: daysAgo((11 - i) * 30), documents: 4000 + i * 900 + Math.round(Math.sin(i) * 700) })),
       };
     },
     async companies(q) {
@@ -202,5 +197,8 @@ const mock = {
 
 const impl = ENV.useMocks ? mock : http;
 export const developersService: DevelopersService = impl.developers;
-export const adminService: AdminService = impl.admin;
+export const adminService: AdminService = {
+  ...impl.admin,
+  dashboard: ENV.authUseMocks ? mock.admin.dashboard : http.admin.dashboard,
+};
 export const chatService: ChatService = ENV.chatApiPath ? http.chat : mock.chat;

@@ -2,17 +2,17 @@ import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, ResponsiveContaine
 import { CHART_COLORS, ChartTooltip, axisProps, gridProps } from '@/components/charts/chart-theme';
 import { EmptyState } from '@/components/shared/states';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { AdminDashboard } from '@/types/platform';
+import type { AdminDashboard, AdminDashboardOverview } from '@/types/platform';
 import { formatNumber } from '@/utils/format';
 
-const monthLabel = (d: string) => new Intl.DateTimeFormat('es-DO', { month: 'short', year: '2-digit' }).format(new Date(d));
+const monthLabel = (d: string) => new Intl.DateTimeFormat('es-DO', { month: 'short', year: '2-digit' }).format(new Date(`${d.slice(0, 10)}T12:00:00`));
 
-export function GrowthChart({ data, loading }: { data: AdminDashboard['trend']; loading?: boolean }) {
+export function GrowthChart({ data, loading }: { data: AdminDashboardOverview['trend']; loading?: boolean }) {
   return (
     <section className="surface p-5" aria-labelledby="growth-title">
       <div className="mb-4">
         <h2 id="growth-title" className="font-semibold">Crecimiento de la plataforma</h2>
-        <p className="text-xs text-muted-foreground">Documentos procesados y solicitudes de API.</p>
+        <p className="text-xs text-muted-foreground">Comprobantes registrados por mes durante el último año.</p>
       </div>
       {loading ? (
         <Skeleton className="h-72 w-full" />
@@ -33,7 +33,6 @@ export function GrowthChart({ data, loading }: { data: AdminDashboard['trend']; 
               <YAxis {...axisProps} width={52} tickFormatter={(v: number) => formatNumber(v)} />
               <Tooltip content={<ChartTooltip formatter={formatNumber} labelFormatter={monthLabel} />} />
               <Area type="monotone" dataKey="documents" name="Documentos" stroke="hsl(var(--chart-1))" strokeWidth={2} fill="url(#admin-docs)" />
-              <Area type="monotone" dataKey="api" name="API" stroke="hsl(var(--chart-3))" strokeWidth={2} fill="transparent" />
             </AreaChart>
           </ResponsiveContainer>
         </div>

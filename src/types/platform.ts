@@ -56,6 +56,14 @@ export interface AdminDashboard {
   planDistribution: { plan: string; companies: number }[];
 }
 
+/** Indicadores administrativos que la API ya puede calcular con datos reales. */
+export interface AdminDashboardOverview {
+  companies: number;
+  configuredCompanies: number;
+  documentsThisMonth: number;
+  trend: { date: string; documents: number }[];
+}
+
 export interface AdminSubscription {
   id: Id;
   company: string;
