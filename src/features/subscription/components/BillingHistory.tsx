@@ -80,7 +80,7 @@ export function ServiceInvoicesTable({ data, isLoading, error, onRetry }: Props)
 export function PaymentHistoryTable({ data, isLoading, error, onRetry }: Omit<Props, 'data'> & { data?: SubscriptionPayment[] }) {
   if (isLoading) return <div className="p-5"><LoadingState rows={3} /></div>;
   if (error) return <ErrorState compact error={error} onRetry={onRetry} />;
-  if (!data?.length) return <EmptyState compact icon={Receipt} title="Sin operaciones registradas" description="Las simulaciones de pago aparecerán aquí." />;
+  if (!data?.length) return <EmptyState compact icon={Receipt} title="Sin operaciones registradas" description="Los depósitos aprobados aparecerán aquí." />;
   return (
     <Table>
       <TableHeader>

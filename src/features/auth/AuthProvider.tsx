@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { ENV } from '@/constants/env';
 import { STORAGE_KEYS } from '@/constants/storage';
 import { authService } from '@/services/api/auth';
+import { queryKeys } from '@/services/api/query-keys';
 import { tokenStore } from '@/services/http/token-store';
 import type { LoginInput, ModuleKey, Permission, SessionUser } from '@/types/account';
 import { AuthContext, type AuthStatus } from './auth-context';
@@ -51,6 +52,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }),
     [queryClient],
   );
+
+  useEffect(() => {
+    if (ENV.authUseMocks || status !== 'authenticated') return;
+    let active = true;
+    const refreshProfile = () => {
+      if (document.visibilityState !== 'visible') return;
+      void authService.me().then((latest) => {
+        if (active && tokenStore.isAuthenticated()) {
+          setUser(latest);
+          if (latest.portal === 'tenant') {
+            void queryClient.invalidateQueries({ queryKey: queryKeys.subscription });
+            void queryClient.invalidateQueries({ queryKey: queryKeys.modules });
+            void queryClient.invalidateQueries({ queryKey: queryKeys.subscriptionPayments });
+          }
+        }
+      }).catch(() => { /* un fallo temporal no cierra la sesión */ });
+    };
+    window.addEventListener('focus', refreshProfile);
+    document.addEventListener('visibilitychange', refreshProfile);
+    const interval = window.setInterval(refreshProfile, 60_000);
+    return () => {
+      active = false;
+      window.removeEventListener('focus', refreshProfile);
+      document.removeEventListener('visibilitychange', refreshProfile);
+      window.clearInterval(interval);
+    };
+  }, [status, queryClient]);
 
   const persist = (u: SessionUser | null) => {
     if (!ENV.authUseMocks) return;

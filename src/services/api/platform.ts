@@ -3,9 +3,9 @@ import type { Page, PageQuery } from '@/types/common';
 import type { Plan } from '@/types/account';
 import type {
   AdminCompany, AdminDashboardOverview, AdminSubscription, ApiCredential, ApiLogEntry, ApiUsagePoint, AuditEvent, ChatMessage,
-  CreatedCredential, InternalUser, PlatformSettings, SupportTicket, SupportTicketDetail,
+  BankAccount, CreatedCredential, InternalUser, PlatformSettings, SupportTicket, SupportTicketDetail,
 } from '@/types/platform';
-import { get, patch, post, put } from '../http/client';
+import { get, getBlob, patch, post, put } from '../http/client';
 import { ApiError } from '../http/errors';
 import { ENDPOINTS } from './endpoints';
 import { adminCompanies, adminSubscriptions, credentials, internalUsers, plans } from '../mocks/data';
@@ -36,6 +36,12 @@ export interface AdminService {
   ticket(id: string): Promise<SupportTicketDetail>;
   updateTicket(id: string, status: string): Promise<SupportTicketDetail>;
   replyTicket(id: string, body: string): Promise<SupportTicketDetail>;
+  approveModuleRequest(ticketId: string): Promise<SupportTicketDetail>;
+  approveDeposit(ticketId: string): Promise<SupportTicketDetail>;
+  rejectDeposit(ticketId: string, reason: string): Promise<SupportTicketDetail>;
+  depositProof(ticketId: string): Promise<Blob>;
+  bankAccounts(): Promise<BankAccount[]>;
+  saveBankAccounts(accounts: BankAccount[]): Promise<BankAccount[]>;
   audit(query: PageQuery & { category?: string }): Promise<Page<AuditEvent>>;
   settings(): Promise<PlatformSettings>;
   saveSettings(s: PlatformSettings): Promise<PlatformSettings>;
@@ -71,6 +77,12 @@ const http = {
     ticket: (id) => get(`${ENDPOINTS.admin.tickets}/${id}`),
     updateTicket: (id, status) => patch(`${ENDPOINTS.admin.tickets}/${id}`, { status }),
     replyTicket: (id, body) => post(`${ENDPOINTS.admin.tickets}/${id}/mensajes`, { body }),
+    approveModuleRequest: (ticketId) => post(`/admin/modulos/solicitudes/${ticketId}/aprobar`),
+    approveDeposit: (ticketId) => post(`/admin/soporte/${ticketId}/validar-deposito`),
+    rejectDeposit: (ticketId, reason) => post(`/admin/soporte/${ticketId}/rechazar-deposito`, { reason }),
+    depositProof: (ticketId) => getBlob(`/admin/soporte/${ticketId}/comprobante`),
+    bankAccounts: () => get('/admin/cuentas-bancarias'),
+    saveBankAccounts: (accounts) => put('/admin/cuentas-bancarias', accounts),
     audit: (params) => get(ENDPOINTS.admin.audit, { params }),
     settings: () => get(ENDPOINTS.admin.settings),
     saveSettings: (s) => put(ENDPOINTS.admin.settings, s),
@@ -171,6 +183,12 @@ const mock = {
     ticket: (id) => http.admin.ticket(id),
     updateTicket: (id, status) => http.admin.updateTicket(id, status),
     replyTicket: (id, body) => http.admin.replyTicket(id, body),
+    approveModuleRequest: (ticketId) => http.admin.approveModuleRequest(ticketId),
+    approveDeposit: (ticketId) => http.admin.approveDeposit(ticketId),
+    rejectDeposit: (ticketId, reason) => http.admin.rejectDeposit(ticketId, reason),
+    depositProof: (ticketId) => http.admin.depositProof(ticketId),
+    bankAccounts: () => http.admin.bankAccounts(),
+    saveBankAccounts: (accounts) => http.admin.saveBankAccounts(accounts),
     audit: (params) => http.admin.audit(params),
     settings: () => http.admin.settings(),
     saveSettings: (s) => http.admin.saveSettings(s),
@@ -211,6 +229,12 @@ export const adminService: AdminService = {
   ticket: http.admin.ticket,
   updateTicket: http.admin.updateTicket,
   replyTicket: http.admin.replyTicket,
+  approveModuleRequest: http.admin.approveModuleRequest,
+  approveDeposit: http.admin.approveDeposit,
+  rejectDeposit: http.admin.rejectDeposit,
+  depositProof: http.admin.depositProof,
+  bankAccounts: http.admin.bankAccounts,
+  saveBankAccounts: http.admin.saveBankAccounts,
   audit: http.admin.audit,
   settings: http.admin.settings,
   saveSettings: http.admin.saveSettings,
@@ -222,5 +246,6 @@ export const supportService = {
   create: (subject: string, priority: string, body: string) =>
     post<SupportTicketDetail>('/soporte', { subject, priority, body }),
   reply: (id: string, body: string) => post<SupportTicketDetail>(`/soporte/${id}/mensajes`, { body }),
+  depositProof: (id: string) => getBlob(`/soporte/${id}/comprobante`),
 };
 export const chatService: ChatService = ENV.chatApiPath ? http.chat : mock.chat;

@@ -39,7 +39,7 @@ export const ENDPOINTS = {
   expenses: '/gastos',
   reports: (key: string) => `/reportes/${key}`,
   reportExport: (key: string, format: string) => `/reportes/${key}/export?formato=${format}`,
-  billing: { subscription: '/suscripcion', plans: '/planes', invoices: '/suscripcion/facturas', payments: '/suscripcion/pagos', simulatePayment: '/suscripcion/pago-simulado' },
+  billing: { subscription: '/suscripcion', plans: '/planes', invoices: '/suscripcion/facturas', payments: '/suscripcion/pagos' },
   modules: { list: '/modulos', request: (key: string) => `/modulos/${key}/solicitud` },
   notifications: { list: '/notificaciones', read: (id: string) => `/notificaciones/${id}/leida`, readAll: '/notificaciones/leidas' },
   users: '/usuarios',

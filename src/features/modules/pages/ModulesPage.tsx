@@ -1,12 +1,10 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { useQuery } from '@tanstack/react-query';
 import { Blocks, CreditCard, Info } from 'lucide-react';
 import { PageTransition, staggerContainer } from '@/components/animations/motion';
 import { PageHeader } from '@/components/shared/PageHeader';
-import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { EmptyState, ErrorState } from '@/components/shared/states';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -15,10 +13,10 @@ import { ROUTES } from '@/constants/routes';
 import { useAuth } from '@/features/auth/auth-context';
 import { billingService, modulesService } from '@/services/api/account';
 import { queryKeys } from '@/services/api/query-keys';
-import { errorMessage } from '@/services/http/errors';
 import type { ModuleInfo } from '@/types/account';
 import { ModuleCard } from '../components/ModuleCard';
 import { MODULE_FILTERS, viewStatus, type ModuleFilter } from '../components/module-meta';
+import { DepositRequestDialog } from '@/features/subscription/components/DepositRequestDialog';
 
 interface PendingAction {
   module: ModuleInfo;
@@ -26,7 +24,6 @@ interface PendingAction {
 }
 
 export function ModulesPage() {
-  const qc = useQueryClient();
   const { hasPermission } = useAuth();
   const canManage = hasPermission('billing.manage');
   const [filter, setFilter] = useState<ModuleFilter>('all');
@@ -45,18 +42,6 @@ export function ModulesPage() {
     return c;
   }, [items]);
   const visible = filter === 'all' ? items : items.filter((i) => i.status === filter);
-
-  const request = useMutation({
-    mutationFn: (m: ModuleInfo) => modulesService.request(m.key),
-    onSuccess: (_, m) => {
-      toast.success(pending?.kind === 'activate' ? `Solicitud de activación enviada: ${m.name}` : `Solicitud enviada: ${m.name}`, {
-        description: 'El equipo de LX revisará la solicitud y te notificará cuando el módulo esté disponible.',
-      });
-      setPending(null);
-      void qc.invalidateQueries({ queryKey: queryKeys.modules });
-    },
-    onError: (err) => toast.error(errorMessage(err)),
-  });
 
   return (
     <PageTransition>
@@ -109,28 +94,9 @@ export function ModulesPage() {
         </motion.div>
       )}
 
-      <ConfirmDialog
-        open={!!pending}
-        onOpenChange={(o) => !o && !request.isPending && setPending(null)}
-        title={pending?.kind === 'activate' ? `Activar ${pending.module.name}` : `Solicitar ${pending?.module.name ?? ''}`}
-        description={
-          pending?.kind === 'activate'
-            ? 'Este módulo está incluido en tu plan. Enviaremos la solicitud de activación y te notificaremos cuando esté listo.'
-            : 'Este módulo no está incluido en tu plan actual. Un asesor de LX te contactará para revisar las opciones disponibles.'
-        }
-        confirmLabel={pending?.kind === 'activate' ? 'Activar módulo' : 'Enviar solicitud'}
-        loading={request.isPending}
-        onConfirm={() => pending && request.mutate(pending.module)}
-      >
-        {pending && pending.module.requirements.length > 0 && (
-          <div className="rounded-lg border bg-muted/40 p-3 text-sm">
-            <p className="font-medium">Requisitos</p>
-            <ul className="mt-1 list-disc space-y-0.5 pl-5 text-muted-foreground">
-              {pending.module.requirements.map((r) => <li key={r}>{r}</li>)}
-            </ul>
-          </div>
-        )}
-      </ConfirmDialog>
+      {pending && <DepositRequestDialog open={!!pending} onOpenChange={(open) => !open && setPending(null)}
+        kind="MODULE" targetId={pending.module.key} targetName={pending.module.name}
+        needsPlan={!subscription.data || !['ACTIVA', 'PRUEBA'].includes(subscription.data.status)} />}
     </PageTransition>
   );
 }

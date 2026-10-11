@@ -4,6 +4,7 @@ import type {
   Subscription, SubscriptionPayment, TenantUser, TenantUserInput,
 } from '@/types/account';
 import { get, getBlob, patch, post, put } from '../http/client';
+import type { BankAccount, SupportTicketDetail } from '@/types/platform';
 import { ApiError } from '../http/errors';
 import { ENDPOINTS } from './endpoints';
 import { plans, serviceInvoices, tenantUsers } from '../mocks/data';
@@ -14,7 +15,6 @@ export interface BillingService {
   plans(): Promise<Plan[]>;
   invoices(): Promise<ServiceInvoice[]>;
   payments(): Promise<SubscriptionPayment[]>;
-  simulatePayment(planId: string): Promise<Subscription>;
 }
 
 export interface ModulesService {
@@ -59,7 +59,6 @@ const http = {
     plans: () => get(ENDPOINTS.billing.plans),
     invoices: () => get(ENDPOINTS.billing.invoices),
     payments: () => get(ENDPOINTS.billing.payments),
-    simulatePayment: (planId) => post(ENDPOINTS.billing.simulatePayment, { planId }),
   } satisfies BillingService,
   modules: {
     list: () => get(ENDPOINTS.modules.list),
@@ -134,12 +133,6 @@ const mock = {
     async payments() {
       await delay(300);
       return [];
-    },
-    async simulatePayment(planId) {
-      await delay(800);
-      const plan = plans.find((item) => item.id === planId);
-      if (!plan) throw new ApiError('validation', 'Plan no encontrado', 404);
-      return { planId, planName: plan.name, status: 'PRUEBA', startedAt: new Date().toISOString(), renewalDate: daysAhead(30), documentsUsed: 0, documentsLimit: plan.invoiceLimit, usersUsed: 1, usersLimit: plan.userLimit, modules: plan.modules };
     },
   } satisfies BillingService,
   users: {
@@ -225,9 +218,35 @@ export const billingService: BillingService = {
   plans: ENV.authUseMocks ? mock.billing.plans : http.billing.plans,
   invoices: ENV.authUseMocks ? mock.billing.invoices : http.billing.invoices,
   payments: ENV.authUseMocks ? mock.billing.payments : http.billing.payments,
-  simulatePayment: ENV.authUseMocks ? mock.billing.simulatePayment : http.billing.simulatePayment,
 };
 export const modulesService: ModulesService = http.modules;
 export const notificationsService: NotificationsService = http.notifications;
 export const usersService: UsersService = ENV.authUseMocks ? mock.users : http.users;
 export const settingsService: SettingsService = ENV.settingsUseMocks ? mock.settings : http.settings;
+
+export interface DepositInput {
+  kind: 'PLAN' | 'MODULE';
+  planId?: string;
+  moduleKey?: ModuleKey;
+  bankAccountId: string;
+  amount: number;
+  reference?: string;
+  proof: File;
+  existingTicketId?: string;
+}
+
+export const manualPaymentsService = {
+  accounts: () => get<BankAccount[]>('/cuentas-bancarias'),
+  submit: (input: DepositInput) => {
+    const form = new FormData();
+    form.append('kind', input.kind);
+    if (input.planId) form.append('planId', input.planId);
+    if (input.moduleKey) form.append('moduleKey', input.moduleKey);
+    form.append('bankAccountId', input.bankAccountId);
+    form.append('amount', String(input.amount));
+    if (input.reference) form.append('reference', input.reference);
+    if (input.existingTicketId) form.append('existingTicketId', input.existingTicketId);
+    form.append('proof', input.proof);
+    return post<SupportTicketDetail>('/pagos-manuales/solicitudes', form, { headers: { 'Content-Type': 'multipart/form-data' } });
+  },
+};

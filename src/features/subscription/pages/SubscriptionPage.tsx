@@ -38,7 +38,7 @@ export function SubscriptionPage() {
         ) : sub.data ? (
           <CurrentPlanCard sub={sub.data} />
         ) : (
-          <div className="surface p-5 text-sm text-muted-foreground">Aún no tienes una suscripción. Elige un plan y usa el pago simulado para activarlo durante 30 días.</div>
+          <div className="surface p-5 text-sm text-muted-foreground">Aún no tienes una suscripción. Elige un plan, deposita en una cuenta publicada y adjunta el comprobante. Superadmin activará tu plan tras verificar el depósito.</div>
         )}
 
         <section>
@@ -60,7 +60,7 @@ export function SubscriptionPage() {
             <section className="surface overflow-hidden">
               <div className="border-b p-5">
                 <h2 className="font-semibold">Historial de pagos</h2>
-                <p className="text-sm text-muted-foreground">Operaciones de prueba registradas. No representan cobros reales.</p>
+                <p className="text-sm text-muted-foreground">Depósitos validados y operaciones anteriores.</p>
               </div>
               <PaymentHistoryTable data={payments.data} isLoading={payments.isLoading} error={payments.error} onRetry={() => void payments.refetch()} />
             </section>

@@ -40,6 +40,8 @@ export interface AdminCompany {
   status: OpenString<'ACTIVA' | 'PRUEBA' | 'SUSPENDIDA' | 'ONBOARDING'>;
   plan: string;
   modules: ModuleKey[];
+  subscriptionStatus?: string | null;
+  renewalDate?: ISODate | null;
   createdAt: ISODate;
   documentsThisMonth: number;
   users: number;
@@ -109,6 +111,33 @@ export interface SupportMessage {
 export interface SupportTicketDetail {
   ticket: SupportTicket;
   messages: SupportMessage[];
+  moduleRequest?: { key: ModuleKey; enabled: boolean; subscriptionActive: boolean } | null;
+  paymentRequest?: {
+    id: Id;
+    kind: 'PLAN' | 'MODULE';
+    planId?: Id | null;
+    planName?: string | null;
+    moduleKey?: ModuleKey | null;
+    bankName: string;
+    accountNumber: string;
+    amount: number;
+    reference?: string | null;
+    filename: string;
+    status: 'PENDING' | 'APPROVED' | 'REJECTED';
+    createdAt: ISODate;
+    reviewNote?: string | null;
+  } | null;
+}
+
+export interface BankAccount {
+  id: Id;
+  bankName: string;
+  accountType: string;
+  accountNumber: string;
+  beneficiary: string;
+  currency: string;
+  active: boolean;
+  sortOrder: number;
 }
 
 export interface AuditEvent {

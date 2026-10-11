@@ -112,7 +112,7 @@ export function AdminCompanyDetailPage() {
           </dl>
         </section>
 
-        <CompanySubscriptionCard />
+        <CompanySubscriptionCard company={company} />
 
         <section className="surface p-5 lg:col-span-2" aria-labelledby="users-title">
           <h2 id="users-title" className="mb-2 font-semibold">Usuarios de la empresa</h2>

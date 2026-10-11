@@ -14,6 +14,8 @@ import { supportService } from '@/services/api/platform';
 import { errorMessage } from '@/services/http/errors';
 import { formatDateTime } from '@/utils/format';
 import { TICKET_PRIORITIES } from '@/features/admin/components/admin-meta';
+import { DepositRequestDialog } from '@/features/subscription/components/DepositRequestDialog';
+import { MODULE_LABELS } from '@/features/admin/components/admin-meta';
 
 export function SupportPage() {
   const qc = useQueryClient();
@@ -22,6 +24,7 @@ export function SupportPage() {
   const [body, setBody] = useState('');
   const [selected, setSelected] = useState<string | null>(null);
   const [reply, setReply] = useState('');
+  const [attachProof, setAttachProof] = useState(false);
   const list = useQuery({ queryKey: ['support', 'tickets'], queryFn: supportService.tickets });
   const detail = useQuery({
     queryKey: ['support', 'ticket', selected],
@@ -107,6 +110,14 @@ export function SupportPage() {
           {detail.data && (
             <>
               <p className="text-sm text-muted-foreground">{detail.data.ticket.subject} · <GenericStatusBadge status={detail.data.ticket.status} /></p>
+              {detail.data.paymentRequest ? <div className="rounded-lg border bg-muted/30 p-3 text-sm">
+                <p className="font-medium">Comprobante de depósito: {detail.data.paymentRequest.status === 'PENDING' ? 'pendiente de validación' : detail.data.paymentRequest.status === 'APPROVED' ? 'aprobado' : 'rechazado'}</p>
+                <p>RD$ {Number(detail.data.paymentRequest.amount).toLocaleString('es-DO', { minimumFractionDigits: 2 })} · {detail.data.paymentRequest.bankName}</p>
+                {detail.data.paymentRequest.reviewNote && <p>Motivo: {detail.data.paymentRequest.reviewNote}</p>}
+              </div> : detail.data.moduleRequest && ['ABIERTO', 'EN_PROGRESO'].includes(detail.data.ticket.status) && <div className="rounded-lg border border-brand/30 p-3 text-sm">
+                <p className="mb-2">Para habilitar el módulo, adjunta tu comprobante de depósito. Superadmin lo verificará.</p>
+                <Button type="button" onClick={() => setAttachProof(true)}>Adjuntar comprobante</Button>
+              </div>}
               <ol className="space-y-3">
                 {detail.data.messages.map((message) => (
                   <li key={message.id} className="rounded-lg border bg-muted/30 p-3 text-sm">
@@ -126,6 +137,11 @@ export function SupportPage() {
           )}
         </section>
       )}
+      {attachProof && detail.data?.moduleRequest && selected && <DepositRequestDialog open={attachProof}
+        onOpenChange={setAttachProof} kind="MODULE" targetId={detail.data.moduleRequest.key}
+        targetName={MODULE_LABELS[detail.data.moduleRequest.key] ?? detail.data.moduleRequest.key}
+        needsPlan={!detail.data.moduleRequest.subscriptionActive} existingTicketId={selected}
+        onSubmitted={() => void qc.invalidateQueries({ queryKey: ['support', 'ticket', selected] })} />}
     </PageTransition>
   );
 }

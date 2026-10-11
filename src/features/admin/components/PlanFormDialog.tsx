@@ -68,8 +68,10 @@ export function PlanFormDialog({ open, onOpenChange, plan }: { open: boolean; on
         highlighted: v.highlighted,
       }),
     onSuccess: () => {
-      toast.success(plan ? 'Plan actualizado' : 'Plan creado');
+      toast.success(plan ? 'Plan y suscripciones existentes actualizados' : 'Plan creado');
       void qc.invalidateQueries({ queryKey: queryKeys.admin.plans });
+      void qc.invalidateQueries({ queryKey: ['admin', 'companies'] });
+      void qc.invalidateQueries({ queryKey: ['admin', 'subscriptions'] });
       void qc.invalidateQueries({ queryKey: queryKeys.plans });
       onOpenChange(false);
     },
@@ -116,7 +118,9 @@ export function PlanFormDialog({ open, onOpenChange, plan }: { open: boolean; on
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>{plan ? `Editar plan ${plan.name}` : 'Nuevo plan'}</DialogTitle>
-          <DialogDescription>Deja el precio vacío para mostrar «Consultar» a los clientes.</DialogDescription>
+          <DialogDescription>
+            Deja el precio vacío para mostrar «Consultar». Al editar un plan, sus módulos y límites se actualizan en las suscripciones existentes de ese plan.
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit((v) => save.mutate(v))} className="space-y-5" noValidate>

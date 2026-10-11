@@ -1,40 +1,20 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
-import { ArrowRightLeft, Check, Loader2, Minus, Sparkles } from 'lucide-react';
+import { ArrowRightLeft, Check, Minus, Sparkles } from 'lucide-react';
 import { staggerContainer, staggerItem } from '@/components/animations/motion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { billingService } from '@/services/api/account';
-import { useAuth } from '@/features/auth/auth-context';
-import { queryKeys } from '@/services/api/query-keys';
-import { errorMessage } from '@/services/http/errors';
 import type { Plan } from '@/types/account';
 import { formatNumber } from '@/utils/format';
 import { cn } from '@/lib/utils';
 import { ALL_MODULES, MODULE_LABELS } from './subscription-utils';
+import { DepositRequestDialog } from './DepositRequestDialog';
 
 const limit = (v: number | null, unit: string) => (v === null ? `${unit} ilimitados` : `Hasta ${formatNumber(v)} ${unit}`);
 
 export function PlanComparison({ plans, currentPlanId }: { plans: Plan[]; currentPlanId?: string }) {
-  const qc = useQueryClient();
-  const { updateUser } = useAuth();
   const [target, setTarget] = useState<Plan | null>(null);
   const visible = plans.filter((p) => p.active);
-
-  const change = useMutation({
-    mutationFn: (p: Plan) => billingService.simulatePayment(p.id),
-    onSuccess: (activated, p) => {
-      updateUser({ modules: activated.modules });
-      toast.success(`Plan ${p.name} activado en modo de prueba`, { description: 'Se registró una operación simulada. No se realizó ningún cobro.' });
-      setTarget(null);
-      void qc.invalidateQueries({ queryKey: queryKeys.subscription });
-      void qc.invalidateQueries({ queryKey: queryKeys.subscriptionPayments });
-    },
-    onError: (err) => toast.error(errorMessage(err)),
-  });
 
   return (
     <>
@@ -79,30 +59,8 @@ export function PlanComparison({ plans, currentPlanId }: { plans: Plan[]; curren
         })}
       </motion.div>
 
-      <Dialog open={!!target} onOpenChange={(o) => !o && !change.isPending && setTarget(null)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Simular pago y activar plan</DialogTitle>
-            <DialogDescription>
-              Esta operación es de prueba: no solicita tarjeta ni cobra dinero. Registrará un pago simulado y activará el plan por 30 días.
-            </DialogDescription>
-          </DialogHeader>
-          {target && (
-            <div className="space-y-2 rounded-xl border bg-muted/40 p-4 text-sm">
-              <div className="flex items-center justify-between"><span className="text-muted-foreground">Nuevo plan</span><strong>{target.name}</strong></div>
-              <div className="flex items-center justify-between"><span className="text-muted-foreground">Precio</span><strong>{target.priceLabel ?? 'Consultar'}</strong></div>
-              <div className="flex items-center justify-between"><span className="text-muted-foreground">Usuarios</span><span>{target.userLimit === null ? 'Ilimitados' : formatNumber(target.userLimit)}</span></div>
-              <div className="flex items-center justify-between"><span className="text-muted-foreground">Módulos</span><span>{target.modules.length}</span></div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setTarget(null)} disabled={change.isPending}>Cancelar</Button>
-            <Button onClick={() => target && change.mutate(target)} disabled={change.isPending}>
-              {change.isPending && <Loader2 className="animate-spin" />} Simular pago
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {target && <DepositRequestDialog open={!!target} onOpenChange={(open) => !open && setTarget(null)}
+        kind="PLAN" targetId={target.id} targetName={target.name} />}
     </>
   );
 }
