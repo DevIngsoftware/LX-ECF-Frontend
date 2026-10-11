@@ -42,14 +42,31 @@ function savedPendingRequest(): { payload: string; key: string } | null {
   } catch { return null; }
 }
 
-function firstValidationMessage(value: unknown): string | undefined {
+function firstValidationIssue(value: unknown, path: string[] = []): { message: string; path: string[] } | undefined {
   if (!value || typeof value !== 'object') return undefined;
-  if ('message' in value && typeof value.message === 'string') return value.message;
-  for (const nested of Object.values(value)) {
-    const message = firstValidationMessage(nested);
-    if (message) return message;
+  if ('message' in value && typeof value.message === 'string') return { message: value.message, path };
+  for (const [key, nested] of Object.entries(value)) {
+    const issue = firstValidationIssue(nested, [...path, key]);
+    if (issue) return issue;
   }
   return undefined;
+}
+
+function validationField(path: string[]): string {
+  const names: Record<string, string> = {
+    type: 'tipo de comprobante', 'buyer.rnc': 'RNC o cédula', 'buyer.name': 'nombre del comprador',
+    'buyer.email': 'correo del comprador', 'buyer.country': 'país', 'buyer.foreignId': 'identificación extranjera',
+    incomeType: 'tipo de ingreso', paymentType: 'forma de pago', paymentTermDays: 'plazo de pago',
+    'reference.modifiedNcf': 'NCF modificado', 'reference.modifiedDate': 'fecha del NCF modificado',
+    'reference.modificationCode': 'motivo de modificación', 'reference.reason': 'descripción del motivo',
+    notes: 'notas',
+  };
+  const itemNames: Record<string, string> = {
+    code: 'código', description: 'descripción', kind: 'tipo', quantity: 'cantidad',
+    unitPrice: 'precio', discount: 'descuento', itbisRate: 'ITBIS',
+  };
+  if (path[0] === 'items' && path[1] && path[2]) return `línea ${Number(path[1]) + 1}, ${itemNames[path[2]] ?? path[2]}`;
+  return (names[path.join('.')] ?? path.join('.')) || 'formulario';
 }
 
 export function NewInvoicePage() {
@@ -168,7 +185,8 @@ export function NewInvoicePage() {
   const busy = validate.isPending || emit.isPending || save.isPending;
   const errors = form.formState.errors;
   const onInvalid = (invalid: FieldErrors<InvoiceFormValues>) => {
-    const message = firstValidationMessage(invalid) ?? 'Revisa los datos del comprobante';
+    const issue = firstValidationIssue(invalid);
+    const message = issue ? `${validationField(issue.path)}: ${issue.message}` : 'Revisa los datos del comprobante';
     const feedback = `No se registró el comprobante: ${message}. Corrige el campo señalado en el formulario y vuelve a intentarlo.`;
     setFormError(feedback);
     toast.error(`No se registró el comprobante: ${message}`);
@@ -215,7 +233,7 @@ export function NewInvoicePage() {
             <div className="space-y-4">{fields.map((field, index) => <div key={field.id} className="rounded-xl border bg-background/50 p-4">
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2"><h3 className="text-sm font-semibold">Línea {index + 1}</h3><div className="flex items-center gap-2">
                 {hasModule('catalog') && <ProductPicker onSelect={(product) => {
-                  form.setValue(`items.${index}.code`, product.code);
+                  form.setValue(`items.${index}.code`, product.code ?? undefined);
                   form.setValue(`items.${index}.description`, product.name);
                   form.setValue(`items.${index}.kind`, product.kind);
                   form.setValue(`items.${index}.unitPrice`, product.price);

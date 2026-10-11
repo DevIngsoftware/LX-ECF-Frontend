@@ -8,7 +8,7 @@ const ECF_CODES = ['E31', 'E32', 'E33', 'E34', 'E41', 'E43', 'E44', 'E45', 'E46'
 const num = (msg = 'Ingresa un número válido') => z.number({ invalid_type_error: msg, required_error: msg });
 
 export const itemSchema = z.object({
-  code: z.string().optional(),
+  code: z.string().nullish().transform((value) => value ?? undefined),
   description: z.string().trim().min(1, 'Describe el artículo').max(500, 'Máximo 500 caracteres'),
   kind: z.enum(['BIEN', 'SERVICIO']),
   quantity: num().positive('Debe ser mayor que 0'),
@@ -128,7 +128,7 @@ export function toDraft(v: InvoiceFormValues): InvoiceDraft {
     incomeType: v.incomeType,
     paymentType: v.paymentType,
     paymentTermDays: v.paymentType === '2' && cfg.allowsCredit ? v.paymentTermDays : undefined,
-    items: v.items.map((i) => ({ ...i, description: i.description.trim() })),
+    items: v.items.map((i) => ({ ...i, code: i.code ?? undefined, description: i.description.trim() })),
     retentions: cfg.allowsRetentions ? { itbis: v.retentions.itbis || 0, isr: v.retentions.isr || 0 } : { itbis: 0, isr: 0 },
     reference: cfg.requiresReference
       ? {
