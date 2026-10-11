@@ -8,6 +8,8 @@ export const ENV = {
   useMocks: raw.VITE_USE_MOCKS !== 'false' || apiBaseUrl === '',
   /** Autenticación y usuarios ya tienen contratos propios con la API. */
   authUseMocks: raw.VITE_USE_MOCKS === 'true' || apiBaseUrl === '',
+  /** Configuración fiscal y asistente conectados de forma independiente. */
+  settingsUseMocks: raw.VITE_USE_MOCKS === 'true' || apiBaseUrl === '',
   requestTimeoutMs: Number(raw.VITE_API_TIMEOUT_MS ?? 30000),
   chatApiPath: (raw.VITE_CHAT_API_PATH as string | undefined) ?? '',
 } as const;

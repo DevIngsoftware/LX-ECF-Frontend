@@ -162,4 +162,6 @@ export interface OnboardingState {
   currentStep: number;
   completedSteps: number[];
   canIssue: boolean;
+  /** Valores guardados por la API para retomar el asistente en otro dispositivo. */
+  data?: Record<string, unknown>;
 }

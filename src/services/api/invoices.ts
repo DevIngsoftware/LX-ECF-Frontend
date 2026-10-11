@@ -122,4 +122,9 @@ const mockInvoices: InvoicesService = {
   },
 };
 
-export const invoicesService: InvoicesService = ENV.useMocks ? mockInvoices : httpInvoices;
+export const invoicesService: InvoicesService = ENV.useMocks
+  ? { ...mockInvoices,
+      dgiiOverview: ENV.settingsUseMocks ? mockInvoices.dgiiOverview : httpInvoices.dgiiOverview,
+      track: ENV.settingsUseMocks ? mockInvoices.track : httpInvoices.track,
+    }
+  : httpInvoices;

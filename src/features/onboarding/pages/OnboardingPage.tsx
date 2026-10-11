@@ -9,6 +9,7 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { ErrorState, LoadingState } from '@/components/shared/states';
 import { useAuth } from '@/features/auth/auth-context';
 import { ROUTES } from '@/constants/routes';
+import { ENV } from '@/constants/env';
 import { settingsService } from '@/services/api/account';
 import { queryKeys } from '@/services/api/query-keys';
 import { errorMessage } from '@/services/http/errors';
@@ -35,7 +36,10 @@ function OnboardingWizard({ initial, company }: { initial: OnboardingState; comp
   const queryClient = useQueryClient();
   const { user, updateUser } = useAuth();
   const reduce = useReducedMotion();
-  const [data, setData] = useState<OnboardingData>(() => ({ ...defaultsFromCompany(company), ...loadDraft() }));
+  const [data, setData] = useState<OnboardingData>(() => ({
+    ...defaultsFromCompany(company),
+    ...(ENV.settingsUseMocks ? loadDraft() : initial.data as Partial<OnboardingData> | undefined),
+  }));
   const [completed, setCompleted] = useState<number[]>(initial.completedSteps);
   const [step, setStep] = useState(() => clampStep(initial.currentStep));
   const [direction, setDirection] = useState(1);
@@ -63,7 +67,7 @@ function OnboardingWizard({ initial, company }: { initial: OnboardingState; comp
     const index = STEP_KEYS.indexOf(key);
     const nextData = { ...data, [key]: values };
     setData(nextData);
-    saveDraft(nextData);
+    if (ENV.settingsUseMocks) saveDraft(nextData);
     save.mutate(
       { index, payload: { ...values } },
       {
@@ -164,8 +168,8 @@ export function OnboardingPage() {
           <LoadingState rows={2} />
           <LoadingState rows={6} />
         </div>
-      ) : onboarding.isError ? (
-        <ErrorState error={onboarding.error} onRetry={() => void onboarding.refetch()} />
+      ) : onboarding.isError || company.isError ? (
+        <ErrorState error={onboarding.error ?? company.error} onRetry={() => { void onboarding.refetch(); void company.refetch(); }} />
       ) : (
         <OnboardingWizard initial={onboarding.data} company={company.data} />
       )}

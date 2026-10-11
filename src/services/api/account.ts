@@ -218,4 +218,4 @@ export const billingService: BillingService = impl.billing;
 export const modulesService: ModulesService = impl.modules;
 export const notificationsService: NotificationsService = impl.notifications;
 export const usersService: UsersService = ENV.authUseMocks ? mock.users : http.users;
-export const settingsService: SettingsService = impl.settings;
+export const settingsService: SettingsService = ENV.settingsUseMocks ? mock.settings : http.settings;
