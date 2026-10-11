@@ -1,9 +1,9 @@
 import {
-  Building2, CreditCard, FileKey2, Hash, Landmark, LayoutTemplate, Plug, Receipt, ShieldCheck, SlidersHorizontal, Users, type LucideIcon,
+  Archive, Building2, CreditCard, FileKey2, Hash, Landmark, LayoutTemplate, Plug, Receipt, ShieldCheck, SlidersHorizontal, Users, type LucideIcon,
 } from 'lucide-react';
 
 export type SettingsSlug =
-  | 'empresa' | 'fiscal' | 'dgii' | 'certificado' | 'secuencias' | 'facturacion' | 'plantillas' | 'usuarios' | 'seguridad' | 'suscripcion' | 'integraciones';
+  | 'empresa' | 'fiscal' | 'dgii' | 'certificado' | 'secuencias' | 'facturacion' | 'plantillas' | 'usuarios' | 'seguridad' | 'suscripcion' | 'integraciones' | 'respaldo';
 
 export interface SettingsSectionDef {
   slug: SettingsSlug;
@@ -27,6 +27,7 @@ export const SETTINGS_SECTIONS: SettingsSectionDef[] = [
   { slug: 'seguridad', label: 'Seguridad', description: 'Contraseña, sesiones y verificación.', icon: ShieldCheck, group: 'Cuenta' },
   { slug: 'suscripcion', label: 'Suscripción', description: 'Plan, consumo y facturas.', icon: CreditCard, group: 'Cuenta' },
   { slug: 'integraciones', label: 'Integraciones', description: 'Credenciales de API.', icon: Plug, group: 'Cuenta' },
+  { slug: 'respaldo', label: 'Copia de seguridad', description: 'Exporta los datos y archivos de tu empresa.', icon: Archive, group: 'Cuenta' },
 ];
 
 export const isSettingsSlug = (s: string | undefined): s is SettingsSlug => !!s && SETTINGS_SECTIONS.some((x) => x.slug === s);

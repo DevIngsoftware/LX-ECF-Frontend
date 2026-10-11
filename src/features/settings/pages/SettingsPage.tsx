@@ -10,6 +10,7 @@ import { settingsService } from '@/services/api/account';
 import { queryKeys } from '@/services/api/query-keys';
 import { CompanySection } from '../components/CompanySection';
 import { CertificateSection } from '../components/CertificateSection';
+import { BackupSection } from '../components/BackupSection';
 import { DgiiSection } from '../components/DgiiSection';
 import { FiscalSection } from '../components/FiscalSection';
 import { SequencesSection } from '../components/SequencesSection';
@@ -30,6 +31,7 @@ function SettingsContent({ section }: { section: SettingsSlug | null }) {
   if (section === 'dgii') return <DgiiSection />;
   if (section === 'certificado') return <CertificateSection />;
   if (section === 'secuencias') return <SequencesSection />;
+  if (section === 'respaldo') return <BackupSection />;
   if (section) {
     const item = sectionBySlug(section);
     const linked = linkedSections[section];

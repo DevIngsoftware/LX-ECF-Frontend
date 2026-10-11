@@ -3,7 +3,7 @@ import type {
   AppNotification, CompanySettings, ModuleInfo, ModuleKey, OnboardingState, Plan, ServiceInvoice, SettingsStatusItem,
   Subscription, SubscriptionPayment, TenantUser, TenantUserInput,
 } from '@/types/account';
-import { get, getBlob, patch, post, put } from '../http/client';
+import { get, getBlob, patch, post, postBlob, put } from '../http/client';
 import type { BankAccount, SupportTicketDetail } from '@/types/platform';
 import { ApiError } from '../http/errors';
 import { ENDPOINTS } from './endpoints';
@@ -49,6 +49,7 @@ export interface SettingsService {
   uploadLogo(file: File): Promise<void>;
   status(): Promise<SettingsStatusItem[]>;
   uploadCertificate(input: CertificateUpload): Promise<void>;
+  exportBackup(password: string): Promise<Blob>;
   onboarding(): Promise<OnboardingState>;
   saveOnboardingStep(step: number, data: Record<string, unknown>): Promise<OnboardingState>;
 }
@@ -92,6 +93,7 @@ const http = {
       form.append('password', password);
       return post(ENDPOINTS.dgii.certificate, form, { headers: { 'Content-Type': 'multipart/form-data' } });
     },
+    exportBackup: (password) => postBlob(ENDPOINTS.settings.backupExport, { password }, { timeout: 600000 }),
     onboarding: () => get(ENDPOINTS.onboarding),
     saveOnboardingStep: (step, data) => put(`${ENDPOINTS.onboarding}/pasos/${step}`, data),
   } satisfies SettingsService,
@@ -197,6 +199,9 @@ const mock = {
         throw new ApiError('validation', 'El archivo debe ser un certificado .p12 o .pfx.', 400);
       }
       throw new ApiError('server', 'Modo demostración: el certificado no se envió. La carga real requiere conexión con el backend LX e-CF.', 503);
+    },
+    async exportBackup() {
+      throw new ApiError('server', 'La exportación requiere conexión con la API LX e-CF.', 503);
     },
     async onboarding() {
       await delay(300);

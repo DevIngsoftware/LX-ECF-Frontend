@@ -87,3 +87,8 @@ export async function getBlob(url: string, config?: AxiosRequestConfig): Promise
   const { data } = await http.get<Blob>(url, { ...config, responseType: 'blob' });
   return data;
 }
+
+export async function postBlob(url: string, body: unknown, config?: AxiosRequestConfig): Promise<Blob> {
+  const { data } = await http.post<Blob>(url, body, { ...config, responseType: 'blob' });
+  return data;
+}
