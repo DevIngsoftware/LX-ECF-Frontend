@@ -42,6 +42,7 @@ const httpInvoices: InvoicesService = {
 };
 
 const DEMO_NOTICE = { code: 'DEMO', message: 'Respuesta de demostración. No proviene de la DGII.' };
+let demoSequence = 9000000000;
 
 function findInvoice(id: string) {
   const inv = invoices.find((i) => i.id === id);
@@ -80,8 +81,8 @@ const mockInvoices: InvoicesService = {
     const subtotal = draft.items.reduce((s, i) => s + i.quantity * i.unitPrice - i.discount, 0);
     const itbis = draft.items.reduce((s, i) => s + (i.quantity * i.unitPrice - i.discount) * (i.itbisRate / 100), 0);
     invoices.unshift({
-      id, encf: `${draft.type}DEMO${uid().toUpperCase()}`, type: draft.type, buyerName: draft.buyer.name ?? 'Sin nombre', buyerRnc: draft.buyer.rnc,
-      issueDate: daysAgo(0), total: subtotal + itbis - draft.retentions.itbis - draft.retentions.isr, itbis, internalStatus: 'CREADO', dgiiStatus: 'NO_ENVIADO',
+      id, encf: `${draft.type}${++demoSequence}`, type: draft.type, buyerName: draft.buyer.name ?? 'Sin nombre', buyerRnc: draft.buyer.rnc,
+      issueDate: daysAgo(0), total: subtotal + itbis, itbis, internalStatus: 'CREADO', dgiiStatus: 'NO_ENVIADO',
       buyer: draft.buyer, items: draft.items, subtotal, discountTotal: draft.items.reduce((s, i) => s + i.discount, 0),
       itbisRetained: draft.retentions.itbis, isrRetained: draft.retentions.isr, incomeType: draft.incomeType, paymentType: draft.paymentType,
       paymentTermDays: draft.paymentTermDays, reference: draft.reference,

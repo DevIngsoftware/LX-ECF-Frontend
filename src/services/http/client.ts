@@ -20,7 +20,7 @@ http.interceptors.response.use(
   (response) => response,
   (error: unknown) => {
     const apiError = toApiError(error);
-    if (apiError.kind === 'unauthorized' && tokenStore.get()) tokenStore.emitSessionExpired();
+    if (apiError.kind === 'unauthorized' && tokenStore.isAuthenticated()) tokenStore.emitSessionExpired();
     return Promise.reject(apiError);
   },
 );

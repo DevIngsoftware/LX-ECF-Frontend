@@ -10,9 +10,10 @@ import { errorMessage } from '@/services/http/errors';
 import { uid } from '@/services/mocks/utils';
 import type { ChatMessage } from '@/types/platform';
 import { cn } from '@/lib/utils';
+import { STORAGE_KEYS } from '@/constants/storage';
 
-const HISTORY_KEY = 'lx-chat-history';
-const SEEN_KEY = 'lx-chat-greeted';
+const HISTORY_KEY = STORAGE_KEYS.chatHistory;
+const SEEN_KEY = STORAGE_KEYS.chatGreeted;
 
 const SUGGESTIONS: Record<ChatContext, string[]> = {
   public: ['¿Qué es un e-CF?', '¿Qué módulos ofrece LX e-CF?', '¿Cómo empiezo?'],

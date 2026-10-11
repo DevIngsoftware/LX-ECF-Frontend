@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { ENV } from '@/constants/env';
 import { STORAGE_KEYS } from '@/constants/storage';
@@ -27,12 +27,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<SessionUser | null>(readDemoSession);
   const [status, setStatus] = useState<AuthStatus>(() => (ENV.useMocks ? (readDemoSession() ? 'authenticated' : 'anonymous') : 'loading'));
   const [sessionExpired, setSessionExpired] = useState(false);
+  const rememberDemoSession = useRef(Boolean(readDemoSession()));
 
   useEffect(() => {
     if (ENV.useMocks) return;
     authService
       .me()
       .then((u) => {
+        tokenStore.restoreSession();
         setUser(u);
         setStatus('authenticated');
       })
@@ -52,12 +54,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const persist = (u: SessionUser | null) => {
     if (!ENV.useMocks) return;
-    if (u) sessionStorage.setItem(STORAGE_KEYS.demoSession, JSON.stringify(u));
+    if (u && rememberDemoSession.current) sessionStorage.setItem(STORAGE_KEYS.demoSession, JSON.stringify(u));
     else sessionStorage.removeItem(STORAGE_KEYS.demoSession);
   };
 
   const login = useCallback(async (input: LoginInput) => {
     const res = await authService.login(input);
+    rememberDemoSession.current = input.remember;
     tokenStore.set(res.tokens);
     setUser(res.user);
     setStatus('authenticated');
@@ -72,8 +75,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       tokenStore.set(null);
       persist(null);
+      sessionStorage.removeItem(STORAGE_KEYS.onboardingDraft);
+      sessionStorage.removeItem(STORAGE_KEYS.chatHistory);
+      sessionStorage.removeItem(STORAGE_KEYS.chatGreeted);
       setUser(null);
       setStatus('anonymous');
+      setSessionExpired(false);
       queryClient.clear();
     }
   }, [queryClient]);

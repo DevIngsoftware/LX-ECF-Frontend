@@ -1,8 +1,9 @@
 import { z } from 'zod';
 import type { CompanySettings } from '@/types/account';
+import { STORAGE_KEYS } from '@/constants/storage';
 
 export const STEP_FORM_ID = 'onboarding-step-form';
-const DRAFT_KEY = 'lx-onboarding-draft';
+const DRAFT_KEY = STORAGE_KEYS.onboardingDraft;
 
 export const STEPS = [
   { key: 'company', title: 'Información de la empresa', short: 'Empresa' },

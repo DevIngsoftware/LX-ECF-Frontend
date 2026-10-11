@@ -115,7 +115,7 @@ export function LoginPage() {
                 <FormControl>
                   <Checkbox checked={field.value} onCheckedChange={(v) => field.onChange(v === true)} />
                 </FormControl>
-                <FormLabel className="cursor-pointer text-sm font-normal">Recordarme en este dispositivo</FormLabel>
+                <FormLabel className="cursor-pointer text-sm font-normal">{ENV.useMocks ? 'Mantener sesión al recargar' : 'Recordarme en este dispositivo'}</FormLabel>
               </FormItem>
             )}
           />
