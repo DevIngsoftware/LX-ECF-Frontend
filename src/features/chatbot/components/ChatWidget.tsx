@@ -7,7 +7,6 @@ import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { useI18n } from '@/i18n';
 import { chatService } from '@/services/api/platform';
 import { errorMessage } from '@/services/http/errors';
-import { uid } from '@/services/mocks/utils';
 import type { ChatMessage } from '@/types/platform';
 import { cn } from '@/lib/utils';
 import { STORAGE_KEYS } from '@/constants/storage';
@@ -35,6 +34,11 @@ function loadHistory(): ChatMessage[] {
 }
 
 export function ChatWidget({ context }: { context: ChatContext }) {
+  if (!chatService.available) return null;
+  return <ConnectedChatWidget context={context} />;
+}
+
+function ConnectedChatWidget({ context }: { context: ChatContext }) {
   const { t } = useI18n();
   const reduce = useReducedMotion();
   const [open, setOpen] = useState(false);
@@ -70,7 +74,7 @@ export function ChatWidget({ context }: { context: ChatContext }) {
   const send = async (text: string) => {
     const content = text.trim();
     if (!content || pending) return;
-    const userMsg: ChatMessage = { id: uid(), role: 'user', content, createdAt: new Date().toISOString() };
+    const userMsg: ChatMessage = { id: crypto.randomUUID(), role: 'user', content, createdAt: new Date().toISOString() };
     const history = [...messages.filter((m) => !m.error), userMsg];
     setMessages((m) => [...m, userMsg]);
     setInput('');
@@ -78,9 +82,9 @@ export function ChatWidget({ context }: { context: ChatContext }) {
     abortRef.current = new AbortController();
     try {
       const reply = await chatService.send(history, abortRef.current.signal);
-      setMessages((m) => [...m, { id: uid(), role: 'assistant', content: reply, createdAt: new Date().toISOString() }]);
+      setMessages((m) => [...m, { id: crypto.randomUUID(), role: 'assistant', content: reply, createdAt: new Date().toISOString() }]);
     } catch (err) {
-      setMessages((m) => [...m, { id: uid(), role: 'assistant', content: errorMessage(err), createdAt: new Date().toISOString(), error: true }]);
+      setMessages((m) => [...m, { id: crypto.randomUUID(), role: 'assistant', content: errorMessage(err), createdAt: new Date().toISOString(), error: true }]);
     } finally {
       setPending(false);
     }
