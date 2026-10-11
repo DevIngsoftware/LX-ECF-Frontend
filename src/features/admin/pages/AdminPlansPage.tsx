@@ -11,9 +11,9 @@ import { adminService } from '@/services/api/platform';
 import { useAuth } from '@/features/auth/auth-context';
 import { queryKeys } from '@/services/api/query-keys';
 import type { Plan } from '@/types/account';
-import { formatNumber } from '@/utils/format';
+import { formatNumber, formatPlanPrice } from '@/utils/format';
 import { cn } from '@/lib/utils';
-import { MODULE_LABELS, priceText } from '../components/admin-meta';
+import { MODULE_LABELS } from '../components/admin-meta';
 import { PlanFormDialog } from '../components/PlanFormDialog';
 
 const limitText = (v: number | null, unit: string) => (v == null ? `${unit} ilimitados` : `Hasta ${formatNumber(v)} ${unit}`);
@@ -61,7 +61,7 @@ export function AdminPlansPage() {
                 <Badge variant={p.active ? 'success' : 'neutral'}>{p.active ? 'Activo' : 'Inactivo'}</Badge>
               </div>
               <p className="text-sm text-muted-foreground">{p.description}</p>
-              <p className="mt-4 font-display text-2xl font-bold tracking-tight">{priceText(p.priceLabel)}</p>
+              <p className="mt-4 font-display text-2xl font-bold tracking-tight">{formatPlanPrice(p.priceLabel)}</p>
               <ul className="mt-4 space-y-2 text-sm">
                 <li className="flex items-center gap-2 text-muted-foreground"><FileText className="h-4 w-4" aria-hidden /> {limitText(p.invoiceLimit, 'comprobantes')}</li>
                 <li className="flex items-center gap-2 text-muted-foreground"><Users className="h-4 w-4" aria-hidden /> {limitText(p.userLimit, 'usuarios')}</li>

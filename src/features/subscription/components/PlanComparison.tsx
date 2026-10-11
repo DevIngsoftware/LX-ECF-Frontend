@@ -5,7 +5,7 @@ import { staggerContainer, staggerItem } from '@/components/animations/motion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { Plan } from '@/types/account';
-import { formatNumber } from '@/utils/format';
+import { formatNumber, formatPlanPrice } from '@/utils/format';
 import { cn } from '@/lib/utils';
 import { ALL_MODULES, MODULE_LABELS } from './subscription-utils';
 import { DepositRequestDialog } from './DepositRequestDialog';
@@ -33,7 +33,7 @@ export function PlanComparison({ plans, currentPlanId }: { plans: Plan[]; curren
                 {current ? <Badge variant="brand">Plan actual</Badge> : p.highlighted ? <Badge variant="neutral"><Sparkles className="h-3 w-3" /> Recomendado</Badge> : null}
               </div>
               <p className="mt-1 text-sm text-muted-foreground">{p.description}</p>
-              <p className="mt-4 text-2xl font-bold">{p.priceLabel ?? 'Consultar'}</p>
+              <p className="mt-4 text-2xl font-bold">{formatPlanPrice(p.priceLabel)}</p>
               {!p.priceLabel && <p className="text-xs text-muted-foreground">Precio según volumen y necesidades</p>}
 
               <ul className="mt-4 space-y-2 border-t pt-4 text-sm">

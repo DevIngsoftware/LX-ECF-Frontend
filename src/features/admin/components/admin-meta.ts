@@ -56,6 +56,3 @@ export const ADMIN_ROLES: { value: AdminRole; label: string; description: string
 export const roleLabel = (r: string) => ADMIN_ROLES.find((x) => x.value === r)?.label ?? r;
 
 export const labelOf = (list: { value: string; label: string }[], v: string) => list.find((x) => x.value === v)?.label ?? v;
-
-/** Los montos en 0 o ausentes no se presentan como precio real. */
-export const priceText = (label: string | null | undefined) => (label && label.trim() ? label : 'Consultar');

@@ -7,6 +7,15 @@ export const formatMoney = (value: number) => money.format(value).replace('DOP',
 export const formatMoneyCompact = (value: number) => compactMoney.format(value).replace('DOP', 'RD$').replace(/\u00a0/g, ' ');
 export const formatNumber = (value: number) => number.format(value);
 
+/** El catálogo conserva texto libre, pero los importes numéricos se publican en pesos dominicanos. */
+export const formatPlanPrice = (label: string | null | undefined) => {
+  const value = label?.trim();
+  if (!value) return 'Consultar';
+  const amount = value.replace(/^(?:RD\$|\$)\s*/i, '');
+  if (!/^(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d{1,2})?$/.test(amount)) return value;
+  return formatMoney(Number(amount.replace(/,/g, '')));
+};
+
 export const formatDate = (iso?: string) =>
   iso ? new Intl.DateTimeFormat('es-DO', { day: '2-digit', month: 'short', year: 'numeric' })
     .format(new Date(/^\d{4}-\d{2}-\d{2}$/.test(iso) ? `${iso}T12:00:00` : iso)) : '—';

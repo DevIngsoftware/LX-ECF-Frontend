@@ -10,6 +10,7 @@ import { queryKeys } from '@/services/api/query-keys';
 import { get } from '@/services/http/client';
 import type { ModuleKey, Plan } from '@/types/account';
 import { cn } from '@/lib/utils';
+import { formatPlanPrice } from '@/utils/format';
 import { SectionHeading } from './SectionHeading';
 
 const MODULE_LABELS: Record<ModuleKey, string> = {
@@ -37,7 +38,7 @@ function PlanCard({ plan }: { plan: Plan }) {
       )}
       <h3 className={cn('text-xl font-extrabold', highlighted && 'text-white')}>{plan.name}</h3>
       <p className={cn('mt-2 min-h-[40px] text-sm', highlighted ? 'text-zinc-400' : 'text-muted-foreground')}>{plan.description}</p>
-      <p className="mt-6 font-display text-3xl font-extrabold">{plan.priceLabel ?? 'Consultar'}</p>
+      <p className="mt-6 font-display text-3xl font-extrabold">{formatPlanPrice(plan.priceLabel)}</p>
       <p className={cn('mt-1 text-xs', highlighted ? 'text-zinc-400' : 'text-muted-foreground')}>
         {plan.userLimit ? `Hasta ${plan.userLimit} usuarios` : 'Usuarios según contrato'} · {plan.invoiceLimit ? `${plan.invoiceLimit} comprobantes/mes` : 'Volumen según necesidad'}
       </p>
