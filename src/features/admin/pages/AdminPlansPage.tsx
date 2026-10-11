@@ -8,6 +8,7 @@ import { EmptyState, ErrorState, LoadingState } from '@/components/shared/states
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { adminService } from '@/services/api/platform';
+import { useAuth } from '@/features/auth/auth-context';
 import { queryKeys } from '@/services/api/query-keys';
 import type { Plan } from '@/types/account';
 import { formatNumber } from '@/utils/format';
@@ -18,6 +19,8 @@ import { PlanFormDialog } from '../components/PlanFormDialog';
 const limitText = (v: number | null, unit: string) => (v == null ? `${unit} ilimitados` : `Hasta ${formatNumber(v)} ${unit}`);
 
 export function AdminPlansPage() {
+  const { hasPermission } = useAuth();
+  const canEdit = hasPermission('admin.plans.write');
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Plan | null>(null);
   const { data, isLoading, error, refetch } = useQuery({ queryKey: queryKeys.admin.plans, queryFn: () => adminService.plans() });
@@ -33,7 +36,7 @@ export function AdminPlansPage() {
         eyebrow="Administración"
         title="Planes"
         description="Catálogo de planes comerciales. Los precios no publicados se muestran como «Consultar»."
-        actions={<Button onClick={() => openForm(null)}><Plus /> Nuevo plan</Button>}
+        actions={canEdit ? <Button onClick={() => openForm(null)}><Plus /> Nuevo plan</Button> : undefined}
       />
 
       {isLoading ? (
@@ -42,7 +45,7 @@ export function AdminPlansPage() {
         <div className="surface"><ErrorState error={error} onRetry={() => void refetch()} /></div>
       ) : !data?.length ? (
         <div className="surface">
-          <EmptyState icon={Layers} title="Aún no hay planes" action={<Button size="sm" onClick={() => openForm(null)}><Plus /> Nuevo plan</Button>} />
+          <EmptyState icon={Layers} title="Aún no hay planes" action={canEdit ? <Button size="sm" onClick={() => openForm(null)}><Plus /> Nuevo plan</Button> : undefined} />
         </div>
       ) : (
         <motion.div variants={staggerContainer} initial="hidden" animate="show" className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -75,11 +78,11 @@ export function AdminPlansPage() {
                   <p className="text-sm text-muted-foreground">Solo funciones base.</p>
                 )}
               </div>
-              <div className="mt-auto pt-6">
+              {canEdit && <div className="mt-auto pt-6">
                 <Button variant="outline" className="w-full" onClick={() => openForm(p)}>
                   <Pencil /> Editar plan
                 </Button>
-              </div>
+              </div>}
             </motion.article>
           ))}
         </motion.div>

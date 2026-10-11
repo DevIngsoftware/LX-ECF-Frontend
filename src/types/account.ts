@@ -21,6 +21,7 @@ export type Permission =
   | 'admin.access'
   | 'admin.companies'
   | 'admin.plans'
+  | 'admin.plans.write'
   | 'admin.users'
   | 'admin.audit';
 

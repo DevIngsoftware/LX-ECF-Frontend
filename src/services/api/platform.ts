@@ -209,6 +209,8 @@ export const adminService: AdminService = {
   companies: ENV.authUseMocks ? mock.admin.companies : http.admin.companies,
   company: ENV.authUseMocks ? mock.admin.company : http.admin.company,
   setCompanyStatus: ENV.authUseMocks ? mock.admin.setCompanyStatus : http.admin.setCompanyStatus,
+  plans: ENV.authUseMocks ? mock.admin.plans : http.admin.plans,
+  savePlan: ENV.authUseMocks ? mock.admin.savePlan : http.admin.savePlan,
   users: ENV.authUseMocks ? mock.admin.users : http.admin.users,
   saveUser: ENV.authUseMocks ? mock.admin.saveUser : http.admin.saveUser,
   resendInvitation: ENV.authUseMocks ? mock.admin.resendInvitation : http.admin.resendInvitation,

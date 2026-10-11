@@ -214,7 +214,10 @@ const mock = {
 };
 
 const impl = ENV.useMocks ? mock : http;
-export const billingService: BillingService = impl.billing;
+export const billingService: BillingService = {
+  ...impl.billing,
+  plans: ENV.authUseMocks ? mock.billing.plans : http.billing.plans,
+};
 export const modulesService: ModulesService = impl.modules;
 export const notificationsService: NotificationsService = impl.notifications;
 export const usersService: UsersService = ENV.authUseMocks ? mock.users : http.users;
