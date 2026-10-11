@@ -137,6 +137,14 @@ export interface ServiceInvoice {
   status: OpenString<'PAGADA' | 'PENDIENTE' | 'VENCIDA'>;
 }
 
+export interface SubscriptionPayment {
+  id: Id;
+  reference: string;
+  date: ISODate;
+  method: string;
+  simulated: boolean;
+}
+
 export interface CompanySettings {
   legalName: string;
   tradeName?: string;

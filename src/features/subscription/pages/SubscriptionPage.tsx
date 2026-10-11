@@ -18,6 +18,7 @@ export function SubscriptionPage() {
   const sub = useQuery({ queryKey: queryKeys.subscription, queryFn: billingService.subscription });
   const plans = useQuery({ queryKey: queryKeys.plans, queryFn: billingService.plans });
   const invoices = useQuery({ queryKey: queryKeys.serviceInvoices, queryFn: billingService.invoices });
+  const payments = useQuery({ queryKey: queryKeys.subscriptionPayments, queryFn: billingService.payments });
   const retryInvoices = () => void invoices.refetch();
 
   return (
@@ -36,7 +37,9 @@ export function SubscriptionPage() {
           <div className="surface"><ErrorState error={sub.error} onRetry={() => void sub.refetch()} /></div>
         ) : sub.data ? (
           <CurrentPlanCard sub={sub.data} />
-        ) : null}
+        ) : (
+          <div className="surface p-5 text-sm text-muted-foreground">Aún no tienes una suscripción. Elige un plan y usa el pago simulado para activarlo durante 30 días.</div>
+        )}
 
         <section>
           <div className="mb-4">
@@ -48,7 +51,7 @@ export function SubscriptionPage() {
           ) : plans.error ? (
             <div className="surface"><ErrorState compact error={plans.error} onRetry={() => void plans.refetch()} /></div>
           ) : (
-            <PlanComparison plans={plans.data ?? []} currentPlanId={sub.data?.planId} />
+            <PlanComparison plans={plans.data ?? []} currentPlanId={sub.data && ['ACTIVA', 'PRUEBA'].includes(sub.data.status) ? sub.data.planId : undefined} />
           )}
         </section>
 
@@ -57,9 +60,9 @@ export function SubscriptionPage() {
             <section className="surface overflow-hidden">
               <div className="border-b p-5">
                 <h2 className="font-semibold">Historial de pagos</h2>
-                <p className="text-sm text-muted-foreground">Pagos de suscripción confirmados por LX.</p>
+                <p className="text-sm text-muted-foreground">Operaciones de prueba registradas. No representan cobros reales.</p>
               </div>
-              <PaymentHistoryTable data={invoices.data} isLoading={invoices.isLoading} error={invoices.error} onRetry={retryInvoices} />
+              <PaymentHistoryTable data={payments.data} isLoading={payments.isLoading} error={payments.error} onRetry={() => void payments.refetch()} />
             </section>
           </Reveal>
           <Reveal y={12} delay={0.05}>

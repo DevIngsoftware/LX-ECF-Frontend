@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { billingService } from '@/services/api/account';
+import { useAuth } from '@/features/auth/auth-context';
 import { queryKeys } from '@/services/api/query-keys';
 import { errorMessage } from '@/services/http/errors';
 import type { Plan } from '@/types/account';
@@ -19,21 +20,25 @@ const limit = (v: number | null, unit: string) => (v === null ? `${unit} ilimita
 
 export function PlanComparison({ plans, currentPlanId }: { plans: Plan[]; currentPlanId?: string }) {
   const qc = useQueryClient();
+  const { updateUser } = useAuth();
   const [target, setTarget] = useState<Plan | null>(null);
   const visible = plans.filter((p) => p.active);
 
   const change = useMutation({
-    mutationFn: (p: Plan) => billingService.requestPlanChange(p.id),
-    onSuccess: (_, p) => {
-      toast.success(`Solicitud de cambio al plan ${p.name} enviada`, { description: 'Un asesor de LX confirmará el cambio y las condiciones aplicables.' });
+    mutationFn: (p: Plan) => billingService.simulatePayment(p.id),
+    onSuccess: (activated, p) => {
+      updateUser({ modules: activated.modules });
+      toast.success(`Plan ${p.name} activado en modo de prueba`, { description: 'Se registró una operación simulada. No se realizó ningún cobro.' });
       setTarget(null);
       void qc.invalidateQueries({ queryKey: queryKeys.subscription });
+      void qc.invalidateQueries({ queryKey: queryKeys.subscriptionPayments });
     },
     onError: (err) => toast.error(errorMessage(err)),
   });
 
   return (
     <>
+      {visible.length === 0 && <p className="surface p-5 text-sm text-muted-foreground">Aún no hay planes activos disponibles. Consulta con el equipo de LX e-CF.</p>}
       <motion.div variants={staggerContainer} initial="hidden" animate="show" className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {visible.map((p) => {
           const current = p.id === currentPlanId;
@@ -67,7 +72,7 @@ export function PlanComparison({ plans, currentPlanId }: { plans: Plan[]; curren
 
               <div className="min-h-4 flex-1" />
               <Button className="w-full" variant={current ? 'outline' : p.highlighted ? 'default' : 'secondary'} disabled={current} onClick={() => setTarget(p)}>
-                {current ? 'Plan actual' : <><ArrowRightLeft /> Cambiar plan</>}
+                {current ? 'Plan actual' : <><ArrowRightLeft /> {currentPlanId ? 'Cambiar plan' : 'Elegir plan'}</>}
               </Button>
             </motion.article>
           );
@@ -77,9 +82,9 @@ export function PlanComparison({ plans, currentPlanId }: { plans: Plan[]; curren
       <Dialog open={!!target} onOpenChange={(o) => !o && !change.isPending && setTarget(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Solicitar cambio de plan</DialogTitle>
+            <DialogTitle>Simular pago y activar plan</DialogTitle>
             <DialogDescription>
-              El cambio no se aplica de inmediato. Un asesor de LX revisará la solicitud y te confirmará condiciones y fecha efectiva.
+              Esta operación es de prueba: no solicita tarjeta ni cobra dinero. Registrará un pago simulado y activará el plan por 30 días.
             </DialogDescription>
           </DialogHeader>
           {target && (
@@ -93,7 +98,7 @@ export function PlanComparison({ plans, currentPlanId }: { plans: Plan[]; curren
           <DialogFooter>
             <Button variant="outline" onClick={() => setTarget(null)} disabled={change.isPending}>Cancelar</Button>
             <Button onClick={() => target && change.mutate(target)} disabled={change.isPending}>
-              {change.isPending && <Loader2 className="animate-spin" />} Enviar solicitud
+              {change.isPending && <Loader2 className="animate-spin" />} Simular pago
             </Button>
           </DialogFooter>
         </DialogContent>

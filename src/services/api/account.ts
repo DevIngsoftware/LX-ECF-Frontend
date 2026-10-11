@@ -1,7 +1,7 @@
 import { ENV } from '@/constants/env';
 import type {
   AppNotification, CompanySettings, ModuleInfo, ModuleKey, OnboardingState, Plan, ServiceInvoice, SettingsStatusItem,
-  Subscription, TenantUser, TenantUserInput,
+  Subscription, SubscriptionPayment, TenantUser, TenantUserInput,
 } from '@/types/account';
 import { get, patch, post, put } from '../http/client';
 import { ApiError } from '../http/errors';
@@ -10,10 +10,11 @@ import { modules, notifications, plans, serviceInvoices, tenantUsers } from '../
 import { daysAgo, daysAhead, delay, uid } from '../mocks/utils';
 
 export interface BillingService {
-  subscription(): Promise<Subscription>;
+  subscription(): Promise<Subscription | null>;
   plans(): Promise<Plan[]>;
   invoices(): Promise<ServiceInvoice[]>;
-  requestPlanChange(planId: string): Promise<void>;
+  payments(): Promise<SubscriptionPayment[]>;
+  simulatePayment(planId: string): Promise<Subscription>;
 }
 
 export interface ModulesService {
@@ -55,7 +56,8 @@ const http = {
     subscription: () => get(ENDPOINTS.billing.subscription),
     plans: () => get(ENDPOINTS.billing.plans),
     invoices: () => get(ENDPOINTS.billing.invoices),
-    requestPlanChange: (planId) => post(ENDPOINTS.billing.changePlan, { planId }),
+    payments: () => get(ENDPOINTS.billing.payments),
+    simulatePayment: (planId) => post(ENDPOINTS.billing.simulatePayment, { planId }),
   } satisfies BillingService,
   modules: {
     list: () => get(ENDPOINTS.modules.list),
@@ -119,7 +121,16 @@ const mock = {
       await delay(300);
       return serviceInvoices;
     },
-    requestPlanChange: () => delay(800),
+    async payments() {
+      await delay(300);
+      return [];
+    },
+    async simulatePayment(planId) {
+      await delay(800);
+      const plan = plans.find((item) => item.id === planId);
+      if (!plan) throw new ApiError('validation', 'Plan no encontrado', 404);
+      return { planId, planName: plan.name, status: 'PRUEBA', startedAt: new Date().toISOString(), renewalDate: daysAhead(30), documentsUsed: 0, documentsLimit: plan.invoiceLimit, usersUsed: 1, usersLimit: plan.userLimit, modules: plan.modules };
+    },
   } satisfies BillingService,
   modules: {
     async list() {
@@ -216,7 +227,11 @@ const mock = {
 const impl = ENV.useMocks ? mock : http;
 export const billingService: BillingService = {
   ...impl.billing,
+  subscription: ENV.authUseMocks ? mock.billing.subscription : http.billing.subscription,
   plans: ENV.authUseMocks ? mock.billing.plans : http.billing.plans,
+  invoices: ENV.authUseMocks ? mock.billing.invoices : http.billing.invoices,
+  payments: ENV.authUseMocks ? mock.billing.payments : http.billing.payments,
+  simulatePayment: ENV.authUseMocks ? mock.billing.simulatePayment : http.billing.simulatePayment,
 };
 export const modulesService: ModulesService = impl.modules;
 export const notificationsService: NotificationsService = impl.notifications;

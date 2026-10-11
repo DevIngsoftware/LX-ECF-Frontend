@@ -4,7 +4,7 @@ import { EmptyState, ErrorState, LoadingState } from '@/components/shared/states
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import type { ServiceInvoice } from '@/types/account';
+import type { ServiceInvoice, SubscriptionPayment } from '@/types/account';
 import { saveBlob } from '@/utils/download';
 import { formatDate, formatMoney } from '@/utils/format';
 import { INVOICE_STATUS } from './subscription-utils';
@@ -77,28 +77,27 @@ export function ServiceInvoicesTable({ data, isLoading, error, onRetry }: Props)
   );
 }
 
-export function PaymentHistoryTable({ data, isLoading, error, onRetry }: Props) {
+export function PaymentHistoryTable({ data, isLoading, error, onRetry }: Omit<Props, 'data'> & { data?: SubscriptionPayment[] }) {
   if (isLoading) return <div className="p-5"><LoadingState rows={3} /></div>;
   if (error) return <ErrorState compact error={error} onRetry={onRetry} />;
-  const paid = (data ?? []).filter((i) => i.status === 'PAGADA');
-  if (!paid.length) return <EmptyState compact icon={Receipt} title="Sin pagos registrados" description="Los pagos confirmados por LX aparecerán aquí." />;
+  if (!data?.length) return <EmptyState compact icon={Receipt} title="Sin operaciones registradas" description="Las simulaciones de pago aparecerán aquí." />;
   return (
     <Table>
       <TableHeader>
         <TableRow>
           <TableHead>Fecha</TableHead>
-          <TableHead>Factura</TableHead>
+          <TableHead>Referencia</TableHead>
           <TableHead className="hidden sm:table-cell">Método</TableHead>
-          <TableHead className="text-right">Monto</TableHead>
+          <TableHead className="text-right">Tipo</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {paid.map((inv) => (
-          <TableRow key={inv.id}>
-            <TableCell className="whitespace-nowrap">{formatDate(inv.date)}</TableCell>
-            <TableCell className="font-mono text-xs">{inv.number}</TableCell>
-            <TableCell className="hidden text-muted-foreground sm:table-cell">Registrado por LX</TableCell>
-            <TableCell className="text-right tabular-nums">{formatMoney(inv.amount)}</TableCell>
+        {data.map((payment) => (
+          <TableRow key={payment.id}>
+            <TableCell className="whitespace-nowrap">{formatDate(payment.date)}</TableCell>
+            <TableCell className="font-mono text-xs">{payment.reference}</TableCell>
+            <TableCell className="hidden text-muted-foreground sm:table-cell">{payment.method}</TableCell>
+            <TableCell className="text-right">{payment.simulated ? 'Simulado · sin cobro' : 'Registrado'}</TableCell>
           </TableRow>
         ))}
       </TableBody>

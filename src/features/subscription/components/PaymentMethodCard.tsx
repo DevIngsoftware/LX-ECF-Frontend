@@ -14,7 +14,7 @@ export function PaymentMethodCard() {
         </span>
         <div className="min-w-0">
           <p className="text-sm font-medium">Pagos en línea con AZUL próximamente</p>
-          <p className="text-xs text-muted-foreground">Mientras tanto, tu asesor de LX coordina el pago de tu suscripción.</p>
+          <p className="text-xs text-muted-foreground">Por ahora puedes activar un plan con una operación simulada sin tarjeta ni cobro.</p>
         </div>
       </div>
       <p className="mt-4 flex items-start gap-2 text-xs text-muted-foreground">

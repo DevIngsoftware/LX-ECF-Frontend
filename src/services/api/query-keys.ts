@@ -14,6 +14,7 @@ export const queryKeys = {
   expenseCategories: ['expense-categories'] as const,
   report: (key: string, range: unknown) => ['report', key, range] as const,
   subscription: ['subscription'] as const,
+  subscriptionPayments: ['subscription-payments'] as const,
   plans: ['plans'] as const,
   serviceInvoices: ['service-invoices'] as const,
   modules: ['modules'] as const,
