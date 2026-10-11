@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { COMPANY } from '@/constants/env';
 import { cn } from '@/lib/utils';
 
@@ -10,8 +10,19 @@ interface LogoProps {
 }
 
 export function Logo({ to = '/', compact = false, className, badge }: LogoProps) {
+  const { pathname, hash } = useLocation();
   return (
-    <Link to={to} className={cn('group flex items-center gap-2.5 rounded-lg', className)} aria-label="LX e-CF, ir al inicio">
+    <Link
+      to={to}
+      className={cn('group flex items-center gap-2.5 rounded-lg', className)}
+      aria-label="LX e-CF, ir al inicio"
+      onClick={(event) => {
+        if (to === '/' && pathname === '/' && !hash) {
+          event.preventDefault();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      }}
+    >
       <img src={COMPANY.logo} alt="" className="h-7 w-auto shrink-0 transition-transform duration-300 group-hover:scale-105" width={64} height={28} />
       {!compact && (
         <span className="flex items-center gap-2">

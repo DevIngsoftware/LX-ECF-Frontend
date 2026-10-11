@@ -5,8 +5,9 @@ import { Reveal } from '@/components/animations/motion';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ROUTES } from '@/constants/routes';
-import { billingService } from '@/services/api/account';
+import { ENDPOINTS } from '@/services/api/endpoints';
 import { queryKeys } from '@/services/api/query-keys';
+import { get } from '@/services/http/client';
 import type { ModuleKey, Plan } from '@/types/account';
 import { cn } from '@/lib/utils';
 import { SectionHeading } from './SectionHeading';
@@ -19,13 +20,6 @@ const MODULE_LABELS: Record<ModuleKey, string> = {
   api: 'API comercial',
   expenses: 'Gestión de gastos',
 };
-
-/** Contenido de respaldo si el catálogo de planes no está disponible públicamente. */
-const FALLBACK_PLANS: Plan[] = [
-  { id: 'fb-1', name: 'Inicial', description: 'Para empresas que comienzan con la facturación electrónica.', priceLabel: null, invoiceLimit: null, userLimit: null, modules: ['catalog'], active: true },
-  { id: 'fb-2', name: 'Empresarial', description: 'Para empresas en crecimiento con varios usuarios y módulos.', priceLabel: null, invoiceLimit: null, userLimit: null, modules: ['catalog', 'receivables', 'api'], active: true, highlighted: true },
-  { id: 'fb-3', name: 'Corporativo', description: 'Para operaciones de alto volumen e integraciones avanzadas.', priceLabel: null, invoiceLimit: null, userLimit: null, modules: ['catalog', 'receivables', 'api', 'reception', 'advanced_reports', 'expenses'], active: true },
-];
 
 const BASE_FEATURES = ['Emisión de e-CF E31 a E47', 'Consulta de estados DGII', 'Clientes y proveedores', 'Reportes esenciales'];
 
@@ -63,8 +57,13 @@ function PlanCard({ plan }: { plan: Plan }) {
 }
 
 export function PlansSection() {
-  const { data, isLoading, isError } = useQuery({ queryKey: queryKeys.plans, queryFn: billingService.plans, retry: false, staleTime: 5 * 60_000 });
-  const plans = (isError || !data?.length ? FALLBACK_PLANS : data.filter((p) => p.active)).slice(0, 3);
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: queryKeys.plans,
+    queryFn: () => get<Plan[]>(ENDPOINTS.billing.plans),
+    retry: false,
+    staleTime: 5 * 60_000,
+  });
+  const plans = data?.filter((plan) => plan.active) ?? [];
 
   return (
     <section id="planes" className="scroll-mt-20 bg-muted/40 py-20 lg:py-28">
@@ -78,8 +77,18 @@ export function PlansSection() {
           <div className="grid gap-6 lg:grid-cols-3">
             {[0, 1, 2].map((i) => <Skeleton key={i} className="h-[440px] rounded-2xl" />)}
           </div>
+        ) : isError ? (
+          <div className="rounded-2xl border bg-card px-6 py-8 text-center">
+            <p className="text-muted-foreground">No pudimos cargar los planes publicados.</p>
+            <Button variant="outline" className="mt-4" onClick={() => void refetch()}>Volver a intentar</Button>
+          </div>
+        ) : plans.length === 0 ? (
+          <p className="rounded-2xl border bg-card px-6 py-8 text-center text-muted-foreground">Aún no hay planes publicados.</p>
         ) : (
-          <div className="grid gap-6 lg:grid-cols-3 lg:items-stretch">
+          <div className={cn(
+            'grid gap-6 lg:items-stretch',
+            plans.length === 1 ? 'mx-auto max-w-md' : plans.length === 2 ? 'mx-auto max-w-4xl md:grid-cols-2' : 'md:grid-cols-2 lg:grid-cols-3',
+          )}>
             {plans.map((p, i) => (
               <Reveal key={p.id} delay={i * 0.08} className="h-full">
                 <PlanCard plan={p} />
@@ -87,14 +96,14 @@ export function PlansSection() {
             ))}
           </div>
         )}
-        <Reveal>
+        {plans.length > 0 && <Reveal>
           <div className="mx-auto flex max-w-2xl flex-col items-center gap-3 rounded-2xl border bg-card px-6 py-5 text-center text-sm sm:flex-row sm:text-left">
             <MessageSquare className="h-5 w-5 shrink-0 text-brand" aria-hidden />
             <p className="flex-1 text-muted-foreground">
-              Los precios no se publican porque cada plan se ajusta a tu operación. Regístrate y nuestro equipo comercial te contactará.
+              Estos son los planes publicados. Si necesitas una propuesta para tu empresa, regístrate y nuestro equipo comercial te contactará.
             </p>
           </div>
-        </Reveal>
+        </Reveal>}
       </div>
     </section>
   );

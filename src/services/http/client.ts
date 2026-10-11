@@ -9,6 +9,7 @@ type RetryableRequest = AxiosRequestConfig & { _retry?: boolean };
 const publicAuthPaths = [
   ENDPOINTS.auth.login, ENDPOINTS.auth.register, ENDPOINTS.auth.refresh, ENDPOINTS.auth.logout,
   ENDPOINTS.auth.verifyEmail, ENDPOINTS.auth.forgot, ENDPOINTS.auth.reset,
+  ENDPOINTS.billing.plans,
   ENV.chatApiPath,
 ];
 const isPublicAuthRequest = (url?: string) => publicAuthPaths.some((path) => path && url?.startsWith(path));
