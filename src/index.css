@@ -1,0 +1,165 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Brand */
+    --brand: 355 100% 45%;
+    --brand-strong: 355 100% 38%;
+    --brand-soft: 355 100% 96%;
+    --ink: 0 0% 8%;
+
+    --background: 220 14% 98%;
+    --foreground: 0 0% 9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 9%;
+    --primary: 355 100% 45%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 14% 95%;
+    --secondary-foreground: 0 0% 12%;
+    --muted: 220 14% 95%;
+    --muted-foreground: 220 9% 40%;
+    --accent: 220 14% 94%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 74% 46%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 89%;
+    --input: 220 13% 86%;
+    --ring: 355 100% 45%;
+
+    --success: 152 64% 34%;
+    --success-foreground: 0 0% 100%;
+    --success-soft: 150 60% 94%;
+    --warning: 35 92% 42%;
+    --warning-foreground: 0 0% 100%;
+    --warning-soft: 45 100% 93%;
+    --info: 210 85% 42%;
+    --info-foreground: 0 0% 100%;
+    --info-soft: 210 90% 95%;
+    --danger-soft: 0 85% 96%;
+
+    --sidebar: 0 0% 100%;
+    --sidebar-foreground: 0 0% 12%;
+
+    --chart-1: 355 100% 45%;
+    --chart-2: 0 0% 15%;
+    --chart-3: 210 85% 45%;
+    --chart-4: 152 60% 38%;
+    --chart-5: 35 92% 50%;
+
+    --radius: 0.75rem;
+    --shadow-card: 0 1px 2px rgb(16 16 16 / 0.04), 0 4px 16px -4px rgb(16 16 16 / 0.06);
+    --shadow-elevated: 0 2px 4px rgb(16 16 16 / 0.04), 0 16px 40px -12px rgb(16 16 16 / 0.18);
+  }
+
+  .dark {
+    --brand-soft: 355 60% 14%;
+    --background: 0 0% 7%;
+    --foreground: 0 0% 96%;
+    --card: 0 0% 10.5%;
+    --card-foreground: 0 0% 96%;
+    --popover: 0 0% 12%;
+    --popover-foreground: 0 0% 96%;
+    --primary: 355 92% 52%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 94%;
+    --muted: 0 0% 14%;
+    --muted-foreground: 0 0% 66%;
+    --accent: 0 0% 16%;
+    --accent-foreground: 0 0% 96%;
+    --destructive: 0 80% 58%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 18%;
+    --input: 0 0% 22%;
+    --ring: 355 92% 55%;
+
+    --success: 152 55% 48%;
+    --success-foreground: 0 0% 8%;
+    --success-soft: 152 40% 13%;
+    --warning: 40 95% 55%;
+    --warning-foreground: 0 0% 8%;
+    --warning-soft: 40 50% 13%;
+    --info: 210 90% 62%;
+    --info-foreground: 0 0% 8%;
+    --info-soft: 210 50% 14%;
+    --danger-soft: 0 50% 14%;
+
+    --sidebar: 0 0% 9%;
+    --sidebar-foreground: 0 0% 92%;
+
+    --chart-1: 355 92% 56%;
+    --chart-2: 0 0% 82%;
+    --chart-3: 210 90% 62%;
+    --chart-4: 152 55% 50%;
+    --chart-5: 40 95% 58%;
+
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 4px 16px -4px rgb(0 0 0 / 0.4);
+    --shadow-elevated: 0 2px 4px rgb(0 0 0 / 0.4), 0 20px 48px -12px rgb(0 0 0 / 0.7);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    line-height: 1.5;
+    overflow-x: hidden;
+  }
+  h1, h2, h3, h4 {
+    @apply font-display tracking-tight;
+    line-height: 1.2;
+  }
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+  ::selection {
+    background: hsl(var(--brand) / 0.2);
+  }
+}
+
+@layer components {
+  .surface {
+    @apply rounded-xl border bg-card text-card-foreground;
+    box-shadow: var(--shadow-card);
+  }
+  .surface-hover {
+    @apply transition-all duration-200 hover:-translate-y-0.5;
+  }
+  .surface-hover:hover {
+    box-shadow: var(--shadow-elevated);
+  }
+  .bg-grid {
+    background-image:
+      linear-gradient(hsl(var(--foreground) / 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--foreground) / 0.05) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+  .text-gradient-brand {
+    background: linear-gradient(100deg, hsl(var(--brand)) 0%, hsl(var(--brand-strong)) 60%, hsl(var(--foreground)) 140%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

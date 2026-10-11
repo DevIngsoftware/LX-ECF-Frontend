@@ -1,0 +1,50 @@
+export const es = {
+  common: {
+    save: 'Guardar',
+    cancel: 'Cancelar',
+    continue: 'Continuar',
+    back: 'Atrás',
+    search: 'Buscar',
+    filters: 'Filtros',
+    export: 'Exportar',
+    retry: 'Reintentar',
+    loading: 'Cargando…',
+    demoData: 'Datos de demostración',
+    signOut: 'Cerrar sesión',
+    profile: 'Mi perfil',
+  },
+  theme: {
+    label: 'Tema',
+    light: 'Claro',
+    dark: 'Oscuro',
+    system: 'Automático',
+  },
+  nav: {
+    home: 'Inicio',
+    newInvoice: 'Nueva factura',
+    invoices: 'Comprobantes',
+    dgii: 'Centro DGII',
+    customers: 'Clientes',
+    suppliers: 'Proveedores',
+    catalog: 'Catálogo',
+    reception: 'Recepción e-CF',
+    receivables: 'Cuentas por cobrar',
+    expenses: 'Gastos',
+    reports: 'Reportes',
+    modules: 'Módulos',
+    integrations: 'Integraciones',
+    subscription: 'Suscripción',
+    users: 'Usuarios',
+    settings: 'Configuración',
+    notifications: 'Notificaciones',
+  },
+  chat: {
+    title: 'Asistente LX e-CF',
+    welcome:
+      '¡Hola! Soy el asistente inteligente de LX e-CF. Puedo orientarte sobre facturación electrónica, funcionalidades de la plataforma y procesos de configuración. ¿En qué puedo ayudarte?',
+    placeholder: 'Escribe tu pregunta…',
+    disclaimer: 'Las respuestas automatizadas pueden contener errores. Verifica la información fiscal importante.',
+  },
+};
+
+export type Messages = typeof es;

@@ -1,0 +1,50 @@
+import type { Messages } from './es';
+
+export const en: Messages = {
+  common: {
+    save: 'Save',
+    cancel: 'Cancel',
+    continue: 'Continue',
+    back: 'Back',
+    search: 'Search',
+    filters: 'Filters',
+    export: 'Export',
+    retry: 'Retry',
+    loading: 'Loading…',
+    demoData: 'Demo data',
+    signOut: 'Sign out',
+    profile: 'My profile',
+  },
+  theme: {
+    label: 'Theme',
+    light: 'Light',
+    dark: 'Dark',
+    system: 'System',
+  },
+  nav: {
+    home: 'Home',
+    newInvoice: 'New invoice',
+    invoices: 'Documents',
+    dgii: 'DGII Center',
+    customers: 'Customers',
+    suppliers: 'Suppliers',
+    catalog: 'Catalog',
+    reception: 'e-CF Reception',
+    receivables: 'Receivables',
+    expenses: 'Expenses',
+    reports: 'Reports',
+    modules: 'Modules',
+    integrations: 'Integrations',
+    subscription: 'Subscription',
+    users: 'Users',
+    settings: 'Settings',
+    notifications: 'Notifications',
+  },
+  chat: {
+    title: 'LX e-CF Assistant',
+    welcome:
+      'Hi! I am the LX e-CF smart assistant. I can guide you on electronic invoicing, platform features and setup processes. How can I help?',
+    placeholder: 'Type your question…',
+    disclaimer: 'Automated answers may contain errors. Verify important tax information.',
+  },
+};

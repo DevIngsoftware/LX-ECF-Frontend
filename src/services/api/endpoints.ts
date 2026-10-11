@@ -1,0 +1,57 @@
+/**
+ * Rutas PROVISIONALES. Deben sustituirse por las definidas en la
+ * especificación OpenAPI del backend LX e-CF (Spring Boot) cuando esté disponible.
+ */
+export const ENDPOINTS = {
+  auth: {
+    login: '/auth/login',
+    register: '/auth/register',
+    logout: '/auth/logout',
+    me: '/auth/me',
+    refresh: '/auth/refresh',
+    forgot: '/auth/password/forgot',
+    reset: '/auth/password/reset',
+    verifyEmail: '/auth/verify-email',
+  },
+  dashboard: '/dashboard/summary',
+  invoices: {
+    list: '/facturas',
+    detail: (id: string) => `/facturas/${id}`,
+    emit: '/facturas',
+    draft: '/facturas/borradores',
+    validate: '/facturas/validar',
+    pdf: (id: string) => `/facturas/${id}/pdf`,
+    xml: (id: string) => `/facturas/${id}/xml`,
+    status: (id: string) => `/facturas/${id}/estado`,
+  },
+  dgii: {
+    overview: '/dgii/resumen',
+    track: (trackId: string) => `/dgii/track/${trackId}`,
+    certificate: '/dgii/certificado',
+  },
+  parties: (kind: 'customers' | 'suppliers') => (kind === 'customers' ? '/clientes' : '/proveedores'),
+  rncLookup: (rnc: string) => `/contribuyentes/${rnc}`,
+  catalog: '/catalogo',
+  reception: '/recepcion',
+  receivables: { list: '/cuentas-por-cobrar', payments: '/cuentas-por-cobrar/pagos' },
+  expenses: '/gastos',
+  reports: (key: string) => `/reportes/${key}`,
+  reportExport: (key: string, format: string) => `/reportes/${key}/export?formato=${format}`,
+  billing: { subscription: '/suscripcion', plans: '/planes', invoices: '/suscripcion/facturas', changePlan: '/suscripcion/cambio-plan' },
+  modules: { list: '/modulos', request: (key: string) => `/modulos/${key}/solicitud` },
+  notifications: { list: '/notificaciones', read: (id: string) => `/notificaciones/${id}/leida`, readAll: '/notificaciones/leidas' },
+  users: '/usuarios',
+  settings: { company: '/configuracion/empresa', status: '/configuracion/estado' },
+  onboarding: '/onboarding',
+  developers: { credentials: '/api-keys', usage: '/api-keys/uso', logs: '/api-keys/historial' },
+  admin: {
+    dashboard: '/admin/dashboard',
+    companies: '/admin/empresas',
+    plans: '/admin/planes',
+    subscriptions: '/admin/suscripciones',
+    users: '/admin/usuarios',
+    tickets: '/admin/soporte',
+    audit: '/admin/auditoria',
+    settings: '/admin/configuracion',
+  },
+} as const;
