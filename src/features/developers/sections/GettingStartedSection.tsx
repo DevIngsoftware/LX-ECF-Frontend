@@ -71,7 +71,7 @@ export function GettingStartedSection() {
       <DocBlock title="Tu primera llamada" description="Lista los comprobantes más recientes para verificar que tu credencial funciona.">
         <CodeBlock lang="bash" title="cURL — Lista de comprobantes" code={FIRST_CALL} />
         <p className="text-sm text-muted-foreground">
-          Reemplaza <InlineCode>{'{BASE_URL_PRUEBAS}'}</InlineCode> por la URL del ambiente de pruebas cuando sea publicada y define la variable{' '}
+          Reemplaza <InlineCode>{'{BASE_URL_PRUEBAS}'}</InlineCode> por la URL de tu instalación en pruebas y define la variable{' '}
           <InlineCode>LX_ACCESS_TOKEN</InlineCode> con el token obtenido al intercambiar tu API Key y API Secret en tu servidor.
         </p>
         <Callout tone="info">Usa siempre el ambiente de pruebas hasta validar tu integración de extremo a extremo.</Callout>

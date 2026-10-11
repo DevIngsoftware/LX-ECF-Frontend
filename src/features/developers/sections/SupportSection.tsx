@@ -22,7 +22,7 @@ const FAQ = [
   },
   {
     q: '¿Dónde está la especificación OpenAPI?',
-    a: 'Se publicará en este portal. Hasta entonces, los contratos mostrados son ilustrativos.',
+    a: 'La API genera su especificación en /v3/api-docs y la vista interactiva en /swagger-ui/index.html de tu instalación.',
   },
 ];
 
@@ -63,7 +63,7 @@ export function SupportSection() {
         ) : (
           <Callout tone="info">Los canales oficiales de soporte se publicarán próximamente.</Callout>
         )}
-        <p className="text-sm text-muted-foreground">Al reportar un problema incluye el traceId de la respuesta, la fecha y hora y la ruta del endpoint. Nunca compartas tu secreto.</p>
+        <p className="text-sm text-muted-foreground">Al reportar un problema incluye la fecha y hora, la ruta, el código HTTP y el mensaje de error. Nunca compartas tu secreto.</p>
       </DocBlock>
 
       <DocBlock title="Preguntas frecuentes">

@@ -10,7 +10,7 @@ import { Callout, DocBlock, DocHeader } from '../components/doc-ui';
 const FEATURES = [
   { icon: Workflow, title: 'Emisión de e-CF', text: 'Envía los datos de tus comprobantes y la plataforma se encarga de firmarlos y remitirlos a la DGII.' },
   { icon: ShieldCheck, title: 'Estados en tiempo real', text: 'Consulta el estado interno y el estado DGII de cada comprobante emitido.' },
-  { icon: FileCode2, title: 'Representación impresa', text: 'Descarga el PDF y el XML firmado de cada comprobante aceptado.' },
+  { icon: FileCode2, title: 'Representación impresa', text: 'Descarga el PDF del comprobante y su XML cuando ya esté firmado.' },
   { icon: Webhook, title: 'Integración con tu sistema', text: 'Conecta tu ERP, punto de venta o tienda en línea mediante una API REST.' },
 ];
 
@@ -60,9 +60,9 @@ export function IntroSection() {
       </DocBlock>
 
       <DocBlock title="Antes de comenzar">
-        <Callout tone="warning" title="Contratos ilustrativos">
-          Los endpoints, cuerpos y ejemplos de este portal son ilustrativos hasta la publicación de la especificación OpenAPI oficial. No los uses
-          como contrato definitivo en producción.
+        <Callout tone="info" title="Referencia de la API actual">
+          Las rutas y los campos de esta guía corresponden a la API implementada. Consulta también la especificación generada en <code>/v3/api-docs</code>
+          y prueba los endpoints en <code>/swagger-ui/index.html</code> de tu instalación.
         </Callout>
         <Link to={ROUTES.developers.section('documentacion')} className="inline-flex items-center gap-1 text-sm font-medium text-brand hover:underline">
           Ir a la referencia de endpoints <ArrowRight className="h-4 w-4" aria-hidden />

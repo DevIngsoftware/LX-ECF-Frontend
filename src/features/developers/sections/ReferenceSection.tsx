@@ -47,12 +47,12 @@ export function ReferenceSection() {
                     />
                   </div>
                 )}
-                {e.request && <CodeBlock lang="json" title="Solicitud — Ejemplo ilustrativo" code={e.request} />}
+                {e.request && <CodeBlock lang="json" title="Solicitud — Ejemplo" code={e.request} />}
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Respuesta <HttpStatusBadge status={e.responseStatus} />
                   </div>
-                  <CodeBlock lang={e.response.startsWith('HTTP') ? 'http' : 'json'} title="Respuesta — Ejemplo ilustrativo" code={e.response} />
+                  <CodeBlock lang={e.response.startsWith('HTTP') ? 'http' : 'json'} title="Respuesta — Ejemplo" code={e.response} />
                 </div>
               </AccordionContent>
             </AccordionItem>

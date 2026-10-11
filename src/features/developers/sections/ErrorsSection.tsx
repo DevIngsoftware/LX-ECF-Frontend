@@ -4,39 +4,28 @@ import { Callout, DocBlock, DocHeader, DocTable, InlineCode } from '../component
 import { HttpStatusBadge } from '../components/MethodBadge';
 
 const CODES: [number, string, string, string][] = [
-  [400, 'BAD_REQUEST', 'La solicitud está mal formada.', 'No. Corrige la solicitud.'],
-  [401, 'UNAUTHORIZED', 'Token ausente, inválido o expirado.', 'Sí, tras renovar el token.'],
-  [402, 'SUBSCRIPTION_INACTIVE', 'La suscripción de la empresa no está activa.', 'No.'],
-  [403, 'FORBIDDEN', 'La credencial no tiene permisos para la operación.', 'No.'],
-  [403, 'MODULE_NOT_CONTRACTED', 'El módulo de API no está incluido en el plan.', 'No.'],
-  [404, 'NOT_FOUND', 'El recurso no existe.', 'No.'],
-  [409, 'CONFLICT', 'Idempotency-Key reutilizada con un cuerpo distinto, o conflicto de estado.', 'No. Revisa la clave.'],
-  [422, 'VALIDATION_ERROR', 'Los datos no superan las validaciones fiscales.', 'No. Corrige los campos.'],
-  [429, 'RATE_LIMITED', 'Demasiadas solicitudes en poco tiempo.', 'Sí, con espera exponencial.'],
-  [500, 'INTERNAL_ERROR', 'Error inesperado del servicio.', 'Solo con la misma Idempotency-Key.'],
-  [503, 'SERVICE_UNAVAILABLE', 'Servicio o DGII temporalmente no disponible.', 'Solo con la misma Idempotency-Key.'],
+  [400, 'Solicitud inválida', 'Faltan datos o alguna regla de validación falla.', 'Corrige la solicitud.'],
+  [401, 'Token inválido', 'El token técnico es inválido o expiró.', 'Obtén otro token.'],
+  [403, 'Acceso denegado', 'La credencial no puede usar esta ruta.', 'Revisa credencial, ambiente y plan.'],
+  [404, 'No encontrado', 'El comprobante no existe para la empresa de la credencial.', 'Revisa el e-NCF.'],
+  [409, 'Conflicto', 'La operación no es válida en el estado actual o la clave de idempotencia entra en conflicto.', 'Revisa el estado y la clave.'],
+  [502, 'Error de integración', 'Falló una comunicación con un servicio fiscal externo.', 'Consulta el estado antes de reintentar.'],
+  [500, 'Error interno', 'Ocurrió un fallo inesperado.', 'Consulta el estado antes de reintentar.'],
 ];
 
 const ERROR_BODY = `{
-  "status": 422,
-  "code": "VALIDATION_ERROR",
-  "message": "Revisa los datos ingresados.",
-  "errors": [
-    { "field": "comprador.rnc", "message": "El RNC debe tener 9 u 11 dígitos." },
-    { "field": "items[0].cantidad", "message": "Debe ser mayor que cero." }
-  ],
-  "traceId": "4bf92f3577b34da6a3ce929d0e0e4736"
+  "error": "El RNC o la cédula debe tener 9 u 11 dígitos"
 }`;
 
 export function ErrorsSection() {
   return (
     <>
-      <DocHeader eyebrow="Referencia" title="Errores" description="La API usa códigos HTTP estándar y un cuerpo de error uniforme." />
+      <DocHeader eyebrow="Referencia" title="Errores" description="La API usa códigos HTTP estándar. El contenido de la respuesta depende del tipo de error." />
 
       <DocBlock title="Códigos HTTP">
         <DocTable
           minWidth={680}
-          headers={['HTTP', 'Código', 'Descripción', '¿Reintentar?']}
+          headers={['HTTP', 'Resultado', 'Descripción', 'Siguiente paso']}
           rows={CODES.map(([s, c, d, r]) => [
             <HttpStatusBadge key="s" status={s} />,
             <InlineCode key="c">{c}</InlineCode>,
@@ -46,8 +35,9 @@ export function ErrorsSection() {
         />
       </DocBlock>
 
-      <DocBlock title="Cuerpo de error" description="Incluye el traceId cuando contactes a soporte para agilizar el diagnóstico.">
-        <CodeBlock lang="json" title="422 Unprocessable Entity — Ejemplo ilustrativo" code={ERROR_BODY} />
+      <DocBlock title="Cuerpo de error" description="Los errores de validación propios de la API incluyen un campo error. Otros fallos pueden usar una estructura distinta.">
+        <CodeBlock lang="json" title="400 Bad Request — Ejemplo" code={ERROR_BODY} />
+        <p className="text-sm text-muted-foreground">El endpoint de prevalidación devuelve HTTP 200 con <InlineCode>valid: false</InlineCode> y una lista de mensajes cuando el formulario no supera sus reglas.</p>
       </DocBlock>
 
       <DocBlock title="Reintentos seguros">
@@ -59,7 +49,7 @@ export function ErrorsSection() {
           <li>Genera y guarda la Idempotency-Key antes de enviar la solicitud.</li>
           <li>En reintentos, usa exactamente la misma clave y el mismo cuerpo.</li>
           <li>Aplica espera exponencial con un límite de intentos.</li>
-          <li>Los errores 4xx (excepto 401 y 429) no deben reintentarse sin corregir la solicitud.</li>
+          <li>Los errores 4xx no deben reintentarse sin corregir la causa; ante 401, renueva el token.</li>
         </ul>
       </DocBlock>
     </>
