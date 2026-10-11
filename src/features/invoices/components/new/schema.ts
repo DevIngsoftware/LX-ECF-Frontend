@@ -74,6 +74,7 @@ export const invoiceFormSchema = z
 
     v.items.forEach((it, i) => {
       if (it.discount > it.quantity * it.unitPrice) issue(['items', i, 'discount'], 'El descuento supera el importe de la línea');
+      if (v.type === 'E44' && it.itbisRate !== 0) issue(['items', i, 'itbisRate'], 'E44 requiere artículos exentos de ITBIS');
     });
 
     if (cfg.allowsRetentions) {
@@ -103,7 +104,7 @@ export const defaultValues = (type: EcfTypeCode = 'E31'): InvoiceFormValues => (
   incomeType: '01',
   paymentType: '1',
   paymentTermDays: undefined,
-  items: [{ ...emptyItem(), itbisRate: type === 'E46' || type === 'E47' ? 0 : 18 }],
+  items: [{ ...emptyItem(), itbisRate: type === 'E44' || type === 'E46' || type === 'E47' ? 0 : 18 }],
   retentions: { itbis: 0, isr: 0 },
   reference: { modifiedNcf: '', modifiedDate: '', modificationCode: '', reason: '' },
   notes: '',

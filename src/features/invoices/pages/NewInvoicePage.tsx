@@ -86,7 +86,7 @@ export function NewInvoicePage() {
   }, [form, noteType, draftId, savedCustomer.data]);
 
   useEffect(() => {
-    if (type !== 'E46' && type !== 'E47') return;
+    if (type !== 'E44' && type !== 'E46' && type !== 'E47') return;
     form.getValues('items').forEach((item, index) => {
       if (item.itbisRate !== 0) form.setValue(`items.${index}.itbisRate`, 0);
     });
@@ -182,7 +182,7 @@ export function NewInvoicePage() {
               </div>
             </div>}
           </FormSection>
-          <FormSection id="sec-articulos" step={3} title="Artículos y servicios" description="Agrega los conceptos del comprobante." aside={<Button type="button" variant="outline" size="sm" onClick={() => append({ ...emptyItem(), itbisRate: type === 'E46' || type === 'E47' ? 0 : 18 })}><Plus /> Agregar línea</Button>}>
+          <FormSection id="sec-articulos" step={3} title="Artículos y servicios" description="Agrega los conceptos del comprobante." aside={<Button type="button" variant="outline" size="sm" onClick={() => append({ ...emptyItem(), itbisRate: type === 'E44' || type === 'E46' || type === 'E47' ? 0 : 18 })}><Plus /> Agregar línea</Button>}>
             <div className="space-y-4">{fields.map((field, index) => <div key={field.id} className="rounded-xl border bg-background/50 p-4">
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2"><h3 className="text-sm font-semibold">Línea {index + 1}</h3><div className="flex items-center gap-2">
                 {hasModule('catalog') && <ProductPicker onSelect={(product) => {
@@ -190,7 +190,7 @@ export function NewInvoicePage() {
                   form.setValue(`items.${index}.description`, product.name);
                   form.setValue(`items.${index}.kind`, product.kind);
                   form.setValue(`items.${index}.unitPrice`, product.price);
-                  form.setValue(`items.${index}.itbisRate`, type === 'E46' || type === 'E47' ? 0 : product.itbisRate);
+                  form.setValue(`items.${index}.itbisRate`, type === 'E44' || type === 'E46' || type === 'E47' ? 0 : product.itbisRate);
                 }} />}
                 <Button type="button" variant="ghost" size="icon-sm" aria-label={`Eliminar línea ${index + 1}`} disabled={fields.length === 1} onClick={() => remove(index)}><Trash2 /></Button>
               </div></div>
@@ -200,7 +200,7 @@ export function NewInvoicePage() {
                 <Field id={`quantity-${index}`} label="Cantidad" error={errors.items?.[index]?.quantity?.message}><Input id={`quantity-${index}`} type="number" min="0.01" step="0.01" {...form.register(`items.${index}.quantity`, { valueAsNumber: true })} /></Field>
                 <Field id={`price-${index}`} label="Precio unitario" error={errors.items?.[index]?.unitPrice?.message}><Input id={`price-${index}`} type="number" min="0" step="0.01" {...form.register(`items.${index}.unitPrice`, { valueAsNumber: true })} /></Field>
                 <Field id={`discount-${index}`} label="Descuento" error={errors.items?.[index]?.discount?.message}><Input id={`discount-${index}`} type="number" min="0" step="0.01" {...form.register(`items.${index}.discount`, { valueAsNumber: true })} /></Field>
-                <Field id={`itbis-${index}`} label="ITBIS"><select id={`itbis-${index}`} className={selectClass} {...form.register(`items.${index}.itbisRate`, { valueAsNumber: true })}>{ITBIS_RATES.filter((rate) => type !== 'E46' && type !== 'E47' || rate.value === 0).map((rate) => <option key={rate.value} value={rate.value}>{rate.label}</option>)}</select></Field>
+                <Field id={`itbis-${index}`} label="ITBIS"><select id={`itbis-${index}`} className={selectClass} {...form.register(`items.${index}.itbisRate`, { valueAsNumber: true })}>{ITBIS_RATES.filter((rate) => type !== 'E44' && type !== 'E46' && type !== 'E47' || rate.value === 0).map((rate) => <option key={rate.value} value={rate.value}>{rate.label}</option>)}</select></Field>
               </div>
             </div>)}</div>
           </FormSection>
