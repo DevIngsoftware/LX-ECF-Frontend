@@ -58,7 +58,7 @@ export function LoginPage() {
     <div>
       <AuthHeader title="Iniciar sesión" description="Accede a tu cuenta de LX e-CF para gestionar tus comprobantes electrónicos." />
 
-      {ENV.useMocks && (
+      {ENV.authUseMocks && (
         <div className="mb-6 flex gap-3 rounded-xl border border-dashed border-brand/40 bg-brand-soft/60 p-4 text-sm">
           <FlaskConical className="mt-0.5 h-4 w-4 shrink-0 text-brand" aria-hidden />
           <p className="leading-relaxed text-muted-foreground">
@@ -115,7 +115,7 @@ export function LoginPage() {
                 <FormControl>
                   <Checkbox checked={field.value} onCheckedChange={(v) => field.onChange(v === true)} />
                 </FormControl>
-                <FormLabel className="cursor-pointer text-sm font-normal">{ENV.useMocks ? 'Mantener sesión al recargar' : 'Recordarme en este dispositivo'}</FormLabel>
+                  <FormLabel className="cursor-pointer text-sm font-normal">{ENV.authUseMocks ? 'Mantener sesión al recargar' : 'Recordarme en este dispositivo'}</FormLabel>
               </FormItem>
             )}
           />
