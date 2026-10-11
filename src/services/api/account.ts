@@ -50,8 +50,28 @@ export interface SettingsService {
   status(): Promise<SettingsStatusItem[]>;
   uploadCertificate(input: CertificateUpload): Promise<void>;
   exportBackup(password: string): Promise<Blob>;
+  previewBackup(file: File, password: string): Promise<BackupPreview>;
+  importBackup(file: File, password: string, expectedSha256: string): Promise<BackupImportResult>;
   onboarding(): Promise<OnboardingState>;
   saveOnboardingStep(step: number, data: Record<string, unknown>): Promise<OnboardingState>;
+}
+
+export interface BackupPreview {
+  sha256: string;
+  companyRnc: string;
+  createdAt: string;
+  available: Record<string, number>;
+  existing: Record<string, number>;
+  warnings: string[];
+  preserved: string[];
+}
+
+export interface BackupImportResult {
+  sha256: string;
+  inserted: Record<string, number>;
+  skipped: Record<string, number>;
+  advancedSequences: number;
+  warnings: string[];
 }
 
 const http = {
@@ -94,6 +114,19 @@ const http = {
       return post(ENDPOINTS.dgii.certificate, form, { headers: { 'Content-Type': 'multipart/form-data' } });
     },
     exportBackup: (password) => postBlob(ENDPOINTS.settings.backupExport, { password }, { timeout: 600000 }),
+    previewBackup: (file, password) => {
+      const form = new FormData();
+      form.append('file', file);
+      form.append('password', password);
+      return post<BackupPreview>(ENDPOINTS.settings.backupPreview, form, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 600000 });
+    },
+    importBackup: (file, password, expectedSha256) => {
+      const form = new FormData();
+      form.append('file', file);
+      form.append('password', password);
+      form.append('expectedSha256', expectedSha256);
+      return post<BackupImportResult>(ENDPOINTS.settings.backupImport, form, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 600000 });
+    },
     onboarding: () => get(ENDPOINTS.onboarding),
     saveOnboardingStep: (step, data) => put(`${ENDPOINTS.onboarding}/pasos/${step}`, data),
   } satisfies SettingsService,
@@ -202,6 +235,12 @@ const mock = {
     },
     async exportBackup() {
       throw new ApiError('server', 'La exportación requiere conexión con la API LX e-CF.', 503);
+    },
+    async previewBackup() {
+      throw new ApiError('server', 'La importación requiere conexión con la API LX e-CF.', 503);
+    },
+    async importBackup() {
+      throw new ApiError('server', 'La importación requiere conexión con la API LX e-CF.', 503);
     },
     async onboarding() {
       await delay(300);

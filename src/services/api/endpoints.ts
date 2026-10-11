@@ -43,7 +43,7 @@ export const ENDPOINTS = {
   modules: { list: '/modulos', request: (key: string) => `/modulos/${key}/solicitud` },
   notifications: { list: '/notificaciones', read: (id: string) => `/notificaciones/${id}/leida`, readAll: '/notificaciones/leidas' },
   users: '/usuarios',
-  settings: { company: '/configuracion/empresa', status: '/configuracion/estado', logo: '/emisor/logo', uploadLogo: '/emisor/upload/logo', backupExport: '/configuracion/respaldo/exportar' },
+  settings: { company: '/configuracion/empresa', status: '/configuracion/estado', logo: '/emisor/logo', uploadLogo: '/emisor/upload/logo', backupExport: '/configuracion/respaldo/exportar', backupPreview: '/configuracion/respaldo/vista-previa', backupImport: '/configuracion/respaldo/importar' },
   onboarding: '/onboarding',
   developers: { credentials: '/api-keys', usage: '/api-keys/uso', logs: '/api-keys/historial' },
   admin: {
