@@ -93,7 +93,7 @@ const mock = {
       const prefix = `lx_${environment === 'sandbox' ? 'test' : 'live'}_${uid().slice(0, 4)}`;
       const credential: ApiCredential = { id: uid(), name, prefix, environment, createdAt: new Date().toISOString(), status: 'ACTIVA' };
       credentials.unshift(credential);
-      return { credential, secret: `${prefix}_DEMO_${uid()}${uid()}_SIN_VALIDEZ` };
+      return { credential, apiKey: `${prefix}_DEMO_KEY`, secret: `${prefix}_DEMO_${uid()}${uid()}_SIN_VALIDEZ` };
     },
     async revokeCredential(id) {
       await delay(500);
@@ -209,7 +209,12 @@ const mock = {
 };
 
 const impl = ENV.useMocks ? mock : http;
-export const developersService: DevelopersService = impl.developers;
+export const developersService: DevelopersService = {
+  ...impl.developers,
+  credentials: ENV.authUseMocks ? mock.developers.credentials : http.developers.credentials,
+  createCredential: ENV.authUseMocks ? mock.developers.createCredential : http.developers.createCredential,
+  revokeCredential: ENV.authUseMocks ? mock.developers.revokeCredential : http.developers.revokeCredential,
+};
 export const adminService: AdminService = {
   ...impl.admin,
   dashboard: ENV.authUseMocks ? mock.admin.dashboard : http.admin.dashboard,

@@ -14,6 +14,7 @@ export interface ApiCredential {
 /** El secreto llega una sola vez desde el backend y nunca se guarda. */
 export interface CreatedCredential {
   credential: ApiCredential;
+  apiKey: string;
   secret: string;
 }
 

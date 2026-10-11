@@ -61,7 +61,7 @@ export function IntegrationsPage() {
         <div className="flex flex-col gap-1 border-b p-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="font-semibold">Credenciales de API</h2>
-            <p className="text-sm text-muted-foreground">El secreto se muestra una sola vez al crearlo. LX solo conserva el prefijo.</p>
+            <p className="text-sm text-muted-foreground">La API Key y el secreto se muestran al crearlos. El secreto se guarda en la API solo como hash.</p>
           </div>
         </div>
         <CredentialsList

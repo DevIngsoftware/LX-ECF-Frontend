@@ -2,22 +2,22 @@ import { KeyRound, ShieldCheck } from 'lucide-react';
 import { CodeBlock } from '@/components/shared/CodeBlock';
 import { Callout, DocBlock, DocHeader, InlineCode } from '../components/doc-ui';
 
-const BEARER = `GET /v1/ecf HTTP/1.1
+const BEARER = `GET /v1/api-client/identity HTTP/1.1
 Host: {BASE_URL}
-Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...
+Authorization: Bearer <ACCESS_TOKEN>
 Accept: application/json`;
 
-const API_KEY = `curl -X POST "https://{BASE_URL}/v1/auth/token" \\
+const API_KEY = `curl -X POST "https://{BASE_URL}/v1/api-keys/token" \\
   -H "Content-Type: application/json" \\
   -d '{
-    "apiKey": "lx_test_XXXX",
+    "apiKey": "lxk_XXXX",
     "apiSecret": "$LX_API_SECRET"
   }'`;
 
 const TOKEN_RESPONSE = `{
-  "accessToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "accessToken": "<JWT>",
   "tokenType": "Bearer",
-  "expiresIn": 3600
+  "expiresIn": 900
 }`;
 
 const METHODS = [
@@ -53,8 +53,8 @@ export function AuthSection() {
       </DocBlock>
 
       <DocBlock title="1. Obtener un token" description="Intercambia la credencial por un token de acceso desde tu servidor.">
-        <CodeBlock lang="bash" title="cURL — Ejemplo ilustrativo" code={API_KEY} />
-        <CodeBlock lang="json" title="Respuesta 200 — Ejemplo ilustrativo" code={TOKEN_RESPONSE} />
+        <CodeBlock lang="bash" title="cURL — Intercambio de credenciales" code={API_KEY} />
+        <CodeBlock lang="json" title="Respuesta 200" code={TOKEN_RESPONSE} />
       </DocBlock>
 
       <DocBlock title="2. Usar el token" description="Incluye el token en cada solicitud.">
@@ -72,8 +72,8 @@ export function AuthSection() {
           <li>Usa credenciales distintas para pruebas y producción.</li>
           <li>Revoca de inmediato cualquier credencial que sospeches comprometida.</li>
         </ul>
-        <Callout tone="warning" title="Flujo sujeto a confirmación">
-          El endpoint de intercambio de token y su formato son ilustrativos hasta la publicación de la especificación OpenAPI oficial.
+        <Callout tone="info" title="Alcance actual">
+          El intercambio de credenciales y la consulta de identidad ya funcionan. Los endpoints fiscales para este token se conectarán en la siguiente etapa.
         </Callout>
       </DocBlock>
     </>

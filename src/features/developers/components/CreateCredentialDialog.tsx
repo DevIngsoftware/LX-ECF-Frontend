@@ -58,10 +58,18 @@ export function CreateCredentialDialog({ open, onOpenChange }: { open: boolean; 
         {created ? (
           <>
             <DialogHeader>
-              <DialogTitle>Guarda tu secreto ahora</DialogTitle>
-              <DialogDescription>Credencial «{created.credential.name}» creada. Este secreto no volverá a mostrarse.</DialogDescription>
+              <DialogTitle>Guarda tu API Key y API Secret</DialogTitle>
+              <DialogDescription>Credencial «{created.credential.name}» creada. Copia ambos valores ahora.</DialogDescription>
             </DialogHeader>
             <div className="space-y-3">
+              <div>
+                <p className="mb-1 text-xs text-muted-foreground">API Key</p>
+                <div className="flex items-center gap-2 rounded-lg border bg-muted/50 p-3">
+                  <code className="min-w-0 flex-1 break-all font-mono text-xs">{created.apiKey}</code>
+                  <CopyButton value={created.apiKey} label="Copiar API Key" />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">API Secret</p>
               <div className="flex items-center gap-2 rounded-lg border bg-muted/50 p-3">
                 <code className="min-w-0 flex-1 break-all font-mono text-xs">{created.secret}</code>
                 <CopyButton value={created.secret} label="Copiar secreto" />

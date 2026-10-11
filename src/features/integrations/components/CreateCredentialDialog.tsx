@@ -59,14 +59,21 @@ export function CreateCredentialDialog({ open, onOpenChange }: { open: boolean; 
         {created ? (
           <>
             <DialogHeader>
-              <DialogTitle>Guarda tu secreto ahora</DialogTitle>
-              <DialogDescription>Credencial «{created.credential.name}» creada. Este secreto solo se mostrará una vez.</DialogDescription>
+              <DialogTitle>Guarda tu API Key y API Secret</DialogTitle>
+              <DialogDescription>Credencial «{created.credential.name}» creada. Copia ambos valores ahora.</DialogDescription>
             </DialogHeader>
             <div className="flex items-start gap-3 rounded-xl border border-warning/40 bg-warning-soft p-4 text-sm">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" aria-hidden />
               <p className="text-muted-foreground">
                 Cópialo y guárdalo en un gestor de secretos. LX no puede volver a mostrarlo. Si lo pierdes, revoca esta credencial y crea una nueva.
               </p>
+            </div>
+            <div>
+              <p className="mb-1.5 text-xs font-medium text-muted-foreground">API Key</p>
+              <div className="flex items-center gap-2 rounded-lg border bg-muted/50 p-2 pl-3">
+                <code className="min-w-0 flex-1 break-all font-mono text-xs">{created.apiKey}</code>
+                <CopyButton value={created.apiKey} label="Copiar API Key" />
+              </div>
             </div>
             <div>
               <p className="mb-1.5 text-xs font-medium text-muted-foreground">Secreto</p>
