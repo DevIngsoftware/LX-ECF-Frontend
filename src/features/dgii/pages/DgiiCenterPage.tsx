@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Activity, FileKey2, Hash, Search, ShieldCheck } from 'lucide-react';
+import { Activity, AlertTriangle, FileKey2, Hash, Search, ShieldCheck } from 'lucide-react';
 import { PageTransition } from '@/components/animations/motion';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { StatCard } from '@/components/shared/StatCard';
@@ -14,7 +14,7 @@ import { DgiiMessages } from '@/features/invoices/components/DgiiMessages';
 import { invoicesService } from '@/services/api/invoices';
 import { queryKeys } from '@/services/api/query-keys';
 import { errorMessage } from '@/services/http/errors';
-import { formatDate, formatNumber } from '@/utils/format';
+import { formatDate, formatMoney, formatNumber } from '@/utils/format';
 
 export function DgiiCenterPage() {
   const [trackId, setTrackId] = useState('');
@@ -51,6 +51,25 @@ export function DgiiCenterPage() {
         </section>
         <section className="surface p-5" aria-labelledby="events-title"><h2 id="events-title" className="mb-4 font-semibold">Eventos recientes</h2>{overview.isLoading ? <LoadingState rows={4} /> : <EventTimeline events={data?.events ?? []} />}</section>
       </div>
+      {!!data?.recentRejections?.length && (
+        <section className="surface mt-6 overflow-hidden" aria-labelledby="rejections-title">
+          <div className="flex items-center gap-2 border-b p-5">
+            <AlertTriangle className="h-4 w-4 text-destructive" aria-hidden />
+            <h2 id="rejections-title" className="font-semibold">Rechazos recientes</h2>
+          </div>
+          <ul className="divide-y">
+            {data.recentRejections.map((invoice) => (
+              <li key={invoice.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm">
+                <div>
+                  <p className="font-mono font-medium">{invoice.encf}</p>
+                  <p className="text-xs text-muted-foreground">{invoice.buyerName} · {formatDate(invoice.issueDate)} · {formatMoney(invoice.total)}</p>
+                </div>
+                <Button asChild variant="outline" size="sm"><Link to={ROUTES.app.invoice(invoice.id)}>Ver motivo</Link></Button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </>}
   </PageTransition>;
 }
