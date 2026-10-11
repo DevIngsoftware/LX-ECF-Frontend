@@ -55,7 +55,7 @@ export function ReceptionPage() {
       },
       { id: 'issueDate', accessorKey: 'issueDate', header: 'Emisión', cell: ({ row }) => <span className="text-muted-foreground">{formatDate(row.original.issueDate)}</span> },
       { id: 'receivedAt', accessorKey: 'receivedAt', header: 'Recibido', cell: ({ row }) => <span className="text-muted-foreground">{formatDate(row.original.receivedAt)}</span> },
-      { id: 'itbis', accessorKey: 'itbis', header: 'ITBIS', cell: ({ row }) => <span className="tabular-nums text-muted-foreground">{formatMoney(row.original.itbis)}</span> },
+      { id: 'itbis', accessorKey: 'itbis', header: 'ITBIS', cell: ({ row }) => <span className="tabular-nums text-muted-foreground">{row.original.itbis == null ? '—' : formatMoney(row.original.itbis)}</span> },
       { id: 'total', accessorKey: 'total', header: 'Total', cell: ({ row }) => <span className="font-medium tabular-nums">{formatMoney(row.original.total)}</span> },
       {
         id: 'status',

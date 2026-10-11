@@ -8,7 +8,7 @@ import type { InvoiceSummary } from '@/types/ecf';
 import { get, getBlob, patch, post, put } from '../http/client';
 import { ApiError, toApiError } from '../http/errors';
 import { ENDPOINTS } from './endpoints';
-import { customers, invoices, receivedDocuments, suppliers } from '../mocks/data';
+import { customers, invoices, suppliers } from '../mocks/data';
 import { buildReport } from '../mocks/reports';
 import { delay, paginate, uid } from '../mocks/utils';
 
@@ -159,17 +159,6 @@ const mock = {
     update: (id, input) => http.catalog.update(id, input),
     setActive: (id, active) => http.catalog.setActive(id, active),
   } satisfies CatalogService,
-  reception: {
-    async list(q) {
-      await delay();
-      const list = q.status && q.status !== 'ALL' ? receivedDocuments.filter((d) => d.status === q.status) : receivedDocuments;
-      return paginate(list, q, ['encf', 'supplierName', 'supplierRnc']);
-    },
-    async downloadXml(id) {
-      await delay(400);
-      return new Blob([`<!-- XML de demostración ${id} sin validez fiscal -->`], { type: 'application/xml' });
-    },
-  } satisfies ReceptionService,
   receivables: {
     list: (params) => http.receivables.list(params),
     summary: () => http.receivables.summary(),
@@ -223,7 +212,7 @@ export const partiesService: PartiesService = {
   lookupRnc: portalCustomers.lookupRnc,
 };
 export const catalogService: CatalogService = http.catalog;
-export const receptionService: ReceptionService = impl.reception;
+export const receptionService: ReceptionService = http.reception;
 export const receivablesService: ReceivablesService = http.receivables;
 export const expensesService: ExpensesService = http.expenses;
 export const reportsService: ReportsService = impl.reports;

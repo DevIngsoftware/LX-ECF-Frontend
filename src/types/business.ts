@@ -49,7 +49,7 @@ export interface ReceivedDocument {
   issueDate: ISODate;
   receivedAt: ISODate;
   total: number;
-  itbis: number;
+  itbis: number | null;
   status: OpenString<'RECIBIDO' | 'ACEPTADO' | 'RECHAZADO' | 'EN_REVISION'>;
   hasPdf: boolean;
 }

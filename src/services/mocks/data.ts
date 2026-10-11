@@ -1,5 +1,5 @@
 import type { EcfTypeCode, InvoiceDetail, InvoiceSummary } from '@/types/ecf';
-import type { Expense, Party, Product, ReceivedDocument, Receivable, ReceivablePayment } from '@/types/business';
+import type { Expense, Party, Product, Receivable, ReceivablePayment } from '@/types/business';
 import type { AppNotification, ModuleInfo, Plan, ServiceInvoice, TenantUser } from '@/types/account';
 import type { AdminCompany, ApiCredential, AuditEvent, InternalUser, AdminSubscription } from '@/types/platform';
 import { daysAgo, daysAhead, seeded } from './utils';
@@ -147,24 +147,6 @@ export const receivables: Receivable[] = invoices
 export const payments: ReceivablePayment[] = receivables
   .filter((r) => r.paid > 0)
   .map((r, i) => ({ id: `pay${i}`, receivableId: r.id, encf: r.encf, date: daysAgo(3 + i), amount: r.paid, method: 'Transferencia', reference: `REF-DEMO-${i + 100}` }));
-
-export const receivedDocuments: ReceivedDocument[] = Array.from({ length: 22 }, (_, i) => {
-  const s = pick(suppliers);
-  const total = Math.round(3000 + rand() * 90000);
-  return {
-    id: `rd${i + 1}`,
-    encf: `E31${String(5000 + i * 11).padStart(10, '0')}`,
-    type: 'E31',
-    supplierName: s.legalName,
-    supplierRnc: s.rnc,
-    issueDate: daysAgo(i * 4 + 1),
-    receivedAt: daysAgo(i * 4),
-    total,
-    itbis: Math.round((total / 1.18) * 0.18),
-    status: pick(['RECIBIDO', 'ACEPTADO', 'ACEPTADO', 'EN_REVISION', 'RECHAZADO'] as const),
-    hasPdf: i % 3 !== 0,
-  };
-});
 
 export const expenseCategories = ['Servicios básicos', 'Alquiler', 'Combustible', 'Suministros de oficina', 'Telecomunicaciones', 'Mantenimiento', 'Honorarios profesionales', 'Otros'];
 

@@ -42,7 +42,7 @@ export function ReceivedDocumentSheet({ doc, onOpenChange }: ReceivedDocumentShe
   });
 
   const meta = doc ? receptionStatusMeta(String(doc.status)) : null;
-  const subtotal = doc ? doc.total - doc.itbis : 0;
+  const subtotal = doc && doc.itbis != null ? doc.total - doc.itbis : null;
 
   return (
     <Sheet open={!!doc} onOpenChange={onOpenChange}>
@@ -76,8 +76,8 @@ export function ReceivedDocumentSheet({ doc, onOpenChange }: ReceivedDocumentShe
               <Separator />
               <section>
                 <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Montos</h3>
-                <Row label="Subtotal"><span className="tabular-nums">{formatMoney(subtotal)}</span></Row>
-                <Row label="ITBIS"><span className="tabular-nums">{formatMoney(doc.itbis)}</span></Row>
+                <Row label="Subtotal"><span className="tabular-nums">{subtotal == null ? '—' : formatMoney(subtotal)}</span></Row>
+                <Row label="ITBIS"><span className="tabular-nums">{doc.itbis == null ? '—' : formatMoney(doc.itbis)}</span></Row>
                 <div className="mt-2 flex items-center justify-between rounded-lg bg-muted/60 px-4 py-3">
                   <span className="text-sm font-semibold">Total</span>
                   <span className="font-display text-lg font-bold tabular-nums">{formatMoney(doc.total)}</span>
