@@ -27,7 +27,7 @@ export function AdminSettingsPage() {
   const submit = (event: FormEvent) => { event.preventDefault(); if (form) save.mutate(form); };
 
   return <PageTransition>
-    <PageHeader eyebrow="Administración" title="Configuración de plataforma" description="Opciones generales de LX e-CF en modo demostración." />
+    <PageHeader eyebrow="Administración" title="Configuración de plataforma" description="Opciones generales de LX e-CF." />
     {query.isLoading || !form && !query.error ? <LoadingState rows={5} /> : query.error ? <ErrorState error={query.error} onRetry={() => void query.refetch()} /> : form && (
       <form onSubmit={submit} className="surface max-w-3xl space-y-6 p-6">
         <div className="grid gap-5 sm:grid-cols-2">
@@ -37,7 +37,7 @@ export function AdminSettingsPage() {
         </div>
         <div className="space-y-3 border-t pt-5">
           <div className="flex items-center justify-between gap-4"><div><Label htmlFor="self-signup">Registro público</Label><p className="text-sm text-muted-foreground">Permitir que nuevas empresas creen una cuenta.</p></div><Switch id="self-signup" checked={form.allowSelfSignup} onCheckedChange={(checked) => setForm({ ...form, allowSelfSignup: checked })} /></div>
-          <div className="flex items-center justify-between gap-4"><div><Label htmlFor="maintenance">Modo mantenimiento</Label><p className="text-sm text-muted-foreground">Indicador visual del estado de mantenimiento.</p></div><Switch id="maintenance" checked={form.maintenanceMode} onCheckedChange={(checked) => setForm({ ...form, maintenanceMode: checked })} /></div>
+          <div className="flex items-center justify-between gap-4"><div><Label htmlFor="maintenance">Modo mantenimiento</Label><p className="text-sm text-muted-foreground">Estado administrativo de mantenimiento; no interrumpe las operaciones fiscales.</p></div><Switch id="maintenance" checked={form.maintenanceMode} onCheckedChange={(checked) => setForm({ ...form, maintenanceMode: checked })} /></div>
         </div>
         <div className="flex justify-end border-t pt-5"><Button type="submit" disabled={save.isPending}>{save.isPending ? <Loader2 className="animate-spin" /> : <Save />} Guardar cambios</Button></div>
       </form>

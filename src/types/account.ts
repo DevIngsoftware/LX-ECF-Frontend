@@ -25,7 +25,8 @@ export type Permission =
   | 'admin.plans.write'
   | 'admin.users'
   | 'admin.audit'
-  | 'admin.support';
+  | 'admin.support'
+  | 'admin.settings';
 
 export type ModuleKey = 'reception' | 'receivables' | 'catalog' | 'advanced_reports' | 'api' | 'expenses';
 

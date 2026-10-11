@@ -82,8 +82,6 @@ const http = {
   } satisfies ChatService,
 };
 
-let platformSettings: PlatformSettings = { platformName: 'LX e-CF', supportEmail: 'soporte@loadexpress.test', defaultTrialDays: 30, maintenanceMode: false, allowSelfSignup: true };
-
 const filterStatus = <T extends { status: string }>(list: T[], status?: string) => (status && status !== 'ALL' ? list.filter((x) => x.status === status) : list);
 
 const mock = {
@@ -185,15 +183,8 @@ const mock = {
       const list = q.category && q.category !== 'ALL' ? auditEvents.filter((a) => a.category === q.category) : auditEvents;
       return paginate(list, q, ['actor', 'action', 'target']);
     },
-    async settings() {
-      await delay(300);
-      return platformSettings;
-    },
-    async saveSettings(s) {
-      await delay(500);
-      platformSettings = s;
-      return s;
-    },
+    settings: () => http.admin.settings(),
+    saveSettings: (s) => http.admin.saveSettings(s),
   } satisfies AdminService,
   chat: {
     available: false,
@@ -230,6 +221,8 @@ export const adminService: AdminService = {
   updateTicket: http.admin.updateTicket,
   replyTicket: http.admin.replyTicket,
   audit: ENV.authUseMocks ? mock.admin.audit : http.admin.audit,
+  settings: http.admin.settings,
+  saveSettings: http.admin.saveSettings,
 };
 
 export const supportService = {

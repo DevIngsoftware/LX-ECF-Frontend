@@ -92,7 +92,7 @@ export const ADMIN_NAV: NavGroup[] = [
       { label: 'Soporte', to: ROUTES.admin.support, icon: LifeBuoy, permission: 'admin.support' },
       { label: 'Notificaciones', to: ROUTES.admin.notifications, icon: Bell },
       { label: 'Auditoría', to: ROUTES.admin.audit, icon: ScrollText, permission: 'admin.audit' },
-      { label: 'Configuración', to: ROUTES.admin.settings, icon: Settings },
+      { label: 'Configuración', to: ROUTES.admin.settings, icon: Settings, permission: 'admin.settings' },
     ],
   },
 ];

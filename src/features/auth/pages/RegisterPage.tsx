@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { Loader2, UserPlus } from 'lucide-react';
@@ -11,6 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { ROUTES } from '@/constants/routes';
 import { authService } from '@/services/api/auth';
+import { get } from '@/services/http/client';
 import { errorMessage } from '@/services/http/errors';
 import { AuthHeader } from '../components/AuthHeader';
 import { PasswordInput } from '../components/PasswordInput';
@@ -42,6 +43,10 @@ export function RegisterPage() {
     defaultValues: { companyName: '', rnc: '', ownerName: '', email: '', password: '', confirm: '', acceptTerms: false },
   });
   const password = useWatch({ control: form.control, name: 'password' });
+  const registration = useQuery({
+    queryKey: ['public', 'registration'],
+    queryFn: () => get<{ allowSelfSignup: boolean; supportEmail: string }>('/public/configuracion'),
+  });
 
   const mutation = useMutation({
     mutationFn: (v: FormOutput) => authService.register({ companyName: v.companyName, rnc: v.rnc, ownerName: v.ownerName, email: v.email, password: v.password }),
@@ -56,6 +61,14 @@ export function RegisterPage() {
   return (
     <div>
       <AuthHeader title="Crea tu cuenta" description="Registra tu empresa y comienza a configurar la facturación electrónica." />
+
+      {registration.data?.allowSelfSignup === false ? (
+        <div className="surface space-y-3 p-5 text-sm">
+          <p className="font-semibold">El registro de nuevas empresas está pausado.</p>
+          <p className="text-muted-foreground">Si necesitas crear una cuenta, contacta al equipo de LX e-CF.</p>
+          {registration.data.supportEmail && <a className="font-medium text-brand hover:underline" href={`mailto:${registration.data.supportEmail}`}>{registration.data.supportEmail}</a>}
+        </div>
+      ) : (
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit((v) => mutation.mutate(v))} className="space-y-4" noValidate>
@@ -152,6 +165,7 @@ export function RegisterPage() {
           </Button>
         </form>
       </Form>
+      )}
 
       <p className="mt-8 text-center text-sm text-muted-foreground">
         ¿Ya tienes cuenta?{' '}

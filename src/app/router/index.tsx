@@ -143,7 +143,7 @@ export const router = createBrowserRouter([
           { path: 'usuarios', element: perm('admin.users', <AdminUsersPage />) },
           { path: 'soporte', element: perm('admin.support', <AdminSupportPage />) },
           { path: 'notificaciones', element: inner(<NotificationsPage />) },
-          { path: 'configuracion', element: inner(<AdminSettingsPage />) },
+          { path: 'configuracion', element: perm('admin.settings', <AdminSettingsPage />) },
           { path: 'auditoria', element: perm('admin.audit', <AdminAuditPage />) },
           { path: '*', element: inner(<NotFoundPage />) },
         ],
