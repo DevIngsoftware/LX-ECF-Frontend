@@ -102,15 +102,8 @@ const mock = {
       const c = credentials.find((x) => x.id === id);
       if (c) c.status = 'REVOCADA';
     },
-    async usage() {
-      await delay(400);
-      return Array.from({ length: 14 }, (_, i) => ({ date: daysAgo(13 - i), requests: 200 + Math.round(Math.sin(i / 2) * 80 + i * 22), errors: Math.round(4 + (i % 4) * 2) }));
-    },
-    async logs() {
-      await delay(400);
-      const paths = ['/v1/ecf (ilustrativo)', '/v1/ecf/{id}/estado (ilustrativo)', '/v1/ecf/{id}/pdf (ilustrativo)'];
-      return Array.from({ length: 18 }, (_, i) => ({ id: `log${i}`, at: daysAgo(0, 23 - i), method: i % 3 ? 'GET' : 'POST', path: paths[i % 3], status: i % 7 === 0 ? 422 : i % 11 === 0 ? 401 : 200, latencyMs: 80 + ((i * 37) % 400) }));
-    },
+    usage: () => http.developers.usage(),
+    logs: () => http.developers.logs(),
   } satisfies DevelopersService,
   admin: {
     async dashboard() {
@@ -201,6 +194,8 @@ export const developersService: DevelopersService = {
   credentials: ENV.authUseMocks ? mock.developers.credentials : http.developers.credentials,
   createCredential: ENV.authUseMocks ? mock.developers.createCredential : http.developers.createCredential,
   revokeCredential: ENV.authUseMocks ? mock.developers.revokeCredential : http.developers.revokeCredential,
+  usage: http.developers.usage,
+  logs: http.developers.logs,
 };
 export const adminService: AdminService = {
   ...impl.admin,
