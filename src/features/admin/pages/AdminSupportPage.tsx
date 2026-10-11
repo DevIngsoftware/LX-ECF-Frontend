@@ -11,7 +11,6 @@ import { SearchInput } from '@/components/forms/SearchInput';
 import { useTableQuery } from '@/hooks/use-table-query';
 import { adminService } from '@/services/api/platform';
 import { queryKeys } from '@/services/api/query-keys';
-import type { Page } from '@/types/common';
 import type { SupportTicket } from '@/types/platform';
 import { formatRelative } from '@/utils/format';
 import { TICKET_PRIORITIES, TICKET_STATUSES } from '../components/admin-meta';
@@ -31,11 +30,6 @@ export function AdminSupportPage() {
     placeholderData: keepPreviousData,
   });
 
-  // La firma del servicio no declara "priority": se envía igualmente y se asegura el filtro sobre la página recibida.
-  const page = useMemo<Page<SupportTicket> | undefined>(
-    () => (data && priority !== 'ALL' ? { ...data, content: data.content.filter((x) => x.priority === priority) } : data),
-    [data, priority],
-  );
 
   const columns = useMemo<ColumnDef<SupportTicket, unknown>[]>(
     () => [
@@ -66,7 +60,7 @@ export function AdminSupportPage() {
       <PageHeader eyebrow="Operación" title="Soporte" description="Tickets de soporte de las empresas clientes." />
       <DataTable
         columns={columns}
-        page={page}
+        page={data}
         isLoading={isLoading}
         error={error}
         onRetry={() => void refetch()}

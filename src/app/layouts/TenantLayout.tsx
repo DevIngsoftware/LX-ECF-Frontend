@@ -28,7 +28,7 @@ function IntegrationNotice() {
   if (ENV.authUseMocks || !ENV.useMocks) return null;
   return (
     <div className="border-b bg-muted/70 px-4 py-2 text-center text-xs text-muted-foreground sm:px-6">
-      La cuenta, la configuración fiscal, los clientes, los comprobantes y el panel ya usan la API. Los demás módulos aún muestran datos de demostración.
+      La cuenta, la configuración fiscal, los clientes, los comprobantes, el panel y soporte ya usan la API. Otros módulos aún muestran datos de demostración.
     </div>
   );
 }

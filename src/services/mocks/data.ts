@@ -1,7 +1,7 @@
 import type { EcfTypeCode, InvoiceDetail, InvoiceSummary } from '@/types/ecf';
 import type { Expense, Party, Product, ReceivedDocument, Receivable, ReceivablePayment } from '@/types/business';
 import type { AppNotification, ModuleInfo, Plan, ServiceInvoice, TenantUser } from '@/types/account';
-import type { AdminCompany, ApiCredential, AuditEvent, InternalUser, SupportTicket, AdminSubscription } from '@/types/platform';
+import type { AdminCompany, ApiCredential, AuditEvent, InternalUser, AdminSubscription } from '@/types/platform';
 import { daysAgo, daysAhead, seeded } from './utils';
 
 /** TODOS los registros de este archivo son ficticios y solo existen para demostración. */
@@ -259,17 +259,6 @@ export const internalUsers: InternalUser[] = [
   { id: 'iu3', name: 'Comercial LX (demo)', email: 'comercial@loadexpress.test', role: 'COMERCIAL', active: true, lastLoginAt: daysAgo(3) },
   { id: 'iu4', name: 'Finanzas LX (demo)', email: 'finanzas@loadexpress.test', role: 'FINANZAS', active: false },
 ];
-
-export const tickets: SupportTicket[] = Array.from({ length: 14 }, (_, i) => ({
-  id: `T-${1040 + i}`,
-  subject: pick(['Error al cargar certificado', 'Consulta sobre secuencias', 'Rechazo de comprobante', 'Cambio de plan', 'Acceso de usuario', 'Integración API']),
-  company: pick(adminCompanies).name,
-  priority: pick(['BAJA', 'MEDIA', 'ALTA', 'CRITICA'] as const),
-  status: pick(['ABIERTO', 'EN_PROGRESO', 'RESUELTO', 'CERRADO'] as const),
-  createdAt: daysAgo(i * 2 + 1),
-  updatedAt: daysAgo(i),
-  assignee: i % 3 ? 'Soporte LX (demo)' : undefined,
-}));
 
 export const auditEvents: AuditEvent[] = Array.from({ length: 30 }, (_, i) => ({
   id: `a${i}`,

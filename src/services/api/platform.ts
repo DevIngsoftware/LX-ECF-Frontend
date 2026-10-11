@@ -3,12 +3,12 @@ import type { Page, PageQuery } from '@/types/common';
 import type { Plan } from '@/types/account';
 import type {
   AdminCompany, AdminDashboardOverview, AdminSubscription, ApiCredential, ApiLogEntry, ApiUsagePoint, AuditEvent, ChatMessage,
-  CreatedCredential, InternalUser, PlatformSettings, SupportTicket,
+  CreatedCredential, InternalUser, PlatformSettings, SupportTicket, SupportTicketDetail,
 } from '@/types/platform';
 import { get, patch, post, put } from '../http/client';
 import { ApiError } from '../http/errors';
 import { ENDPOINTS } from './endpoints';
-import { adminCompanies, adminSubscriptions, auditEvents, credentials, internalUsers, plans, tickets } from '../mocks/data';
+import { adminCompanies, adminSubscriptions, auditEvents, credentials, internalUsers, plans } from '../mocks/data';
 import { daysAgo, delay, paginate, uid } from '../mocks/utils';
 
 export interface DevelopersService {
@@ -32,8 +32,10 @@ export interface AdminService {
   saveUser(user: Omit<InternalUser, 'id'> & { id?: string }): Promise<InternalUser>;
   resendInvitation(id: string): Promise<void>;
   resendEmailChangeVerification(id: string): Promise<void>;
-  tickets(query: PageQuery & { status?: string }): Promise<Page<SupportTicket>>;
-  updateTicket(id: string, status: string): Promise<void>;
+  tickets(query: PageQuery & { status?: string; priority?: string }): Promise<Page<SupportTicket>>;
+  ticket(id: string): Promise<SupportTicketDetail>;
+  updateTicket(id: string, status: string): Promise<SupportTicketDetail>;
+  replyTicket(id: string, body: string): Promise<SupportTicketDetail>;
   audit(query: PageQuery & { category?: string }): Promise<Page<AuditEvent>>;
   settings(): Promise<PlatformSettings>;
   saveSettings(s: PlatformSettings): Promise<PlatformSettings>;
@@ -66,7 +68,9 @@ const http = {
     resendInvitation: (id) => post(`${ENDPOINTS.admin.users}/${id}/reenviar-invitacion`),
     resendEmailChangeVerification: (id) => post(`${ENDPOINTS.admin.users}/${id}/reenviar-verificacion`),
     tickets: (params) => get(ENDPOINTS.admin.tickets, { params }),
+    ticket: (id) => get(`${ENDPOINTS.admin.tickets}/${id}`),
     updateTicket: (id, status) => patch(`${ENDPOINTS.admin.tickets}/${id}`, { status }),
+    replyTicket: (id, body) => post(`${ENDPOINTS.admin.tickets}/${id}/mensajes`, { body }),
     audit: (params) => get(ENDPOINTS.admin.audit, { params }),
     settings: () => get(ENDPOINTS.admin.settings),
     saveSettings: (s) => put(ENDPOINTS.admin.settings, s),
@@ -172,18 +176,10 @@ const mock = {
     },
     resendInvitation: () => delay(500),
     resendEmailChangeVerification: () => delay(500),
-    async tickets(q) {
-      await delay();
-      return paginate(filterStatus(tickets, q.status), q, ['id', 'subject', 'company']);
-    },
-    async updateTicket(id, status) {
-      await delay(400);
-      const t = tickets.find((x) => x.id === id);
-      if (t) {
-        t.status = status;
-        t.updatedAt = new Date().toISOString();
-      }
-    },
+    tickets: (params) => http.admin.tickets(params),
+    ticket: (id) => http.admin.ticket(id),
+    updateTicket: (id, status) => http.admin.updateTicket(id, status),
+    replyTicket: (id, body) => http.admin.replyTicket(id, body),
     async audit(q) {
       await delay();
       const list = q.category && q.category !== 'ALL' ? auditEvents.filter((a) => a.category === q.category) : auditEvents;
@@ -229,6 +225,18 @@ export const adminService: AdminService = {
   saveUser: ENV.authUseMocks ? mock.admin.saveUser : http.admin.saveUser,
   resendInvitation: ENV.authUseMocks ? mock.admin.resendInvitation : http.admin.resendInvitation,
   resendEmailChangeVerification: ENV.authUseMocks ? mock.admin.resendEmailChangeVerification : http.admin.resendEmailChangeVerification,
+  tickets: http.admin.tickets,
+  ticket: http.admin.ticket,
+  updateTicket: http.admin.updateTicket,
+  replyTicket: http.admin.replyTicket,
   audit: ENV.authUseMocks ? mock.admin.audit : http.admin.audit,
+};
+
+export const supportService = {
+  tickets: () => get<Page<SupportTicket>>('/soporte'),
+  ticket: (id: string) => get<SupportTicketDetail>(`/soporte/${id}`),
+  create: (subject: string, priority: string, body: string) =>
+    post<SupportTicketDetail>('/soporte', { subject, priority, body }),
+  reply: (id: string, body: string) => post<SupportTicketDetail>(`/soporte/${id}/mensajes`, { body }),
 };
 export const chatService: ChatService = ENV.chatApiPath ? http.chat : mock.chat;

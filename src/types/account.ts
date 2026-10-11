@@ -18,12 +18,14 @@ export type Permission =
   | 'settings.manage'
   | 'billing.manage'
   | 'developers.manage'
+  | 'support.access'
   | 'admin.access'
   | 'admin.companies'
   | 'admin.plans'
   | 'admin.plans.write'
   | 'admin.users'
-  | 'admin.audit';
+  | 'admin.audit'
+  | 'admin.support';
 
 export type ModuleKey = 'reception' | 'receivables' | 'catalog' | 'advanced_reports' | 'api' | 'expenses';
 

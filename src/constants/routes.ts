@@ -26,6 +26,7 @@ export const ROUTES = {
     modules: '/app/modulos',
     integrations: '/app/integraciones',
     subscription: '/app/suscripcion',
+    support: '/app/soporte',
     notifications: '/app/notificaciones',
     users: '/app/usuarios',
     settings: '/app/configuracion',

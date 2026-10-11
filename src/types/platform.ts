@@ -98,6 +98,19 @@ export interface SupportTicket {
   assignee?: string;
 }
 
+export interface SupportMessage {
+  id: Id;
+  author: string;
+  portal: 'tenant' | 'admin';
+  body: string;
+  createdAt: ISODate;
+}
+
+export interface SupportTicketDetail {
+  ticket: SupportTicket;
+  messages: SupportMessage[];
+}
+
 export interface AuditEvent {
   id: Id;
   at: ISODate;

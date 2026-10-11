@@ -47,6 +47,7 @@ export const TENANT_NAV: NavGroup[] = [
       { label: 'Módulos', to: ROUTES.app.modules, icon: Boxes },
       { label: 'Integraciones', to: ROUTES.app.integrations, icon: PlugZap, permission: 'developers.manage' },
       { label: 'Suscripción', to: ROUTES.app.subscription, icon: CreditCard, permission: 'billing.manage' },
+      { label: 'Soporte', to: ROUTES.app.support, icon: LifeBuoy, permission: 'support.access' },
       { label: 'Usuarios', to: ROUTES.app.users, icon: Users, permission: 'users.manage' },
       { label: 'Configuración', to: ROUTES.app.settings, icon: Settings, permission: 'settings.manage' },
     ],
@@ -88,7 +89,7 @@ export const ADMIN_NAV: NavGroup[] = [
     label: 'Operación',
     items: [
       { label: 'Usuarios internos', to: ROUTES.admin.users, icon: Users, permission: 'admin.users' },
-      { label: 'Soporte', to: ROUTES.admin.support, icon: LifeBuoy },
+      { label: 'Soporte', to: ROUTES.admin.support, icon: LifeBuoy, permission: 'admin.support' },
       { label: 'Notificaciones', to: ROUTES.admin.notifications, icon: Bell },
       { label: 'Auditoría', to: ROUTES.admin.audit, icon: ScrollText, permission: 'admin.audit' },
       { label: 'Configuración', to: ROUTES.admin.settings, icon: Settings },

@@ -41,6 +41,7 @@ const ReportsPage = page(() => import('@/features/reports/pages/ReportsPage'), '
 const ModulesPage = page(() => import('@/features/modules/pages/ModulesPage'), 'ModulesPage');
 const IntegrationsPage = page(() => import('@/features/integrations/pages/IntegrationsPage'), 'IntegrationsPage');
 const SubscriptionPage = page(() => import('@/features/subscription/pages/SubscriptionPage'), 'SubscriptionPage');
+const SupportPage = page(() => import('@/features/support/pages/SupportPage'), 'SupportPage');
 const NotificationsPage = page(() => import('@/features/notifications/pages/NotificationsPage'), 'NotificationsPage');
 const UsersPage = page(() => import('@/features/users/pages/UsersPage'), 'UsersPage');
 const SettingsPage = page(() => import('@/features/settings/pages/SettingsPage'), 'SettingsPage');
@@ -109,6 +110,7 @@ export const router = createBrowserRouter([
           { path: 'modulos', element: inner(<ModulesPage />) },
           { path: 'integraciones', element: perm('developers.manage', <IntegrationsPage />) },
           { path: 'suscripcion', element: perm('billing.manage', <SubscriptionPage />) },
+          { path: 'soporte', element: perm('support.access', <SupportPage />) },
           { path: 'notificaciones', element: inner(<NotificationsPage />) },
           { path: 'usuarios', element: perm('users.manage', <UsersPage />) },
           { path: 'configuracion', element: perm('settings.manage', <SettingsPage />) },
@@ -139,7 +141,7 @@ export const router = createBrowserRouter([
           { path: 'planes', element: perm('admin.plans', <AdminPlansPage />) },
           { path: 'suscripciones', element: perm('admin.plans', <AdminSubscriptionsPage />) },
           { path: 'usuarios', element: perm('admin.users', <AdminUsersPage />) },
-          { path: 'soporte', element: inner(<AdminSupportPage />) },
+          { path: 'soporte', element: perm('admin.support', <AdminSupportPage />) },
           { path: 'notificaciones', element: inner(<NotificationsPage />) },
           { path: 'configuracion', element: inner(<AdminSettingsPage />) },
           { path: 'auditoria', element: perm('admin.audit', <AdminAuditPage />) },
