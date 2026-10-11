@@ -13,7 +13,6 @@ import { expensesService, partiesService } from '@/services/api/operations';
 import { queryKeys } from '@/services/api/query-keys';
 import { errorMessage } from '@/services/http/errors';
 import type { ExpenseInput } from '@/types/business';
-import { fromInputDate } from '@/utils/dates';
 import { formatMoney } from '@/utils/format';
 
 const OTHER = '__other__';
@@ -95,7 +94,7 @@ function ExpenseForm({ categories, onClose }: { categories: string[]; onClose: (
     const supplierName = s ? s.legalName : manualSupplier ? v.supplierName || undefined : undefined;
     const supplierRnc = s ? s.rnc : manualSupplier ? v.supplierRnc.replace(/[\s-]/g, '') || undefined : undefined;
     save.mutate({
-      date: fromInputDate(v.date),
+      date: v.date,
       category: v.category,
       description: v.description.trim(),
       supplierName,

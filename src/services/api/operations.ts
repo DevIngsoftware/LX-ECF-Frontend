@@ -8,9 +8,9 @@ import type { InvoiceSummary } from '@/types/ecf';
 import { get, getBlob, patch, post, put } from '../http/client';
 import { ApiError, toApiError } from '../http/errors';
 import { ENDPOINTS } from './endpoints';
-import { customers, expenseCategories, expenses, invoices, payments, receivables, receivedDocuments, suppliers } from '../mocks/data';
+import { customers, invoices, payments, receivables, receivedDocuments, suppliers } from '../mocks/data';
 import { buildReport } from '../mocks/reports';
-import { daysAgo, delay, paginate, uid } from '../mocks/utils';
+import { delay, paginate, uid } from '../mocks/utils';
 
 type ActiveFilter = { active?: 'all' | 'active' | 'inactive' };
 
@@ -45,7 +45,15 @@ export interface ReceivablesService {
 export interface ExpensesService {
   list(query: PageQuery & { category?: string; from?: string; to?: string }): Promise<Page<Expense>>;
   categories(): Promise<string[]>;
+  summary(query: { category?: string; from?: string; to?: string }): Promise<ExpenseSummary>;
   create(input: ExpenseInput): Promise<Expense>;
+}
+
+export interface ExpenseSummary {
+  total: number;
+  itbis: number;
+  count: number;
+  byCategory: { category: string; amount: number }[];
 }
 
 export interface ReportsService {
@@ -81,6 +89,7 @@ const http = {
   expenses: {
     list: (params) => get(ENDPOINTS.expenses, { params }),
     categories: () => get(`${ENDPOINTS.expenses}/categorias`),
+    summary: (params) => get(`${ENDPOINTS.expenses}/resumen`, { params }),
     create: (input) => post(ENDPOINTS.expenses, input),
   } satisfies ExpensesService,
   reports: {
@@ -174,24 +183,10 @@ const mock = {
     },
   } satisfies ReceivablesService,
   expenses: {
-    async list(q) {
-      await delay();
-      let list = expenses;
-      if (q.category && q.category !== 'ALL') list = list.filter((e) => e.category === q.category);
-      if (q.from) list = list.filter((e) => e.date >= q.from!);
-      if (q.to) list = list.filter((e) => e.date <= q.to!);
-      return paginate(list, { sort: 'date', ...q }, ['description', 'supplierName', 'ncf']);
-    },
-    async categories() {
-      await delay(150);
-      return expenseCategories;
-    },
-    async create(input) {
-      await delay(600);
-      const e = { ...input, id: uid(), date: input.date || daysAgo(0) };
-      expenses.unshift(e);
-      return e;
-    },
+    list: (params) => http.expenses.list(params),
+    categories: () => http.expenses.categories(),
+    summary: (params) => http.expenses.summary(params),
+    create: (input) => http.expenses.create(input),
   } satisfies ExpensesService,
   reports: {
     async get(key, range) {
@@ -236,5 +231,5 @@ export const partiesService: PartiesService = {
 export const catalogService: CatalogService = http.catalog;
 export const receptionService: ReceptionService = impl.reception;
 export const receivablesService: ReceivablesService = impl.receivables;
-export const expensesService: ExpensesService = impl.expenses;
+export const expensesService: ExpensesService = http.expenses;
 export const reportsService: ReportsService = impl.reports;

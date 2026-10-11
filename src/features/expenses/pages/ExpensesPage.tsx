@@ -37,21 +37,9 @@ export function ExpensesPage() {
   const query = { ...t.query, category, from: range.from, to: range.to };
   const list = useQuery({ queryKey: queryKeys.expenses(query), queryFn: () => expensesService.list(query), placeholderData: keepPreviousData });
 
-  const summaryQuery = { page: 0, size: 1000, category, from: range.from, to: range.to };
-  const summary = useQuery({ queryKey: queryKeys.expenses({ ...summaryQuery, scope: 'summary' }), queryFn: () => expensesService.list(summaryQuery) });
-
-  const stats = useMemo(() => {
-    const items = summary.data?.content ?? [];
-    const map = new Map<string, number>();
-    items.forEach((e) => map.set(e.category, (map.get(e.category) ?? 0) + e.amount));
-    const byCategory: CategoryTotal[] = [...map.entries()].map(([c, amount]) => ({ category: c, amount })).sort((a, b) => b.amount - a.amount);
-    return {
-      total: items.reduce((s, e) => s + e.amount, 0),
-      itbis: items.reduce((s, e) => s + e.itbis, 0),
-      count: summary.data?.totalElements ?? items.length,
-      byCategory,
-    };
-  }, [summary.data]);
+  const summaryQuery = { category, from: range.from, to: range.to };
+  const summary = useQuery({ queryKey: queryKeys.expenses({ ...summaryQuery, scope: 'summary' }), queryFn: () => expensesService.summary(summaryQuery) });
+  const stats = summary.data ?? { total: 0, itbis: 0, count: 0, byCategory: [] as CategoryTotal[] };
 
   const columns = useMemo<ColumnDef<Expense, unknown>[]>(
     () => [

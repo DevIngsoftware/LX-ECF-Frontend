@@ -8,7 +8,8 @@ export const formatMoneyCompact = (value: number) => compactMoney.format(value).
 export const formatNumber = (value: number) => number.format(value);
 
 export const formatDate = (iso?: string) =>
-  iso ? new Intl.DateTimeFormat('es-DO', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(iso)) : '—';
+  iso ? new Intl.DateTimeFormat('es-DO', { day: '2-digit', month: 'short', year: 'numeric' })
+    .format(new Date(/^\d{4}-\d{2}-\d{2}$/.test(iso) ? `${iso}T12:00:00` : iso)) : '—';
 
 export const formatDateTime = (iso?: string) =>
   iso ? new Intl.DateTimeFormat('es-DO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(iso)) : '—';
