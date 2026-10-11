@@ -229,5 +229,6 @@ export const adminService: AdminService = {
   saveUser: ENV.authUseMocks ? mock.admin.saveUser : http.admin.saveUser,
   resendInvitation: ENV.authUseMocks ? mock.admin.resendInvitation : http.admin.resendInvitation,
   resendEmailChangeVerification: ENV.authUseMocks ? mock.admin.resendEmailChangeVerification : http.admin.resendEmailChangeVerification,
+  audit: ENV.authUseMocks ? mock.admin.audit : http.admin.audit,
 };
 export const chatService: ChatService = ENV.chatApiPath ? http.chat : mock.chat;
