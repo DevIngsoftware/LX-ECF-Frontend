@@ -100,6 +100,7 @@ export function PartyFormSheet({ kind, open, onOpenChange, party, onSaved }: Par
     onSuccess: (saved) => {
       toast.success(isEdit ? `${meta.singularCap} actualizado` : `${meta.singularCap} creado`);
       void qc.invalidateQueries({ queryKey: ['parties', kind] });
+      if (kind === 'customers') void qc.invalidateQueries({ queryKey: ['invoice-customers'] });
       void qc.invalidateQueries({ queryKey: queryKeys.party(kind, saved.id) });
       onSaved?.(saved);
       onOpenChange(false);
@@ -145,7 +146,7 @@ export function PartyFormSheet({ kind, open, onOpenChange, party, onSaved }: Par
                       </Button>
                     </div>
                     <FormMessage />
-                    {ENV.useMocks && (
+                    {(kind === 'customers' ? ENV.invoicesUseMocks : ENV.useMocks) && (
                       <FormDescription className="flex items-center gap-1.5">
                         <Info className="h-3.5 w-3.5" aria-hidden /> Consulta ilustrativa: en modo demostración no se consulta el padrón real.
                       </FormDescription>

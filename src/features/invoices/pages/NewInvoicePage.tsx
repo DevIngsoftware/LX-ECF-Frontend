@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useFieldArray, useForm, FormProvider, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -22,6 +22,7 @@ import { Field, FormSection } from '../components/new/form-ui';
 import { defaultValues, emptyItem, invoiceFormSchema, isEcfCode, toDraft, type InvoiceFormValues } from '../components/new/schema';
 import { computeTotals } from '../lib/invoice-math';
 import { invoicesService } from '@/services/api/invoices';
+import { partiesService } from '@/services/api/operations';
 import { queryKeys } from '@/services/api/query-keys';
 import { errorMessage } from '@/services/http/errors';
 import type { PreValidationResult } from '@/types/ecf';
@@ -41,6 +42,7 @@ function savedPendingRequest(): { payload: string; key: string } | null {
 
 export function NewInvoicePage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const qc = useQueryClient();
   const [params] = useSearchParams();
   const requestedType = params.get('tipo');
@@ -52,11 +54,22 @@ export function NewInvoicePage() {
   const { fields, append, remove } = useFieldArray({ control: form.control, name: 'items' });
   const type = useWatch({ control: form.control, name: 'type' });
   const paymentType = useWatch({ control: form.control, name: 'paymentType' });
-  const items = useWatch({ control: form.control, name: 'items' }) ?? [];
+  const items = useWatch({ control: form.control, name: 'items' });
   const retentions = useWatch({ control: form.control, name: 'retentions' });
   const config = ECF_TYPE_MAP[type];
-  const totals = useMemo(() => computeTotals(items, retentions), [items, retentions]);
+  const totals = useMemo(() => computeTotals(items ?? [], retentions), [items, retentions]);
   const reference = useQuery({ queryKey: queryKeys.invoice(refId ?? ''), queryFn: () => invoicesService.get(refId!), enabled: !!refId && !!noteType });
+  const customerId = (location.state as { customerId?: string } | null)?.customerId;
+  const savedCustomer = useQuery({ queryKey: queryKeys.party('customers', customerId ?? ''),
+    queryFn: () => partiesService.get('customers', customerId!), enabled: !!customerId && !noteType });
+
+  useEffect(() => {
+    if (!savedCustomer.data || noteType) return;
+    form.setValue('buyer.partyId', savedCustomer.data.id);
+    form.setValue('buyer.rnc', savedCustomer.data.rnc);
+    form.setValue('buyer.name', savedCustomer.data.legalName);
+    form.setValue('buyer.email', savedCustomer.data.email ?? '');
+  }, [form, noteType, savedCustomer.data]);
 
   useEffect(() => {
     if (type !== 'E46' && type !== 'E47') return;

@@ -59,10 +59,9 @@ export interface SavedInvoiceCustomer {
 
 export const invoiceCustomersService = {
   async list(search?: string): Promise<Page<SavedInvoiceCustomer>> {
-    const page = await get<Page<Omit<SavedInvoiceCustomer, 'id'> & { id: number }>>(ENDPOINTS.invoiceCustomers, {
-      params: { page: 0, size: 8, search: search || undefined },
+    return get<Page<SavedInvoiceCustomer>>(ENDPOINTS.invoiceCustomers, {
+      params: { page: 0, size: 8, search: search || undefined, active: 'active' },
     });
-    return { ...page, content: page.content.map((customer) => ({ ...customer, id: String(customer.id) })) };
   },
 };
 

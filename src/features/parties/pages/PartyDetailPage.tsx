@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   ArrowLeft, CalendarDays, FilePlus2, FileText, Mail, MapPin, Pencil, Phone, Power, Receipt, StickyNote, Wallet, type LucideIcon,
@@ -37,6 +37,7 @@ function InfoRow({ icon: Icon, label, children }: { icon: LucideIcon; label: str
 
 export function PartyDetailPage({ kind }: { kind: PartyKind }) {
   const { id = '' } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const meta = PARTY_META[kind];
   const { hasPermission } = useAuth();
   const canWrite = hasPermission('parties.write');
@@ -146,7 +147,8 @@ export function PartyDetailPage({ kind }: { kind: PartyKind }) {
         </div>
       </div>
 
-      <PartyFormSheet kind={kind} open={editOpen} onOpenChange={setEditOpen} party={p} />
+      <PartyFormSheet kind={kind} open={editOpen} onOpenChange={setEditOpen} party={p}
+        onSaved={(saved) => { if (saved.id !== id) navigate(meta.detailRoute(saved.id), { replace: true }); }} />
       <PartyActiveConfirm kind={kind} party={toggleOpen ? p : null} onOpenChange={setToggleOpen} />
     </PageTransition>
   );

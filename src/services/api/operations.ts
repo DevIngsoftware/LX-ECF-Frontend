@@ -6,7 +6,7 @@ import type {
 } from '@/types/business';
 import type { InvoiceSummary } from '@/types/ecf';
 import { get, getBlob, patch, post, put } from '../http/client';
-import { ApiError } from '../http/errors';
+import { ApiError, toApiError } from '../http/errors';
 import { ENDPOINTS } from './endpoints';
 import { customers, expenseCategories, expenses, invoices, payments, products, receivables, receivedDocuments, suppliers } from '../mocks/data';
 import { buildReport } from '../mocks/reports';
@@ -225,7 +225,32 @@ const mock = {
 };
 
 const impl = ENV.useMocks ? mock : http;
-export const partiesService: PartiesService = impl.parties;
+const portalCustomers: PartiesService = {
+  list: (_kind, params) => get(ENDPOINTS.invoiceCustomers, { params }),
+  get: (_kind, id) => get(`${ENDPOINTS.invoiceCustomers}/${encodeURIComponent(id)}`),
+  create: (_kind, input) => post(ENDPOINTS.invoiceCustomers, input),
+  update: (_kind, id, input) => put(`${ENDPOINTS.invoiceCustomers}/${encodeURIComponent(id)}`, input),
+  setActive: (_kind, id, active) => patch(`${ENDPOINTS.invoiceCustomers}/${encodeURIComponent(id)}/estado`, { active }),
+  history: (_kind, id) => get(`${ENDPOINTS.invoiceCustomers}/${encodeURIComponent(id)}/comprobantes`),
+  async lookupRnc(rnc) {
+    try {
+      const result = await get<{ rnc: string; razonSocial: string; estado?: string }>(`/rnc/${encodeURIComponent(rnc)}`);
+      return { rnc: result.rnc, legalName: result.razonSocial, status: result.estado };
+    } catch (error) {
+      if (toApiError(error).kind === 'not_found') return null;
+      throw error;
+    }
+  },
+};
+export const partiesService: PartiesService = ENV.invoicesUseMocks ? impl.parties : {
+  list: (kind, query) => kind === 'customers' ? portalCustomers.list(kind, query) : impl.parties.list(kind, query),
+  get: (kind, id) => kind === 'customers' ? portalCustomers.get(kind, id) : impl.parties.get(kind, id),
+  create: (kind, input) => kind === 'customers' ? portalCustomers.create(kind, input) : impl.parties.create(kind, input),
+  update: (kind, id, input) => kind === 'customers' ? portalCustomers.update(kind, id, input) : impl.parties.update(kind, id, input),
+  setActive: (kind, id, active) => kind === 'customers' ? portalCustomers.setActive(kind, id, active) : impl.parties.setActive(kind, id, active),
+  history: (kind, id) => kind === 'customers' ? portalCustomers.history(kind, id) : impl.parties.history(kind, id),
+  lookupRnc: portalCustomers.lookupRnc,
+};
 export const catalogService: CatalogService = impl.catalog;
 export const receptionService: ReceptionService = impl.reception;
 export const receivablesService: ReceivablesService = impl.receivables;

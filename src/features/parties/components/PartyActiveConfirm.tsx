@@ -26,6 +26,7 @@ export function PartyActiveConfirm({ kind, party, onOpenChange }: PartyActiveCon
     onSuccess: (_, p) => {
       toast.success(p.active ? `${meta.singularCap} desactivado` : `${meta.singularCap} reactivado`);
       void qc.invalidateQueries({ queryKey: ['parties', kind] });
+      if (kind === 'customers') void qc.invalidateQueries({ queryKey: ['invoice-customers'] });
       void qc.invalidateQueries({ queryKey: queryKeys.party(kind, p.id) });
       onOpenChange(false);
     },
