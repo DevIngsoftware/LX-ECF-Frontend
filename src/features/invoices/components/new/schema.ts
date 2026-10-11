@@ -140,3 +140,20 @@ export function toDraft(v: InvoiceFormValues): InvoiceDraft {
     notes: v.notes.trim() || undefined,
   };
 }
+
+export function fromDraft(draft: InvoiceDraft): InvoiceFormValues {
+  const defaults = defaultValues(draft.type);
+  return {
+    ...defaults,
+    buyer: { ...defaults.buyer,
+      rnc: draft.buyer.rnc ?? '', name: draft.buyer.name ?? '', email: draft.buyer.email ?? '',
+      foreignId: draft.buyer.foreignId ?? '', country: draft.buyer.country ?? '' },
+    incomeType: draft.incomeType || defaults.incomeType,
+    paymentType: draft.paymentType || defaults.paymentType,
+    paymentTermDays: draft.paymentTermDays,
+    items: draft.items.length ? draft.items.map((item) => ({ ...emptyItem(), ...item })) : defaults.items,
+    retentions: draft.retentions,
+    reference: { ...defaults.reference, ...draft.reference },
+    notes: draft.notes ?? '',
+  };
+}

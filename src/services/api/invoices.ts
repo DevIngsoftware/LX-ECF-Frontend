@@ -1,13 +1,13 @@
 import { ENV } from '@/constants/env';
 import type { Page, PageQuery, DateRange } from '@/types/common';
 import type {
-  DgiiOverview, EmitResult, InvoiceDetail, InvoiceDraft, InvoiceFilters, InvoiceSummary, PreValidationResult, TrackStatusResult,
+  DgiiOverview, EmitResult, InvoiceDetail, InvoiceDraft, InvoiceFilters, InvoiceSummary, PreValidationResult, SavedInvoiceDraft, TrackStatusResult,
 } from '@/types/ecf';
 import type { DashboardOverview } from '@/types/business';
-import { get, getBlob, post } from '../http/client';
+import { del, get, getBlob, post, put } from '../http/client';
+import { type FacturaRequestDTO, fromFacturaRequestDTO, toFacturaRequestDTO } from '../adapters/invoice.adapter';
 import { ApiError } from '../http/errors';
 import { ENDPOINTS } from './endpoints';
-import { toFacturaRequestDTO } from '../adapters/invoice.adapter';
 import { invoices } from '../mocks/data';
 import { buildDashboard, buildDgiiOverview } from '../mocks/aggregates';
 import { daysAgo, delay, demoBlob, paginate, uid } from '../mocks/utils';
@@ -17,6 +17,10 @@ export interface InvoicesService {
   get(id: string): Promise<InvoiceDetail>;
   validate(draft: InvoiceDraft): Promise<PreValidationResult>;
   saveDraft(draft: InvoiceDraft): Promise<{ id: string }>;
+  listDrafts(): Promise<SavedInvoiceDraft[]>;
+  getDraft(id: string): Promise<InvoiceDraft>;
+  updateDraft(id: string, draft: InvoiceDraft): Promise<void>;
+  deleteDraft(id: string): Promise<void>;
   /** Nunca se reintenta automáticamente para evitar emisiones duplicadas. */
   emit(draft: InvoiceDraft, idempotencyKey: string): Promise<EmitResult>;
   send(id: string): Promise<InvoiceDetail>;
@@ -41,6 +45,11 @@ const httpInvoices: InvoicesService = {
   get: (id) => get(ENDPOINTS.invoices.detail(id)),
   validate: (draft) => post(ENDPOINTS.invoices.validate, toFacturaRequestDTO(draft)),
   saveDraft: (draft) => post(ENDPOINTS.invoices.draft, toFacturaRequestDTO(draft)),
+  listDrafts: () => get(ENDPOINTS.invoices.draft),
+  getDraft: (id) => get<FacturaRequestDTO>(`${ENDPOINTS.invoices.draft}/${encodeURIComponent(id)}`)
+    .then(fromFacturaRequestDTO),
+  updateDraft: (id, draft) => put(`${ENDPOINTS.invoices.draft}/${encodeURIComponent(id)}`, toFacturaRequestDTO(draft)),
+  deleteDraft: (id) => del(`${ENDPOINTS.invoices.draft}/${encodeURIComponent(id)}`),
   emit: (draft, key) => post(ENDPOINTS.invoices.emit, toFacturaRequestDTO(draft), { headers: { 'Idempotency-Key': key }, timeout: 60000 }),
   send: (id) => post(ENDPOINTS.invoices.send(id), undefined, { timeout: 60000 }),
   checkStatus: (id) => get(ENDPOINTS.invoices.status(id)),
@@ -100,6 +109,10 @@ const mockInvoices: InvoicesService = {
     await delay(500);
     return { id: `draft-${uid()}` };
   },
+  async listDrafts() { return []; },
+  async getDraft() { throw new ApiError('not_found', 'Borrador no disponible en la demostración.', 404); },
+  async updateDraft() { throw new ApiError('validation', 'Borrador no disponible en la demostración.', 400); },
+  async deleteDraft() { throw new ApiError('validation', 'Borrador no disponible en la demostración.', 400); },
   async emit(draft) {
     await delay(1600);
     const id = `inv-demo-${uid()}`;

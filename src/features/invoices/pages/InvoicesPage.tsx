@@ -1,11 +1,13 @@
 import { useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef, RowSelectionState } from '@tanstack/react-table';
-import { FilePlus2, FileText, SlidersHorizontal } from 'lucide-react';
+import { FilePenLine, FilePlus2, FileText, SlidersHorizontal, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { PageTransition } from '@/components/animations/motion';
 import { PageHeader } from '@/components/shared/PageHeader';
-import { EmptyState } from '@/components/shared/states';
+import { EmptyState, ErrorState } from '@/components/shared/states';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { DgiiStatusBadge, InternalStatusBadge } from '@/components/shared/StatusBadge';
 import { DataTable } from '@/components/tables/DataTable';
 import { SearchInput } from '@/components/forms/SearchInput';
@@ -13,12 +15,14 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { ROUTES } from '@/constants/routes';
+import { ENV } from '@/constants/env';
 import { useAuth } from '@/features/auth/auth-context';
 import { useTableQuery } from '@/hooks/use-table-query';
 import { invoicesService } from '@/services/api/invoices';
 import { queryKeys } from '@/services/api/query-keys';
-import type { InvoiceSummary } from '@/types/ecf';
-import { formatDate, formatMoney } from '@/utils/format';
+import { errorMessage } from '@/services/http/errors';
+import type { InvoiceSummary, SavedInvoiceDraft } from '@/types/ecf';
+import { formatDate, formatDateTime, formatMoney } from '@/utils/format';
 import { EcfTypeTag } from '../components/EcfTypeTag';
 import { BulkActions } from '../components/list/BulkActions';
 import {
@@ -29,15 +33,29 @@ import { useCheckStatus, useInvoiceDownloads } from '../lib/use-invoice-actions'
 
 export function InvoicesPage() {
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const { hasPermission } = useAuth();
   const canEmit = hasPermission('invoices.emit');
   const t = useTableQuery({ sort: [{ id: 'issueDate', desc: true }] });
   const [filters, setFiltersState] = useState<InvoiceFilterState>(EMPTY_FILTERS);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [showAllDrafts, setShowAllDrafts] = useState(false);
+  const [deletingDraft, setDeletingDraft] = useState<SavedInvoiceDraft | null>(null);
   const seen = useRef(new Map<string, InvoiceSummary>());
   const { download } = useInvoiceDownloads();
   const { mutate: checkStatusMutate } = useCheckStatus();
+  const drafts = useQuery({ queryKey: ['invoice-drafts'], queryFn: invoicesService.listDrafts,
+    enabled: canEmit && !ENV.invoicesUseMocks });
+  const deleteDraft = useMutation({
+    mutationFn: (id: string) => invoicesService.deleteDraft(id),
+    onSuccess: () => {
+      setDeletingDraft(null);
+      void qc.invalidateQueries({ queryKey: ['invoice-drafts'] });
+      toast.success('Borrador eliminado');
+    },
+    onError: (err) => toast.error(errorMessage(err)),
+  });
 
   const setFilters = (next: InvoiceFilterState) => {
     setFiltersState(next);
@@ -115,6 +133,30 @@ export function InvoicesPage() {
         }
       />
 
+      {drafts.error && <div className="mb-6"><ErrorState compact error={drafts.error} onRetry={() => void drafts.refetch()} /></div>}
+      {!!drafts.data?.length && (
+        <section className="surface mb-6 overflow-hidden" aria-labelledby="drafts-title">
+          <div className="flex items-center justify-between gap-3 border-b p-5">
+            <div><h2 id="drafts-title" className="font-semibold">Borradores guardados</h2>
+              <p className="text-xs text-muted-foreground">Se conservan en tu empresa hasta que los registres o elimines.</p></div>
+            <Badge variant="neutral">{drafts.data.length}</Badge>
+          </div>
+          <ul className="divide-y">
+            {drafts.data.slice(0, showAllDrafts ? undefined : 5).map((draft) => (
+              <li key={draft.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm">
+                <div><p className="font-medium">{draft.type} · {draft.buyerName}</p>
+                  <p className="text-xs text-muted-foreground">Guardado {formatDateTime(draft.updatedAt)}</p></div>
+                <div className="flex gap-2">
+                  <Button asChild variant="outline" size="sm"><Link to={`${ROUTES.app.newInvoice}?borrador=${draft.id}`}><FilePenLine /> Continuar</Link></Button>
+                  <Button type="button" variant="ghost" size="icon-sm" aria-label={`Eliminar borrador ${draft.type} de ${draft.buyerName}`} onClick={() => setDeletingDraft(draft)}><Trash2 /></Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+          {drafts.data.length > 5 && <div className="border-t p-3 text-center"><Button variant="ghost" size="sm" onClick={() => setShowAllDrafts((v) => !v)}>{showAllDrafts ? 'Mostrar menos' : `Ver todos (${drafts.data.length})`}</Button></div>}
+        </section>
+      )}
+
       <DataTable
         columns={columns}
         page={data}
@@ -176,6 +218,10 @@ export function InvoicesPage() {
           ) : undefined
         }
       />
+      <ConfirmDialog open={!!deletingDraft} onOpenChange={(open) => !open && !deleteDraft.isPending && setDeletingDraft(null)}
+        title="Eliminar borrador" description="Este borrador no tiene e-NCF asignado y se eliminará de la empresa."
+        confirmLabel="Eliminar" destructive loading={deleteDraft.isPending}
+        onConfirm={() => deletingDraft && deleteDraft.mutate(deletingDraft.id)} />
     </PageTransition>
   );
 }

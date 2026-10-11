@@ -1,4 +1,5 @@
-import type { InvoiceDraft } from '@/types/ecf';
+import { ECF_TYPE_MAP } from '@/constants/ecf';
+import type { EcfTypeCode, InvoiceDraft } from '@/types/ecf';
 
 /**
  * Adaptador hacia FacturaRequestDTO / ItemDTO del backend Spring Boot.
@@ -61,5 +62,34 @@ export function toFacturaRequestDTO(draft: InvoiceDraft): FacturaRequestDTO {
     codigoModificacion: draft.reference?.modificationCode,
     razonModificacion: draft.reference?.reason,
     observaciones: draft.notes,
+  };
+}
+
+/** Restaura el formulario guardado por la API sin inventar datos fiscales ausentes. */
+export function fromFacturaRequestDTO(saved: FacturaRequestDTO): InvoiceDraft {
+  const type = saved.tipoEcf in ECF_TYPE_MAP ? saved.tipoEcf as EcfTypeCode : 'E31';
+  const amount = (value: number | null | undefined) => Number.isFinite(value) ? value! : 0;
+  return {
+    type,
+    buyer: {
+      rnc: saved.rncComprador ?? '', name: saved.razonSocialComprador ?? '',
+      email: saved.correoComprador ?? '', foreignId: saved.identificadorExtranjero ?? '',
+      country: saved.paisComprador ?? '',
+    },
+    incomeType: saved.tipoIngresos ?? '01',
+    paymentType: saved.tipoPago ?? '1',
+    paymentTermDays: saved.plazoPagoDias ?? undefined,
+    items: (saved.items ?? []).map((item) => ({
+      code: item.codigo, description: item.descripcion ?? '',
+      kind: item.indicadorBienServicio === '1' ? 'BIEN' : 'SERVICIO',
+      quantity: item.cantidad == null ? 1 : amount(item.cantidad), unitPrice: amount(item.precioUnitario),
+      discount: amount(item.descuento), itbisRate: amount(item.tasaItbis),
+    })),
+    retentions: { itbis: amount(saved.itbisRetenido), isr: amount(saved.isrRetenido) },
+    reference: {
+      modifiedNcf: saved.ncfModificado ?? '', modifiedDate: saved.fechaNcfModificado ?? '',
+      modificationCode: saved.codigoModificacion ?? '', reason: saved.razonModificacion ?? '',
+    },
+    notes: saved.observaciones ?? '',
   };
 }

@@ -94,6 +94,13 @@ export interface InvoiceDraft {
   notes?: string;
 }
 
+export interface SavedInvoiceDraft {
+  id: string;
+  type: EcfTypeCode;
+  buyerName: string;
+  updatedAt: ISODate;
+}
+
 export interface InvoiceFilters {
   search?: string;
   type?: EcfTypeCode | 'ALL';
