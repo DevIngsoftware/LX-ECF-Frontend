@@ -24,6 +24,7 @@ export interface AdminService {
   companies(query: PageQuery & { status?: string }): Promise<Page<AdminCompany>>;
   company(id: string): Promise<AdminCompany>;
   setCompanyStatus(id: string, status: string): Promise<void>;
+  activateEnvironment(rnc: string, environment: 'TesteCF' | 'CerteCF' | 'eCF', authorizationConfirmed: boolean): Promise<void>;
   plans(): Promise<Plan[]>;
   savePlan(plan: Plan): Promise<Plan>;
   subscriptions(query: PageQuery & { status?: string }): Promise<Page<AdminSubscription>>;
@@ -65,6 +66,7 @@ const http = {
     companies: (params) => get(ENDPOINTS.admin.companies, { params }),
     company: (id) => get(`${ENDPOINTS.admin.companies}/${id}`),
     setCompanyStatus: (id, status) => patch(`${ENDPOINTS.admin.companies}/${id}/estado`, { status }),
+    activateEnvironment: (rnc, environment, authorizationConfirmed) => put(`/admin/empresas/${encodeURIComponent(rnc)}/dgii/ambiente`, { environment, authorizationConfirmed }),
     plans: () => get(ENDPOINTS.admin.plans),
     savePlan: (plan) => (plan.id ? put(`${ENDPOINTS.admin.plans}/${plan.id}`, plan) : post(ENDPOINTS.admin.plans, plan)),
     subscriptions: (params) => get(ENDPOINTS.admin.subscriptions, { params }),
@@ -142,6 +144,11 @@ const mock = {
       const c = adminCompanies.find((x) => x.id === id);
       if (c) c.status = status;
     },
+    async activateEnvironment(rnc, environment) {
+      await delay(300);
+      const c = adminCompanies.find((x) => x.rnc === rnc);
+      if (c) c.dgiiEnvironment = environment;
+    },
     async plans() {
       await delay(300);
       return [...plans];
@@ -217,6 +224,7 @@ export const adminService: AdminService = {
   companies: ENV.authUseMocks ? mock.admin.companies : http.admin.companies,
   company: ENV.authUseMocks ? mock.admin.company : http.admin.company,
   setCompanyStatus: ENV.authUseMocks ? mock.admin.setCompanyStatus : http.admin.setCompanyStatus,
+  activateEnvironment: ENV.authUseMocks ? mock.admin.activateEnvironment : http.admin.activateEnvironment,
   plans: ENV.authUseMocks ? mock.admin.plans : http.admin.plans,
   savePlan: ENV.authUseMocks ? mock.admin.savePlan : http.admin.savePlan,
   subscriptions: ENV.authUseMocks ? mock.admin.subscriptions : http.admin.subscriptions,

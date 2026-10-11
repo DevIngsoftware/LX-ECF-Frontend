@@ -9,6 +9,7 @@ import { ROUTES } from '@/constants/routes';
 import { settingsService } from '@/services/api/account';
 import { queryKeys } from '@/services/api/query-keys';
 import { CompanySection } from '../components/CompanySection';
+import { CertificateSection } from '../components/CertificateSection';
 import { DgiiSection } from '../components/DgiiSection';
 import { FiscalSection } from '../components/FiscalSection';
 import { SequencesSection } from '../components/SequencesSection';
@@ -17,7 +18,6 @@ import { SETTINGS_SECTIONS, isSettingsSlug, sectionBySlug, type SettingsSlug } f
 import { SectionShell } from '../components/settings-shared';
 
 const linkedSections: Partial<Record<SettingsSlug, { to: string; action: string; note: string }>> = {
-  certificado: { to: ROUTES.app.onboarding, action: 'Abrir configuración inicial', note: 'Carga y valida el certificado desde el asistente de configuración.' },
   facturacion: { to: ROUTES.app.onboarding, action: 'Editar preferencias', note: 'Configura los valores por defecto de facturación en el asistente.' },
   usuarios: { to: ROUTES.app.users, action: 'Administrar usuarios', note: 'Gestiona el equipo y sus permisos.' },
   suscripcion: { to: ROUTES.app.subscription, action: 'Ver suscripción', note: 'Consulta tu plan y el consumo actual.' },
@@ -28,6 +28,7 @@ function SettingsContent({ section }: { section: SettingsSlug | null }) {
   if (section === 'empresa') return <CompanySection />;
   if (section === 'fiscal') return <FiscalSection />;
   if (section === 'dgii') return <DgiiSection />;
+  if (section === 'certificado') return <CertificateSection />;
   if (section === 'secuencias') return <SequencesSection />;
   if (section) {
     const item = sectionBySlug(section);

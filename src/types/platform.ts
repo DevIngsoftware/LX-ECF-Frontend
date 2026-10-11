@@ -45,6 +45,8 @@ export interface AdminCompany {
   createdAt: ISODate;
   documentsThisMonth: number;
   users: number;
+  dgiiEnvironment?: string;
+  requestedDgiiEnvironment?: string;
 }
 
 export interface AdminDashboard {

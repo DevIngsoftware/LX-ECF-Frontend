@@ -19,6 +19,7 @@ import { formatDate, formatNumber } from '@/utils/format';
 import { MODULE_LABELS } from '../components/admin-meta';
 import { CompanySubscriptionCard } from '../components/CompanySubscriptionCard';
 import { CompanyCertificationCard } from '../components/CompanyCertificationCard';
+import { CompanyEnvironmentCard } from '../components/CompanyEnvironmentCard';
 import { useAuth } from '@/features/auth/auth-context';
 
 export function AdminCompanyDetailPage() {
@@ -117,6 +118,7 @@ export function AdminCompanyDetailPage() {
 
         <CompanySubscriptionCard company={company} />
 
+        {user?.role === 'SUPERADMIN' && <CompanyEnvironmentCard key={company.id} company={company} />}
         {user?.role === 'SUPERADMIN' && <CompanyCertificationCard companyId={id} />}
 
         <section className="surface p-5 lg:col-span-2" aria-labelledby="users-title">

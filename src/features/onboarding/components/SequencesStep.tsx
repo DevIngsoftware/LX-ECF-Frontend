@@ -12,7 +12,7 @@ import { StepCard, type StepProps } from './StepCard';
 
 const preview = (type: string, n: string) => (type && /^\d+$/.test(n) ? `${type}${n.padStart(10, '0')}` : '—');
 
-export function SequencesStep({ defaultValues, onSubmit }: StepProps<SequencesStepValues>) {
+export function SequencesStep({ defaultValues, onSubmit, usedTypes = [] }: StepProps<SequencesStepValues> & { usedTypes?: string[] }) {
   const reduce = useReducedMotion();
   const form = useForm<SequencesStepValues>({ resolver: zodResolver(sequencesSchema), defaultValues });
   const { fields, append, remove } = useFieldArray({ control: form.control, name: 'items' });
@@ -105,7 +105,7 @@ export function SequencesStep({ defaultValues, onSubmit }: StepProps<SequencesSt
                         )}
                       />
                       <div className="flex items-end">
-                        <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} aria-label="Eliminar secuencia" className="text-muted-foreground hover:text-destructive">
+                        <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} disabled={usedTypes.includes(row?.type)} title={usedTypes.includes(row?.type) ? 'Una secuencia utilizada no se puede eliminar' : undefined} aria-label="Eliminar secuencia" className="text-muted-foreground hover:text-destructive">
                           <Trash2 />
                         </Button>
                       </div>

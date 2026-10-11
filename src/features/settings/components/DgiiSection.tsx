@@ -1,8 +1,15 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, CheckCircle2, FlaskConical, Info, Rocket, ShieldCheck, type LucideIcon } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { ArrowRight, CheckCircle2, FlaskConical, Info, Loader2, Rocket, ShieldCheck, type LucideIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 import { ROUTES } from '@/constants/routes';
+import { settingsService } from '@/services/api/account';
+import { queryKeys } from '@/services/api/query-keys';
+import { errorMessage } from '@/services/http/errors';
 import { cn } from '@/lib/utils';
 import { SectionError, SectionLoading, SectionShell, useDgiiOverview } from './settings-shared';
 
@@ -14,6 +21,21 @@ const ENVIRONMENTS: { code: string; name: string; description: string; icon: Luc
 
 export function DgiiSection() {
   const { data, isLoading, error, refetch } = useDgiiOverview();
+  const qc = useQueryClient();
+  const onboarding = useQuery({ queryKey: queryKeys.onboarding, queryFn: settingsService.onboarding });
+  const [choice, setChoice] = useState('');
+  const requested = (onboarding.data?.data?.dgii as { environment?: string } | undefined)?.environment ?? 'PRUEBAS';
+  const selected = choice || requested;
+  const save = useMutation({
+    mutationFn: () => settingsService.saveOnboardingStep(2, { environment: selected }),
+    onSuccess: () => {
+      setChoice('');
+      void qc.invalidateQueries({ queryKey: queryKeys.onboarding });
+      void qc.invalidateQueries({ queryKey: queryKeys.dgii });
+      toast.success('Solicitud de ambiente guardada');
+    },
+    onError: (err) => toast.error(errorMessage(err)),
+  });
 
   return (
     <SectionShell title="Ambiente DGII" description="Ambiente en el que LX envía tus comprobantes electrónicos.">
@@ -47,6 +69,19 @@ export function DgiiSection() {
               );
             })}
           </ol>
+          <div className="space-y-3 rounded-xl border p-4">
+            <Label htmlFor="requested-environment">Ambiente solicitado para la empresa</Label>
+            <div className="flex flex-wrap gap-2">
+              <select id="requested-environment" className="h-10 min-w-48 rounded-md border bg-background px-3 text-sm" value={selected} onChange={(event) => setChoice(event.target.value)} disabled={onboarding.isLoading || save.isPending}>
+                <option value="PRUEBAS">Pruebas (TesteCF)</option>
+                <option value="CERTIFICACION">Certificación (CerteCF)</option>
+                <option value="PRODUCCION">Producción (eCF)</option>
+              </select>
+              <Button type="button" disabled={onboarding.isLoading || !!onboarding.error || save.isPending || selected === requested} onClick={() => save.mutate()}>{save.isPending && <Loader2 className="animate-spin" />} Solicitar cambio</Button>
+            </div>
+            {onboarding.error && <SectionError error={onboarding.error} onRetry={() => void onboarding.refetch()} />}
+            <p className="text-xs text-muted-foreground">Esta selección registra la solicitud. El ambiente activo solo cambia cuando LX confirma la habilitación correspondiente ante la DGII.</p>
+          </div>
           <div className="flex flex-col gap-3 rounded-xl border bg-muted/40 p-4 text-sm sm:flex-row sm:items-center sm:justify-between">
             <p className="text-muted-foreground">
               El cambio de ambiente lo realiza LX tras completar las etapas de certificación exigidas por la DGII.
