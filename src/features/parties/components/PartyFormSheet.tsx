@@ -77,7 +77,8 @@ export function PartyFormSheet({ kind, open, onOpenChange, party, onSaved }: Par
 
   const lookup = useMutation({
     mutationFn: (rnc: string) => partiesService.lookupRnc(rnc),
-    onSuccess: (res) => {
+    onSuccess: (res, searchedRnc) => {
+      if (!open || cleanRnc(form.getValues('rnc')) !== searchedRnc) return;
       if (!res) {
         setLookupNote('No se encontraron datos para este documento. Completa la información manualmente.');
         return;
@@ -138,7 +139,8 @@ export function PartyFormSheet({ kind, open, onOpenChange, party, onSaved }: Par
                     <FormLabel>RNC o cédula</FormLabel>
                     <div className="flex gap-2">
                       <FormControl>
-                        <Input {...field} inputMode="numeric" placeholder="101234567" className="font-mono" autoComplete="off" />
+                        <Input {...field} onChange={(event) => { field.onChange(event); setLookupNote(null); }}
+                          inputMode="numeric" placeholder="101234567" className="font-mono" autoComplete="off" />
                       </FormControl>
                       <Button type="button" variant="outline" onClick={onLookup} disabled={lookup.isPending}>
                         {lookup.isPending ? <Loader2 className="animate-spin" /> : <SearchCheck />}

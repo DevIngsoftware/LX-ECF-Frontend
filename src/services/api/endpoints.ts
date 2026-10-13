@@ -32,7 +32,7 @@ export const ENDPOINTS = {
     certificate: '/dgii/certificado',
   },
   parties: (kind: 'customers' | 'suppliers') => (kind === 'customers' ? '/clientes' : '/proveedores'),
-  rncLookup: (rnc: string) => `/contribuyentes/${rnc}`,
+  rncLookup: (rnc: string) => `/rnc/${encodeURIComponent(rnc)}`,
   catalog: '/catalogo',
   reception: '/recepcion',
   receivables: { list: '/cuentas-por-cobrar', payments: '/cuentas-por-cobrar/pagos' },
@@ -47,6 +47,7 @@ export const ENDPOINTS = {
   onboarding: '/onboarding',
   developers: { credentials: '/api-keys', usage: '/api-keys/uso', logs: '/api-keys/historial' },
   admin: {
+    rncUpload: '/upload/dgicsv',
     dashboard: '/admin/dashboard',
     companies: '/admin/empresas',
     plans: '/admin/planes',

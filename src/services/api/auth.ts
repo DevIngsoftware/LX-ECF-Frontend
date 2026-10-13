@@ -56,7 +56,7 @@ export const DEMO_ADMIN_USER: SessionUser = {
   email: 'admin@loadexpress.test',
   portal: 'admin',
   role: 'SUPERADMIN',
-  permissions: ['admin.access', 'admin.companies', 'admin.plans', 'admin.users', 'admin.audit'],
+  permissions: ['admin.access', 'admin.companies', 'admin.plans', 'admin.users', 'admin.audit', 'admin.settings', 'rnc.import'],
   modules: [],
 };
 

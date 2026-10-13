@@ -79,7 +79,15 @@ const http = {
     update: (kind, id, input) => put(`${ENDPOINTS.parties(kind)}/${id}`, input),
     setActive: (kind, id, active) => patch(`${ENDPOINTS.parties(kind)}/${id}/estado`, { active }),
     history: (kind, id) => get(`${ENDPOINTS.parties(kind)}/${id}/comprobantes`),
-    lookupRnc: (rnc) => get(ENDPOINTS.rncLookup(rnc)),
+    async lookupRnc(rnc) {
+      try {
+        const result = await get<{ rnc: string; razonSocial: string; estado?: string }>(ENDPOINTS.rncLookup(rnc));
+        return { rnc: result.rnc, legalName: result.razonSocial, status: result.estado };
+      } catch (error) {
+        if (toApiError(error).kind === 'not_found') return null;
+        throw error;
+      }
+    },
   } satisfies PartiesService,
   catalog: {
     list: (params) => get(ENDPOINTS.catalog, { params }),
@@ -182,15 +190,7 @@ const portalCustomers: PartiesService = {
   update: (_kind, id, input) => put(`${ENDPOINTS.invoiceCustomers}/${encodeURIComponent(id)}`, input),
   setActive: (_kind, id, active) => patch(`${ENDPOINTS.invoiceCustomers}/${encodeURIComponent(id)}/estado`, { active }),
   history: (_kind, id) => get(`${ENDPOINTS.invoiceCustomers}/${encodeURIComponent(id)}/comprobantes`),
-  async lookupRnc(rnc) {
-    try {
-      const result = await get<{ rnc: string; razonSocial: string; estado?: string }>(`/rnc/${encodeURIComponent(rnc)}`);
-      return { rnc: result.rnc, legalName: result.razonSocial, status: result.estado };
-    } catch (error) {
-      if (toApiError(error).kind === 'not_found') return null;
-      throw error;
-    }
-  },
+  lookupRnc: (rnc) => http.parties.lookupRnc(rnc),
 };
 const activeCustomers = ENV.invoicesUseMocks ? impl.parties : portalCustomers;
 export const partiesService: PartiesService = {
@@ -200,7 +200,7 @@ export const partiesService: PartiesService = {
   update: (kind, id, input) => kind === 'customers' ? activeCustomers.update(kind, id, input) : http.parties.update(kind, id, input),
   setActive: (kind, id, active) => kind === 'customers' ? activeCustomers.setActive(kind, id, active) : http.parties.setActive(kind, id, active),
   history: (kind, id) => kind === 'customers' ? activeCustomers.history(kind, id) : http.parties.history(kind, id),
-  lookupRnc: portalCustomers.lookupRnc,
+  lookupRnc: ENV.invoicesUseMocks ? mock.parties.lookupRnc : http.parties.lookupRnc,
 };
 export const catalogService: CatalogService = http.catalog;
 export const receptionService: ReceptionService = http.reception;

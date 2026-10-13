@@ -76,6 +76,7 @@ export function toApiError(error: unknown): ApiError {
     if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') return new ApiError('timeout', FALLBACK.timeout);
     if (!error.response) return new ApiError('network', FALLBACK.network);
     const { status, data } = error.response;
+    if (typeof data === 'string') return new ApiError(kindFromStatus(status), data, status);
     const body = (data ?? {}) as SpringErrorBody;
     const kind = kindFromStatus(status, body.code);
     const fieldErrors: FieldError[] = (body.errors ?? []).map((e) => ({

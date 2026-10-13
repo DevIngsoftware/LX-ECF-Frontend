@@ -1,7 +1,7 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Loader2, Plus, Save } from 'lucide-react';
+import { Loader2, Plus, Save, Upload } from 'lucide-react';
 import { PageTransition } from '@/components/animations/motion';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { ErrorState, LoadingState } from '@/components/shared/states';
@@ -12,7 +12,44 @@ import { Switch } from '@/components/ui/switch';
 import { adminService } from '@/services/api/platform';
 import { queryKeys } from '@/services/api/query-keys';
 import { errorMessage } from '@/services/http/errors';
+import { useAuth } from '@/features/auth/auth-context';
 import type { BankAccount, PlatformSettings } from '@/types/platform';
+
+function RncCsvSettings() {
+  const [file, setFile] = useState<File | null>(null);
+  const [result, setResult] = useState<string | null>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const upload = useMutation({
+    mutationFn: adminService.uploadRncCsv,
+    onSuccess: (message) => {
+      setResult(message);
+      setFile(null);
+      if (fileInput.current) fileInput.current.value = '';
+      toast.success('Padrón RNC actualizado');
+    },
+    onError: (error) => toast.error(errorMessage(error)),
+  });
+
+  return <section className="surface mt-6 max-w-3xl space-y-4 p-6">
+    <div>
+      <h2 className="font-semibold">Padrón RNC de la DGII</h2>
+      <p className="text-sm text-muted-foreground">Carga el CSV oficial para que todas las empresas puedan consultar el RNC al crear clientes. Cada carga reemplaza el padrón anterior.</p>
+    </div>
+    <div className="space-y-2">
+      <Label htmlFor="rnc-csv">Archivo CSV</Label>
+      <Input id="rnc-csv" ref={fileInput} type="file" accept=".csv,text/csv" disabled={upload.isPending}
+        onChange={(event) => { setFile(event.target.files?.[0] ?? null); setResult(null); }} />
+      <p className="text-xs text-muted-foreground">Tamaño máximo: 200 MB. El procesamiento puede tardar varios minutos.</p>
+    </div>
+    {result && <p role="status" className="rounded-md bg-muted px-3 py-2 text-sm">{result}</p>}
+    <Button type="button" disabled={!file || file.size === 0 || file.size > 200 * 1024 * 1024 || upload.isPending}
+      onClick={() => file && upload.mutate(file)}>
+      {upload.isPending ? <Loader2 className="animate-spin" /> : <Upload />}
+      {upload.isPending ? 'Procesando CSV…' : 'Actualizar padrón'}
+    </Button>
+    {file && file.size > 200 * 1024 * 1024 && <p className="text-sm text-destructive">El archivo supera los 200 MB permitidos.</p>}
+  </section>;
+}
 
 function BankAccountsSettings() {
   const qc = useQueryClient();
@@ -51,6 +88,7 @@ function BankAccountsSettings() {
 }
 
 export function AdminSettingsPage() {
+  const { user } = useAuth();
   const qc = useQueryClient();
   const query = useQuery({ queryKey: queryKeys.admin.settings, queryFn: adminService.settings });
   const [form, setForm] = useState<PlatformSettings | null>(null);
@@ -78,6 +116,7 @@ export function AdminSettingsPage() {
         <div className="flex justify-end border-t pt-5"><Button type="submit" disabled={save.isPending}>{save.isPending ? <Loader2 className="animate-spin" /> : <Save />} Guardar cambios</Button></div>
       </form>
     )}
+    {user?.role === 'SUPERADMIN' && <RncCsvSettings />}
     <BankAccountsSettings />
   </PageTransition>;
 }

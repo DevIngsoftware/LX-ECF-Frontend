@@ -20,6 +20,7 @@ export interface DevelopersService {
 }
 
 export interface AdminService {
+  uploadRncCsv(file: File): Promise<string>;
   dashboard(): Promise<AdminDashboardOverview>;
   companies(query: PageQuery & { status?: string }): Promise<Page<AdminCompany>>;
   company(id: string): Promise<AdminCompany>;
@@ -64,6 +65,14 @@ const http = {
     logs: () => get(ENDPOINTS.developers.logs),
   } satisfies DevelopersService,
   admin: {
+    uploadRncCsv: (file) => {
+      const form = new FormData();
+      form.append('file', file);
+      return post<string>(ENDPOINTS.admin.rncUpload, form, {
+        headers: { 'Content-Type': 'multipart/form-data', Accept: 'text/plain' },
+        timeout: 30 * 60_000,
+      });
+    },
     dashboard: () => get(ENDPOINTS.admin.dashboard),
     companies: (params) => get(ENDPOINTS.admin.companies, { params }),
     company: (id) => get(`${ENDPOINTS.admin.companies}/${id}`),
@@ -124,6 +133,10 @@ const mock = {
     logs: () => http.developers.logs(),
   } satisfies DevelopersService,
   admin: {
+    async uploadRncCsv() {
+      await delay(500);
+      return 'Archivo procesado en modo demostración.';
+    },
     async dashboard() {
       await delay();
       return {

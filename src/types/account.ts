@@ -29,7 +29,8 @@ export type Permission =
   | 'admin.users'
   | 'admin.audit'
   | 'admin.support'
-  | 'admin.settings';
+  | 'admin.settings'
+  | 'rnc.import';
 
 export type ModuleKey = 'reception' | 'receivables' | 'catalog' | 'advanced_reports' | 'api' | 'expenses';
 
