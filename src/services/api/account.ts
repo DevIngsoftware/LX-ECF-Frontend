@@ -277,6 +277,7 @@ export interface DepositInput {
   reference?: string;
   proof: File;
   existingTicketId?: string;
+  termMonths?: 1 | 6 | 12;
 }
 
 export const manualPaymentsService = {
@@ -290,6 +291,7 @@ export const manualPaymentsService = {
     form.append('amount', String(input.amount));
     if (input.reference) form.append('reference', input.reference);
     if (input.existingTicketId) form.append('existingTicketId', input.existingTicketId);
+    if (input.termMonths) form.append('termMonths', String(input.termMonths));
     form.append('proof', input.proof);
     return post<SupportTicketDetail>('/pagos-manuales/solicitudes', form, { headers: { 'Content-Type': 'multipart/form-data' } });
   },

@@ -147,6 +147,7 @@ export function TicketSheet({ ticket, onOpenChange }: { ticket: SupportTicket | 
           <h3 className="font-semibold">Depósito para validar</h3>
           <p>{detail.data.paymentRequest.kind === 'PLAN' ? `Plan ${detail.data.paymentRequest.planName}` : `Módulo ${detail.data.paymentRequest.moduleKey ? MODULE_LABELS[detail.data.paymentRequest.moduleKey] ?? detail.data.paymentRequest.moduleKey : ''}`}
             {detail.data.paymentRequest.kind === 'MODULE' && detail.data.paymentRequest.planName ? ` con plan ${detail.data.paymentRequest.planName}` : ''}</p>
+          {detail.data.paymentRequest.planId && <p>Período solicitado: {detail.data.paymentRequest.termMonths} {detail.data.paymentRequest.termMonths === 1 ? 'mes' : 'meses'}</p>}
           <p>RD$ {Number(detail.data.paymentRequest.amount).toLocaleString('es-DO', { minimumFractionDigits: 2 })} · {detail.data.paymentRequest.bankName} · {detail.data.paymentRequest.accountNumber}</p>
           {detail.data.paymentRequest.reference && <p>Referencia: {detail.data.paymentRequest.reference}</p>}
           <p>Estado: {detail.data.paymentRequest.status}</p>
@@ -251,7 +252,7 @@ export function TicketSheet({ ticket, onOpenChange }: { ticket: SupportTicket | 
         open={approveOpen}
         onOpenChange={(open) => !approve.isPending && setApproveOpen(open)}
         title="Validar depósito y activar acceso"
-        description={`Confirma que el depósito coincide con el comprobante. Se activará ${detail.data?.paymentRequest?.kind === 'PLAN' ? `el plan ${detail.data.paymentRequest.planName}` : 'el módulo solicitado'} para ${current?.company ?? 'la empresa'}. El ticket quedará resuelto y la empresa recibirá una notificación.`}
+        description={`Confirma en la cuenta bancaria el monto, la referencia y el período solicitado. Se activará ${detail.data?.paymentRequest?.planId ? `el plan ${detail.data.paymentRequest.planName} por ${detail.data.paymentRequest.termMonths} mes(es)` : 'el módulo solicitado'} para ${current?.company ?? 'la empresa'}. El ticket quedará resuelto y la empresa recibirá una notificación.`}
         confirmLabel="Validar y activar"
         loading={approve.isPending}
         onConfirm={() => current && approve.mutate(current.id)}

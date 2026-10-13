@@ -29,12 +29,13 @@ export function DepositRequestDialog({ open, onOpenChange, kind, targetId, targe
   const plans = useQuery({ queryKey: queryKeys.plans, queryFn: billingService.plans, enabled: open && !!needsPlan });
   const [bankId, setBankId] = useState('');
   const [planId, setPlanId] = useState('');
+  const [termMonths, setTermMonths] = useState<'1' | '6' | '12'>('1');
   const [amount, setAmount] = useState('');
   const [reference, setReference] = useState('');
   const [proof, setProof] = useState<File | null>(null);
 
   useEffect(() => {
-    if (!open) { setBankId(''); setPlanId(''); setAmount(''); setReference(''); setProof(null); }
+    if (!open) { setBankId(''); setPlanId(''); setTermMonths('1'); setAmount(''); setReference(''); setProof(null); }
   }, [open]);
 
   const submit = useMutation({
@@ -47,6 +48,7 @@ export function DepositRequestDialog({ open, onOpenChange, kind, targetId, targe
       reference: reference.trim() || undefined,
       proof: proof!,
       existingTicketId,
+      termMonths: kind === 'PLAN' || needsPlan ? Number(termMonths) as 1 | 6 | 12 : undefined,
     }),
     onSuccess: ({ ticket }) => {
       toast.success(`Comprobante enviado en el ticket #${ticket.id}`, { description: 'Superadmin revisará el depósito antes de habilitar el acceso.' });
@@ -79,7 +81,21 @@ export function DepositRequestDialog({ open, onOpenChange, kind, targetId, targe
                 <SelectTrigger><SelectValue placeholder="Selecciona un plan" /></SelectTrigger>
                 <SelectContent>{plans.data?.filter((plan) => plan.active).map((plan) => <SelectItem key={plan.id} value={plan.id}>{plan.name}</SelectItem>)}</SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">La aprobación activará este plan y el módulo solicitado por 30 días.</p>
+              <p className="text-xs text-muted-foreground">La aprobación activará este plan y el módulo solicitado por el período elegido.</p>
+            </div>
+          )}
+          {(kind === 'PLAN' || needsPlan) && (
+            <div className="space-y-2">
+              <Label>Período del plan</Label>
+              <Select value={termMonths} onValueChange={(value) => setTermMonths(value as '1' | '6' | '12')}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 mes</SelectItem>
+                  <SelectItem value="6">6 meses</SelectItem>
+                  <SelectItem value="12">12 meses</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">El monto se acuerda con tu asesor. Si renuevas antes de vencer, conservarás los días restantes.</p>
             </div>
           )}
           <div className="space-y-2">

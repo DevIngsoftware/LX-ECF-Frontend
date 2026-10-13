@@ -31,7 +31,14 @@ export function formatRelative(iso: string) {
   return rtf.format(-Math.round(diff / 86400), 'day');
 }
 
-export const daysUntil = (iso: string) => Math.ceil((new Date(iso).getTime() - Date.now()) / 86400000);
+export const daysUntil = (iso: string) => {
+  const [year, month, day] = iso.slice(0, 10).split('-').map(Number);
+  const todayParts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Santo_Domingo', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(new Date());
+  const part = (type: string) => Number(todayParts.find((item) => item.type === type)?.value);
+  return Math.round((Date.UTC(year, month - 1, day) - Date.UTC(part('year'), part('month') - 1, part('day'))) / 86400000);
+};
 
 export const initials = (name: string) =>
   name

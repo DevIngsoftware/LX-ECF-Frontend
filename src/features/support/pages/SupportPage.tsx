@@ -113,6 +113,7 @@ export function SupportPage() {
               {detail.data.paymentRequest ? <div className="rounded-lg border bg-muted/30 p-3 text-sm">
                 <p className="font-medium">Comprobante de depósito: {detail.data.paymentRequest.status === 'PENDING' ? 'pendiente de validación' : detail.data.paymentRequest.status === 'APPROVED' ? 'aprobado' : 'rechazado'}</p>
                 <p>RD$ {Number(detail.data.paymentRequest.amount).toLocaleString('es-DO', { minimumFractionDigits: 2 })} · {detail.data.paymentRequest.bankName}</p>
+                {detail.data.paymentRequest.planId && <p>Plan solicitado por {detail.data.paymentRequest.termMonths} {detail.data.paymentRequest.termMonths === 1 ? 'mes' : 'meses'}.</p>}
                 {detail.data.paymentRequest.reviewNote && <p>Motivo: {detail.data.paymentRequest.reviewNote}</p>}
               </div> : detail.data.moduleRequest && ['ABIERTO', 'EN_PROGRESO'].includes(detail.data.ticket.status) && <div className="rounded-lg border border-brand/30 p-3 text-sm">
                 <p className="mb-2">Para habilitar el módulo, adjunta tu comprobante de depósito. Superadmin lo verificará.</p>

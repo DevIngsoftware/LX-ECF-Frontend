@@ -140,7 +140,7 @@ export function PlanFormDialog({ open, onOpenChange, plan }: { open: boolean; on
             />
             {text('priceLabel', 'Precio publicado', { placeholder: 'Ejemplo: 1200', hint: 'Ingresa el monto en pesos dominicanos. Se mostrará como RD$1,200.00; si lo dejas vacío, aparecerá «Consultar».' })}
             <div className="grid gap-5 sm:grid-cols-2">
-              {text('invoiceLimit', 'Límite de comprobantes', { placeholder: 'Ilimitado', numeric: true })}
+              {text('invoiceLimit', 'Límite de comprobantes al mes', { placeholder: 'Ilimitado', numeric: true })}
               {text('userLimit', 'Límite de usuarios', { placeholder: 'Ilimitado', numeric: true })}
             </div>
             <FormField

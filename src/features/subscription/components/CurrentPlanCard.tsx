@@ -35,15 +35,21 @@ export function CurrentPlanCard({ sub }: { sub: Subscription }) {
           </dl>
         </div>
         <p className="mt-3 text-xs text-muted-foreground">
-          Período actual: {formatDate(sub.startedAt)} – {formatDate(sub.renewalDate)}
+          Vigencia pagada: {formatDate(sub.startedAt)} – {formatDate(sub.renewalDate)}. El cupo de comprobantes se renueva cada mes.
         </p>
+        {sub.status === 'VENCIDA' && days < 0 && <p className="mt-2 text-sm font-medium text-warning">
+          {days >= -5
+            ? days === -5 ? 'Último día de gracia para crear nuevos comprobantes. Renueva hoy.'
+              : `Plan vencido. Puedes crear comprobantes durante ${5 + days} día(s) más; renueva para evitar la interrupción.`
+            : 'Plan vencido. Renueva para crear nuevos comprobantes.'}
+        </p>}
       </div>
 
       <div className="grid gap-6 p-5 sm:p-6 lg:grid-cols-[1fr_280px]">
         <div>
           <h3 className="mb-3 text-sm font-semibold">Uso del período</h3>
           <div className="grid gap-3 sm:grid-cols-2">
-            <UsageMeter label="Comprobantes" icon={FileText} used={sub.documentsUsed} limit={sub.documentsLimit} unit="comprobantes" />
+            <UsageMeter label="Comprobantes este mes" icon={FileText} used={sub.documentsUsed} limit={sub.documentsLimit} unit="comprobantes" />
             <UsageMeter label="Usuarios" icon={Users} used={sub.usersUsed} limit={sub.usersLimit} unit="usuarios" />
           </div>
         </div>

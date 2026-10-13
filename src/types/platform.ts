@@ -134,6 +134,7 @@ export interface SupportTicketDetail {
     status: 'PENDING' | 'APPROVED' | 'REJECTED';
     createdAt: ISODate;
     reviewNote?: string | null;
+    termMonths: number;
   } | null;
 }
 

@@ -51,7 +51,7 @@ export function SubscriptionPage() {
           ) : plans.error ? (
             <div className="surface"><ErrorState compact error={plans.error} onRetry={() => void plans.refetch()} /></div>
           ) : (
-            <PlanComparison plans={plans.data ?? []} currentPlanId={sub.data && ['ACTIVA', 'PRUEBA'].includes(sub.data.status) ? sub.data.planId : undefined} />
+            <PlanComparison plans={plans.data ?? []} currentPlanId={sub.data?.planId} />
           )}
         </section>
 

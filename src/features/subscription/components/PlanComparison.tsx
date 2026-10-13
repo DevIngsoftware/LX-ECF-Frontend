@@ -37,7 +37,7 @@ export function PlanComparison({ plans, currentPlanId }: { plans: Plan[]; curren
               {!p.priceLabel && <p className="text-xs text-muted-foreground">Precio según volumen y necesidades</p>}
 
               <ul className="mt-4 space-y-2 border-t pt-4 text-sm">
-                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-success" /> {limit(p.invoiceLimit, 'comprobantes')}</li>
+                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-success" /> {p.invoiceLimit === null ? 'Comprobantes ilimitados' : `Hasta ${formatNumber(p.invoiceLimit)} comprobantes al mes`}</li>
                 <li className="flex items-center gap-2"><Check className="h-4 w-4 text-success" /> {limit(p.userLimit, 'usuarios')}</li>
                 {ALL_MODULES.map((m) => {
                   const inc = p.modules.includes(m);
@@ -51,8 +51,8 @@ export function PlanComparison({ plans, currentPlanId }: { plans: Plan[]; curren
               </ul>
 
               <div className="min-h-4 flex-1" />
-              <Button className="w-full" variant={current ? 'outline' : p.highlighted ? 'default' : 'secondary'} disabled={current} onClick={() => setTarget(p)}>
-                {current ? 'Plan actual' : <><ArrowRightLeft /> {currentPlanId ? 'Cambiar plan' : 'Elegir plan'}</>}
+              <Button className="w-full" variant={current ? 'outline' : p.highlighted ? 'default' : 'secondary'} onClick={() => setTarget(p)}>
+                {current ? 'Renovar plan' : <><ArrowRightLeft /> {currentPlanId ? 'Cambiar plan' : 'Elegir plan'}</>}
               </Button>
             </motion.article>
           );

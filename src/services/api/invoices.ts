@@ -13,6 +13,7 @@ import { buildDashboard, buildDgiiOverview } from '../mocks/aggregates';
 import { daysAgo, delay, demoBlob, paginate, uid } from '../mocks/utils';
 
 export interface InvoicesService {
+  access(): Promise<{ allowed: boolean; message: string }>;
   list(query: PageQuery & InvoiceFilters): Promise<Page<InvoiceSummary>>;
   get(id: string): Promise<InvoiceDetail>;
   validate(draft: InvoiceDraft): Promise<PreValidationResult>;
@@ -39,6 +40,7 @@ function localDate(iso?: string) {
 }
 
 const httpInvoices: InvoicesService = {
+  access: () => get(`${ENDPOINTS.invoices.list}/acceso`),
   list: (params) => {
     return get(ENDPOINTS.invoices.list, { params: { ...params, from: localDate(params.from), to: localDate(params.to) } });
   },
@@ -85,6 +87,7 @@ function findInvoice(id: string) {
 }
 
 const mockInvoices: InvoicesService = {
+  async access() { return { allowed: true, message: 'Puedes crear comprobantes.' }; },
   async list(query) {
     await delay();
     let list: InvoiceSummary[] = invoices;

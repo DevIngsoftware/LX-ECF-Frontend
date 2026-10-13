@@ -81,6 +81,8 @@ export function NewInvoicePage() {
   const noteType = requestedType === 'E33' || requestedType === 'E34' ? requestedType : null;
   const [validation, setValidation] = useState<PreValidationResult | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const access = useQuery({ queryKey: ['invoice-issuance-access'], queryFn: invoicesService.access,
+    enabled: !ENV.invoicesUseMocks });
   const pendingRequest = useRef<{ payload: string; key: string } | null>(savedPendingRequest());
   const restoredDraftId = useRef<string | null>(null);
   const form = useForm<InvoiceFormValues>({ resolver: zodResolver(invoiceFormSchema), defaultValues: defaultValues(isEcfCode(requestedType) ? requestedType : 'E31') });
@@ -203,6 +205,11 @@ export function NewInvoicePage() {
   return <PageTransition>
     <PageHeader eyebrow="Facturación electrónica" title={type === 'E33' || type === 'E34' ? 'Nueva nota electrónica' : 'Nueva factura'} description={ENV.invoicesUseMocks ? 'Prepara un e-CF y revisa los totales antes de registrarlo. En modo demostración no se envía a la DGII.' : 'Prepara el e-CF, valídalo y regístralo. Podrás enviarlo a la DGII desde el detalle.'}
       actions={<Button asChild variant="outline"><Link to={ROUTES.app.invoices}><ArrowLeft /> Comprobantes</Link></Button>} />
+    {access.data && !access.data.allowed && <div role="alert" className="mb-6 rounded-lg border border-warning/30 bg-warning-soft p-4 text-sm">
+      <p className="font-semibold">Emisión de nuevos comprobantes pausada</p>
+      <p className="mt-1">{access.data.message}</p>
+      <p className="mt-1">Consulta con el administrador de tu empresa para renovar el plan.</p>
+    </div>}
     {reference.error && <div className="mb-6"><ErrorState compact error={reference.error} onRetry={() => void reference.refetch()} /></div>}
     {savedDraft.isLoading && <LoadingState rows={5} />}
     {savedDraft.error && <ErrorState error={savedDraft.error} onRetry={() => void savedDraft.refetch()} />}
@@ -271,7 +278,7 @@ export function NewInvoicePage() {
         </div>
         <aside className="lg:sticky lg:top-24 lg:self-start"><div className="surface space-y-5 p-5"><h2 className="font-semibold">Resumen</h2>
           <TotalsList values={{ subtotal: totals.taxable, discount: totals.discount, itbis: totals.itbis, itbisByRate: totals.itbisByRate, retainedItbis: totals.retainedItbis, retainedIsr: totals.retainedIsr, total: totals.total }} />
-          <div className="space-y-2 border-t pt-5">{!ENV.invoicesUseMocks && <Button type="button" variant="outline" className="w-full" disabled={busy} onClick={() => save.mutate(form.getValues())}>{save.isPending ? <Loader2 className="animate-spin" /> : <Save />} Guardar borrador</Button>}<Button type="button" variant="outline" className="w-full" disabled={busy} onClick={validateForm}>{validate.isPending ? <Loader2 className="animate-spin" /> : <FileCheck2 />} Validar borrador</Button><Button type="submit" className="w-full" disabled={busy}>{emit.isPending ? <Loader2 className="animate-spin" /> : <FileCheck2 />} Registrar comprobante</Button></div>
+          <div className="space-y-2 border-t pt-5">{!ENV.invoicesUseMocks && <Button type="button" variant="outline" className="w-full" disabled={busy} onClick={() => save.mutate(form.getValues())}>{save.isPending ? <Loader2 className="animate-spin" /> : <Save />} Guardar borrador</Button>}<Button type="button" variant="outline" className="w-full" disabled={busy} onClick={validateForm}>{validate.isPending ? <Loader2 className="animate-spin" /> : <FileCheck2 />} Validar borrador</Button><Button type="submit" className="w-full" disabled={busy || access.isLoading || access.data?.allowed === false}>{emit.isPending ? <Loader2 className="animate-spin" /> : <FileCheck2 />} Registrar comprobante</Button></div>
           {formError && <p role="alert" className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">{formError}</p>}
           <p className="text-xs text-muted-foreground">{ENV.invoicesUseMocks ? 'Modo demostración: el registro se guarda solo en la memoria de esta página y no tiene validez fiscal.' : 'Registrar asigna un e-NCF real de la empresa. El envío a la DGII es un paso separado.'}</p>
         </div>{validation && <div className="surface mt-4 p-4"><h2 className="mb-3 text-sm font-semibold">Validación</h2><DgiiMessages messages={validation.messages} tone={validation.valid ? 'info' : 'warning'} /></div>}</aside>
