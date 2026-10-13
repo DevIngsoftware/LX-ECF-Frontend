@@ -42,6 +42,7 @@ export function InvoicesPage() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [showAllDrafts, setShowAllDrafts] = useState(false);
   const [deletingDraft, setDeletingDraft] = useState<SavedInvoiceDraft | null>(null);
+  const [deletingInvoice, setDeletingInvoice] = useState<InvoiceSummary | null>(null);
   const seen = useRef(new Map<string, InvoiceSummary>());
   const { download } = useInvoiceDownloads();
   const { mutate: checkStatusMutate } = useCheckStatus();
@@ -53,6 +54,16 @@ export function InvoicesPage() {
       setDeletingDraft(null);
       void qc.invalidateQueries({ queryKey: ['invoice-drafts'] });
       toast.success('Borrador eliminado');
+    },
+    onError: (err) => toast.error(errorMessage(err)),
+  });
+  const deleteInvoice = useMutation({
+    mutationFn: (id: string) => invoicesService.delete(id),
+    onSuccess: () => {
+      setDeletingInvoice(null);
+      setRowSelection({});
+      void qc.invalidateQueries({ queryKey: ['invoices'] });
+      toast.success('Factura eliminada');
     },
     onError: (err) => toast.error(errorMessage(err)),
   });
@@ -108,6 +119,7 @@ export function InvoicesPage() {
             canEmit={canEmit}
             onDownload={(inv, kind) => void download(inv.id, kind, inv.encf)}
             onCheckStatus={(inv) => checkStatusMutate(inv.id)}
+            onDelete={setDeletingInvoice}
           />
         ),
       },
@@ -222,6 +234,10 @@ export function InvoicesPage() {
         title="Eliminar borrador" description="Este borrador no tiene e-NCF asignado y se eliminará de la empresa."
         confirmLabel="Eliminar" destructive loading={deleteDraft.isPending}
         onConfirm={() => deletingDraft && deleteDraft.mutate(deletingDraft.id)} />
+      <ConfirmDialog open={!!deletingInvoice} onOpenChange={(open) => !open && !deleteInvoice.isPending && setDeletingInvoice(null)}
+        title="Eliminar factura" description={`Se eliminará la factura ${deletingInvoice?.encf ?? ''} que aún no se ha enviado a la DGII. Esta acción no se puede deshacer.`}
+        confirmLabel="Eliminar" destructive loading={deleteInvoice.isPending}
+        onConfirm={() => deletingInvoice && deleteInvoice.mutate(deletingInvoice.id)} />
     </PageTransition>
   );
 }

@@ -16,7 +16,10 @@ export interface InvoicesService {
   access(): Promise<{ allowed: boolean; message: string }>;
   list(query: PageQuery & InvoiceFilters): Promise<Page<InvoiceSummary>>;
   get(id: string): Promise<InvoiceDetail>;
-  validate(draft: InvoiceDraft): Promise<PreValidationResult>;
+  getEditForm(id: string): Promise<InvoiceDraft>;
+  update(id: string, draft: InvoiceDraft): Promise<InvoiceDetail>;
+  delete(id: string): Promise<void>;
+  validate(draft: InvoiceDraft, editingId?: string): Promise<PreValidationResult>;
   saveDraft(draft: InvoiceDraft): Promise<{ id: string }>;
   listDrafts(): Promise<SavedInvoiceDraft[]>;
   getDraft(id: string): Promise<InvoiceDraft>;
@@ -45,7 +48,10 @@ const httpInvoices: InvoicesService = {
     return get(ENDPOINTS.invoices.list, { params: { ...params, from: localDate(params.from), to: localDate(params.to) } });
   },
   get: (id) => get(ENDPOINTS.invoices.detail(id)),
-  validate: (draft) => post(ENDPOINTS.invoices.validate, toFacturaRequestDTO(draft)),
+  getEditForm: (id) => get<FacturaRequestDTO>(`${ENDPOINTS.invoices.detail(id)}/formulario`).then(fromFacturaRequestDTO),
+  update: (id, draft) => put(ENDPOINTS.invoices.detail(id), toFacturaRequestDTO(draft)),
+  delete: (id) => del(ENDPOINTS.invoices.detail(id)),
+  validate: (draft, editingId) => post(editingId ? `${ENDPOINTS.invoices.detail(editingId)}/validar` : ENDPOINTS.invoices.validate, toFacturaRequestDTO(draft)),
   saveDraft: (draft) => post(ENDPOINTS.invoices.draft, toFacturaRequestDTO(draft)),
   listDrafts: () => get(ENDPOINTS.invoices.draft),
   getDraft: (id) => get<FacturaRequestDTO>(`${ENDPOINTS.invoices.draft}/${encodeURIComponent(id)}`)
@@ -102,6 +108,9 @@ const mockInvoices: InvoicesService = {
     await delay(350);
     return findInvoice(id);
   },
+  async getEditForm() { throw new ApiError('validation', 'La edición no está disponible en la demostración.', 400); },
+  async update() { throw new ApiError('validation', 'La edición no está disponible en la demostración.', 400); },
+  async delete() { throw new ApiError('validation', 'La eliminación no está disponible en la demostración.', 400); },
   async validate(draft) {
     await delay(600);
     const messages = [{ code: 'DEMO', message: 'Validación de demostración: la validación fiscal definitiva la realiza el backend.' }];

@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { FileSearch } from 'lucide-react';
 import { PageTransition } from '@/components/animations/motion';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { ErrorState, StateView } from '@/components/shared/states';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -42,9 +43,12 @@ function DetailSkeleton() {
 export function InvoiceDetailPage() {
   const { id = '' } = useParams<{ id: string }>();
   const [params, setParams] = useSearchParams();
+  const navigate = useNavigate();
   const { hasPermission } = useAuth();
   const [lastCheck, setLastCheck] = useState<TrackStatusResult | null>(null);
   const [printToken, setPrintToken] = useState(0);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmSend, setConfirmSend] = useState(false);
   const downloads = useInvoiceDownloads();
   const check = useCheckStatus(setLastCheck);
   const qc = useQueryClient();
@@ -52,9 +56,20 @@ export function InvoiceDetailPage() {
     mutationFn: (invoiceId: string) => invoicesService.send(invoiceId),
     retry: false,
     onSuccess: () => {
+      setConfirmSend(false);
       toast.success('Comprobante enviado a la DGII');
       void qc.invalidateQueries({ queryKey: queryKeys.invoice(id) });
       void qc.invalidateQueries({ queryKey: ['invoices'] });
+    },
+    onError: (error) => toast.error(errorMessage(error)),
+  });
+  const remove = useMutation({
+    mutationFn: () => invoicesService.delete(id),
+    onSuccess: () => {
+      setConfirmDelete(false);
+      toast.success('Comprobante eliminado');
+      void qc.invalidateQueries({ queryKey: ['invoices'] });
+      navigate(ROUTES.app.invoices);
     },
     onError: (error) => toast.error(errorMessage(error)),
   });
@@ -108,9 +123,17 @@ export function InvoiceDetailPage() {
         onDownload={onDownload}
         onCheckStatus={onCheckStatus}
         onPrint={onPrint}
-        onSend={() => send.mutate(invoice.id)}
+        onSend={() => setConfirmSend(true)}
         sending={send.isPending}
+        onDelete={() => setConfirmDelete(true)}
       />
+      <ConfirmDialog open={confirmSend} onOpenChange={(open) => !send.isPending && setConfirmSend(open)}
+        title="Enviar comprobante a la DGII"
+        description={`Confirma que revisaste el PDF de ${invoice.encf}. Al iniciar el envío ya no podrás editar ni eliminar este comprobante.`}
+        confirmLabel="Enviar a la DGII" loading={send.isPending} onConfirm={() => send.mutate(invoice.id)} />
+      <ConfirmDialog open={confirmDelete} onOpenChange={(open) => !remove.isPending && setConfirmDelete(open)}
+        title="Eliminar comprobante" description={`Se eliminará ${invoice.encf} y sus líneas. Esta acción no se puede deshacer.`}
+        confirmLabel="Eliminar comprobante" destructive loading={remove.isPending} onConfirm={() => remove.mutate()} />
       <Tabs value={tab} onValueChange={setTab}>
         <div className="scrollbar-thin -mx-4 mb-6 overflow-x-auto px-4 sm:mx-0 sm:px-0">
           <TabsList className="h-11">

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import type { InvoiceDetail, TrackStatusResult } from '@/types/ecf';
 import { formatDateTime } from '@/utils/format';
 import { DgiiMessages } from '../DgiiMessages';
+import { canCheckDgiiStatus, isRfce } from '../../lib/invoice-routes';
 
 interface Props {
   invoice: InvoiceDetail;
@@ -17,6 +18,7 @@ export function DgiiTab({ invoice, lastCheck, checking, onCheckStatus }: Props) 
   const dgiiStatus = lastCheck?.dgiiStatus ?? invoice.dgiiStatus;
   const messages = lastCheck?.messages ?? invoice.dgiiMessages;
   const trackId = lastCheck?.trackId && lastCheck.trackId !== '—' ? lastCheck.trackId : invoice.trackId;
+  const canCheck = canCheckDgiiStatus(invoice);
 
   return (
     <div className="space-y-6">
@@ -55,7 +57,13 @@ export function DgiiTab({ invoice, lastCheck, checking, onCheckStatus }: Props) 
                     <CopyButton value={trackId} label="Copiar trackId" />
                   </>
                 ) : (
-                  <span className="text-muted-foreground">Sin trackId: el comprobante no ha sido enviado.</span>
+                  <span className="text-muted-foreground">
+                    {isRfce(invoice) && canCheck
+                      ? 'La API no guardó un Track ID para este envío. Consulta el estado con el e-NCF y código de seguridad.'
+                      : invoice.internalStatus === 'ENVIANDO' || invoice.internalStatus === 'ENVIO_INCIERTO'
+                        ? 'Envío pendiente de confirmación: aún no hay un Track ID guardado.'
+                      : 'Sin TrackId: el comprobante no ha sido enviado.'}
+                  </span>
                 )}
               </dd>
             </div>
@@ -64,7 +72,7 @@ export function DgiiTab({ invoice, lastCheck, checking, onCheckStatus }: Props) 
               <dd>{lastCheck ? formatDateTime(lastCheck.checkedAt) : 'No consultado en esta sesión'}</dd>
             </div>
           </dl>
-          <Button variant="outline" onClick={onCheckStatus} disabled={checking}>
+          <Button variant="outline" onClick={onCheckStatus} disabled={checking || !canCheck}>
             {checking ? <Loader2 className="animate-spin" /> : <RefreshCw />} Consultar estado
           </Button>
         </div>

@@ -78,13 +78,15 @@ export function NewInvoicePage() {
   const requestedType = params.get('tipo');
   const refId = params.get('ref');
   const draftId = params.get('borrador');
+  const editId = params.get('editar');
   const noteType = requestedType === 'E33' || requestedType === 'E34' ? requestedType : null;
   const [validation, setValidation] = useState<PreValidationResult | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const access = useQuery({ queryKey: ['invoice-issuance-access'], queryFn: invoicesService.access,
-    enabled: !ENV.invoicesUseMocks });
+    enabled: !ENV.invoicesUseMocks && !editId });
   const pendingRequest = useRef<{ payload: string; key: string } | null>(savedPendingRequest());
   const restoredDraftId = useRef<string | null>(null);
+  const restoredEditId = useRef<string | null>(null);
   const form = useForm<InvoiceFormValues>({ resolver: zodResolver(invoiceFormSchema), defaultValues: defaultValues(isEcfCode(requestedType) ? requestedType : 'E31') });
   const { fields, append, remove } = useFieldArray({ control: form.control, name: 'items' });
   const type = useWatch({ control: form.control, name: 'type' });
@@ -93,11 +95,12 @@ export function NewInvoicePage() {
   const retentions = useWatch({ control: form.control, name: 'retentions' });
   const config = ECF_TYPE_MAP[type];
   const totals = useMemo(() => computeTotals(items ?? [], retentions), [items, retentions]);
-  const reference = useQuery({ queryKey: queryKeys.invoice(refId ?? ''), queryFn: () => invoicesService.get(refId!), enabled: !!refId && !!noteType && !draftId });
-  const savedDraft = useQuery({ queryKey: ['invoice-draft', draftId], queryFn: () => invoicesService.getDraft(draftId!), enabled: !!draftId && !ENV.invoicesUseMocks });
+  const reference = useQuery({ queryKey: queryKeys.invoice(refId ?? ''), queryFn: () => invoicesService.get(refId!), enabled: !!refId && !!noteType && !draftId && !editId });
+  const savedDraft = useQuery({ queryKey: ['invoice-draft', draftId], queryFn: () => invoicesService.getDraft(draftId!), enabled: !!draftId && !editId && !ENV.invoicesUseMocks });
+  const savedInvoice = useQuery({ queryKey: ['invoice-edit-form', editId], queryFn: () => invoicesService.getEditForm(editId!), enabled: !!editId && !ENV.invoicesUseMocks });
   const customerId = (location.state as { customerId?: string } | null)?.customerId;
   const savedCustomer = useQuery({ queryKey: queryKeys.party('customers', customerId ?? ''),
-    queryFn: () => partiesService.get('customers', customerId!), enabled: !!customerId && !noteType && !draftId });
+    queryFn: () => partiesService.get('customers', customerId!), enabled: !!customerId && !noteType && !draftId && !editId });
 
   useEffect(() => {
     if (!draftId) { restoredDraftId.current = null; return; }
@@ -108,12 +111,20 @@ export function NewInvoicePage() {
   }, [draftId, form, savedDraft.data]);
 
   useEffect(() => {
-    if (!savedCustomer.data || noteType || draftId) return;
+    if (!editId) { restoredEditId.current = null; return; }
+    if (savedInvoice.data && restoredEditId.current !== editId) {
+      form.reset(fromDraft(savedInvoice.data));
+      restoredEditId.current = editId;
+    }
+  }, [editId, form, savedInvoice.data]);
+
+  useEffect(() => {
+    if (!savedCustomer.data || noteType || draftId || editId) return;
     form.setValue('buyer.partyId', savedCustomer.data.id);
     form.setValue('buyer.rnc', savedCustomer.data.rnc);
     form.setValue('buyer.name', savedCustomer.data.legalName);
     form.setValue('buyer.email', savedCustomer.data.email ?? '');
-  }, [form, noteType, draftId, savedCustomer.data]);
+  }, [form, noteType, draftId, editId, savedCustomer.data]);
 
   useEffect(() => {
     if (type !== 'E44' && type !== 'E46' && type !== 'E47') return;
@@ -123,17 +134,17 @@ export function NewInvoicePage() {
   }, [type, form]);
 
   useEffect(() => {
-    if (!reference.data || !noteType || draftId) return;
+    if (!reference.data || !noteType || draftId || editId) return;
     form.setValue('type', noteType);
     form.setValue('buyer.name', reference.data.buyer.name ?? reference.data.buyerName);
     form.setValue('buyer.rnc', reference.data.buyer.rnc ?? reference.data.buyerRnc ?? '');
     form.setValue('buyer.email', reference.data.buyer.email ?? '');
     form.setValue('reference.modifiedNcf', reference.data.encf);
     form.setValue('reference.modifiedDate', reference.data.issueDate.slice(0, 10));
-  }, [form, noteType, draftId, reference.data]);
+  }, [form, noteType, draftId, editId, reference.data]);
 
   const validate = useMutation({
-    mutationFn: (values: InvoiceFormValues) => invoicesService.validate(toDraft(values)),
+    mutationFn: (values: InvoiceFormValues) => invoicesService.validate(toDraft(values), editId ?? undefined),
     onSuccess: (result) => { setValidation(result); toast[result.valid ? 'success' : 'error'](result.valid ? 'Borrador validado' : 'Revisa los mensajes de validación'); },
     onError: (error) => toast.error(errorMessage(error)),
   });
@@ -160,26 +171,32 @@ export function NewInvoicePage() {
   const emit = useMutation({
     mutationFn: (values: InvoiceFormValues) => {
       const draft = toDraft(values);
+      if (editId) return invoicesService.update(editId, draft).then(() => ({ id: editId }));
       const payload = JSON.stringify(draft);
       if (pendingRequest.current?.payload !== payload) {
         pendingRequest.current = { payload, key: crypto.randomUUID() };
         try { sessionStorage.setItem(pendingKey, JSON.stringify(pendingRequest.current)); } catch { /* memoria disponible */ }
       }
-      return invoicesService.emit(draft, pendingRequest.current.key);
+      return invoicesService.emit(draft, pendingRequest.current.key).then((result) => ({ id: result.id }));
     },
     onSuccess: (result) => {
       pendingRequest.current = null;
       try { sessionStorage.removeItem(pendingKey); } catch { /* memoria disponible */ }
       void qc.invalidateQueries({ queryKey: ['invoices'] });
-      if (draftId) {
+      if (editId) {
+        void qc.invalidateQueries({ queryKey: queryKeys.invoice(editId) });
+        void qc.invalidateQueries({ queryKey: ['invoice-pdf', editId] });
+        void qc.invalidateQueries({ queryKey: ['invoice-edit-form', editId] });
+      }
+      if (draftId && !editId) {
         void invoicesService.deleteDraft(draftId).then(() => qc.invalidateQueries({ queryKey: ['invoice-drafts'] }))
           .catch(() => toast.error('El comprobante se registró, pero no se pudo retirar el borrador. Puedes eliminarlo desde Comprobantes.'));
       }
-      toast.success(ENV.invoicesUseMocks ? 'Comprobante creado en modo demostración' : 'Comprobante registrado');
-      navigate(ROUTES.app.invoice(result.id));
+      toast.success(editId ? 'Comprobante actualizado' : ENV.invoicesUseMocks ? 'Comprobante creado en modo demostración' : 'Comprobante registrado');
+      navigate(ROUTES.app.invoice(editId ?? result.id));
     },
     onError: (error) => {
-      const message = `No se pudo registrar el comprobante: ${errorMessage(error)}`;
+      const message = `No se pudo ${editId ? 'actualizar' : 'registrar'} el comprobante: ${errorMessage(error)}`;
       setFormError(message);
       toast.error(message);
     },
@@ -189,9 +206,9 @@ export function NewInvoicePage() {
   const onInvalid = (invalid: FieldErrors<InvoiceFormValues>) => {
     const issue = firstValidationIssue(invalid);
     const message = issue ? `${validationField(issue.path)}: ${issue.message}` : 'Revisa los datos del comprobante';
-    const feedback = `No se registró el comprobante: ${message}. Corrige el campo señalado en el formulario y vuelve a intentarlo.`;
+    const feedback = `No se ${editId ? 'actualizó' : 'registró'} el comprobante: ${message}. Corrige el campo señalado en el formulario y vuelve a intentarlo.`;
     setFormError(feedback);
-    toast.error(`No se registró el comprobante: ${message}`);
+    toast.error(`No se ${editId ? 'actualizó' : 'registró'} el comprobante: ${message}`);
   };
   const validateForm = form.handleSubmit((values) => {
     setFormError(null);
@@ -203,7 +220,7 @@ export function NewInvoicePage() {
   }, onInvalid);
 
   return <PageTransition>
-    <PageHeader eyebrow="Facturación electrónica" title={type === 'E33' || type === 'E34' ? 'Nueva nota electrónica' : 'Nueva factura'} description={ENV.invoicesUseMocks ? 'Prepara un e-CF y revisa los totales antes de registrarlo. En modo demostración no se envía a la DGII.' : 'Prepara el e-CF, valídalo y regístralo. Podrás enviarlo a la DGII desde el detalle.'}
+    <PageHeader eyebrow="Facturación electrónica" title={editId ? 'Editar comprobante' : type === 'E33' || type === 'E34' ? 'Nueva nota electrónica' : 'Nueva factura'} description={editId ? `Corrige ${editId} antes de enviarlo a la DGII. Se conservará su e-NCF.` : ENV.invoicesUseMocks ? 'Prepara un e-CF y revisa los totales antes de registrarlo. En modo demostración no se envía a la DGII.' : 'Prepara el e-CF, valídalo y regístralo. Podrás enviarlo a la DGII desde el detalle.'}
       actions={<Button asChild variant="outline"><Link to={ROUTES.app.invoices}><ArrowLeft /> Comprobantes</Link></Button>} />
     {access.data && !access.data.allowed && <div role="alert" className="mb-6 rounded-lg border border-warning/30 bg-warning-soft p-4 text-sm">
       <p className="font-semibold">Emisión de nuevos comprobantes pausada</p>
@@ -213,11 +230,13 @@ export function NewInvoicePage() {
     {reference.error && <div className="mb-6"><ErrorState compact error={reference.error} onRetry={() => void reference.refetch()} /></div>}
     {savedDraft.isLoading && <LoadingState rows={5} />}
     {savedDraft.error && <ErrorState error={savedDraft.error} onRetry={() => void savedDraft.refetch()} />}
-    {!savedDraft.isLoading && !savedDraft.error && (
+    {savedInvoice.isLoading && <LoadingState rows={5} />}
+    {savedInvoice.error && <ErrorState error={savedInvoice.error} onRetry={() => void savedInvoice.refetch()} />}
+    {!savedDraft.isLoading && !savedDraft.error && !savedInvoice.isLoading && !savedInvoice.error && (
     <FormProvider {...form}>
       <form onSubmit={registerForm} noValidate className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 space-y-6">
-          <TypeSection step={1} locked={!!noteType && !!reference.data} />
+          <TypeSection step={1} locked={!!editId || !!noteType && !!reference.data} />
           <FormSection id="sec-comprador" step={2} title={config.buyerLabel} description="Elige un cliente guardado o escribe sus datos directamente.">
             {config.buyerMode === 'none' ? <p className="text-sm text-muted-foreground">Este tipo de e-CF no requiere datos de receptor.</p> : <div className="space-y-4">
               {config.buyerMode !== 'foreign' && (ENV.invoicesUseMocks || config.buyerMode !== 'supplier') && <PartyPicker kind={config.buyerMode === 'supplier' ? 'suppliers' : 'customers'} label="Elegir cliente guardado" onSelect={(party) => {
@@ -278,9 +297,9 @@ export function NewInvoicePage() {
         </div>
         <aside className="lg:sticky lg:top-24 lg:self-start"><div className="surface space-y-5 p-5"><h2 className="font-semibold">Resumen</h2>
           <TotalsList values={{ subtotal: totals.taxable, discount: totals.discount, itbis: totals.itbis, itbisByRate: totals.itbisByRate, retainedItbis: totals.retainedItbis, retainedIsr: totals.retainedIsr, total: totals.total }} />
-          <div className="space-y-2 border-t pt-5">{!ENV.invoicesUseMocks && <Button type="button" variant="outline" className="w-full" disabled={busy} onClick={() => save.mutate(form.getValues())}>{save.isPending ? <Loader2 className="animate-spin" /> : <Save />} Guardar borrador</Button>}<Button type="button" variant="outline" className="w-full" disabled={busy} onClick={validateForm}>{validate.isPending ? <Loader2 className="animate-spin" /> : <FileCheck2 />} Validar borrador</Button><Button type="submit" className="w-full" disabled={busy || access.isLoading || access.data?.allowed === false}>{emit.isPending ? <Loader2 className="animate-spin" /> : <FileCheck2 />} Registrar comprobante</Button></div>
+          <div className="space-y-2 border-t pt-5">{!ENV.invoicesUseMocks && !editId && <Button type="button" variant="outline" className="w-full" disabled={busy} onClick={() => save.mutate(form.getValues())}>{save.isPending ? <Loader2 className="animate-spin" /> : <Save />} Guardar borrador</Button>}<Button type="button" variant="outline" className="w-full" disabled={busy} onClick={validateForm}>{validate.isPending ? <Loader2 className="animate-spin" /> : <FileCheck2 />} Validar borrador</Button><Button type="submit" className="w-full" disabled={busy || (!editId && (access.isLoading || access.data?.allowed === false))}>{emit.isPending ? <Loader2 className="animate-spin" /> : <FileCheck2 />} {editId ? 'Guardar cambios' : 'Registrar comprobante'}</Button></div>
           {formError && <p role="alert" className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">{formError}</p>}
-          <p className="text-xs text-muted-foreground">{ENV.invoicesUseMocks ? 'Modo demostración: el registro se guarda solo en la memoria de esta página y no tiene validez fiscal.' : 'Registrar asigna un e-NCF real de la empresa. El envío a la DGII es un paso separado.'}</p>
+          <p className="text-xs text-muted-foreground">{editId ? 'Los cambios quedan en este comprobante. Revisa el PDF antes del envío a la DGII.' : ENV.invoicesUseMocks ? 'Modo demostración: el registro se guarda solo en la memoria de esta página y no tiene validez fiscal.' : 'Registrar asigna un e-NCF real de la empresa. El envío a la DGII es un paso separado.'}</p>
         </div>{validation && <div className="surface mt-4 p-4"><h2 className="mb-3 text-sm font-semibold">Validación</h2><DgiiMessages messages={validation.messages} tone={validation.valid ? 'info' : 'warning'} /></div>}</aside>
       </form>
     </FormProvider>

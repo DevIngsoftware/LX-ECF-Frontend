@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { ArrowLeft, Ban, CalendarDays, FileText, Info, Play, Users } from 'lucide-react';
+import { ArrowLeft, Ban, CalendarDays, FileText, Info, Play, Trash2, Users } from 'lucide-react';
 import { PageTransition } from '@/components/animations/motion';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { StatCard } from '@/components/shared/StatCard';
@@ -11,6 +11,7 @@ import { ErrorState, LoadingState } from '@/components/shared/states';
 import { GenericStatusBadge } from '@/components/shared/StatusBadge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { ROUTES } from '@/constants/routes';
 import { adminService } from '@/services/api/platform';
 import { queryKeys } from '@/services/api/query-keys';
@@ -26,7 +27,10 @@ export function AdminCompanyDetailPage() {
   const { id = '' } = useParams<{ id: string }>();
   const { user } = useAuth();
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [confirm, setConfirm] = useState<'SUSPENDIDA' | 'ACTIVA' | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [typedRnc, setTypedRnc] = useState('');
   const { data: company, isLoading, error, refetch } = useQuery({
     queryKey: queryKeys.admin.company(id),
     queryFn: () => adminService.company(id),
@@ -41,6 +45,16 @@ export function AdminCompanyDetailPage() {
       void qc.invalidateQueries({ queryKey: ['admin', 'companies'] });
       void qc.invalidateQueries({ queryKey: queryKeys.admin.dashboard });
       setConfirm(null);
+    },
+    onError: (err) => toast.error(errorMessage(err)),
+  });
+  const remove = useMutation({
+    mutationFn: () => adminService.deleteCompany(id, typedRnc),
+    onSuccess: () => {
+      toast.success('Empresa y datos asociados eliminados');
+      void qc.invalidateQueries({ queryKey: ['admin', 'companies'] });
+      void qc.invalidateQueries({ queryKey: queryKeys.admin.dashboard });
+      navigate(ROUTES.admin.companies);
     },
     onError: (err) => toast.error(errorMessage(err)),
   });
@@ -77,6 +91,9 @@ export function AdminCompanyDetailPage() {
                 <Ban /> Suspender
               </Button>
             )}
+            {user?.role === 'SUPERADMIN' && <Button variant="outline" className="text-destructive hover:text-destructive" onClick={() => setDeleteOpen(true)}>
+              <Trash2 /> Eliminar empresa
+            </Button>}
           </>
         }
       />
@@ -147,6 +164,17 @@ export function AdminCompanyDetailPage() {
         loading={setStatus.isPending}
         onConfirm={() => confirm && setStatus.mutate(confirm)}
       />
+      {user?.role === 'SUPERADMIN' && <ConfirmDialog
+        open={deleteOpen}
+        onOpenChange={(open) => { if (!remove.isPending) { setDeleteOpen(open); if (!open) setTypedRnc(''); } }}
+        title="Eliminar empresa y todos sus datos"
+        description={`Se eliminarán ${company.name}, sus usuarios, comprobantes, suscripciones, pagos, tickets y archivos almacenados. Esta acción no se puede deshacer. Escribe el RNC ${company.rnc} para continuar.`}
+        confirmLabel="Eliminar definitivamente" destructive loading={remove.isPending}
+        confirmDisabled={typedRnc.trim() !== company.rnc}
+        onConfirm={() => remove.mutate()}>
+        <Input aria-label="Confirmar RNC de la empresa" value={typedRnc} onChange={(event) => setTypedRnc(event.target.value)}
+          placeholder={company.rnc} inputMode="numeric" autoComplete="off" />
+      </ConfirmDialog>}
     </PageTransition>
   );
 }

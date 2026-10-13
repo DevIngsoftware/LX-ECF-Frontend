@@ -13,11 +13,12 @@ interface ConfirmDialogProps {
   confirmLabel?: string;
   destructive?: boolean;
   loading?: boolean;
+  confirmDisabled?: boolean;
   onConfirm: () => void;
   children?: ReactNode;
 }
 
-export function ConfirmDialog({ open, onOpenChange, title, description, confirmLabel = 'Confirmar', destructive, loading, onConfirm, children }: ConfirmDialogProps) {
+export function ConfirmDialog({ open, onOpenChange, title, description, confirmLabel = 'Confirmar', destructive, loading, confirmDisabled, onConfirm, children }: ConfirmDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
@@ -28,7 +29,7 @@ export function ConfirmDialog({ open, onOpenChange, title, description, confirmL
         {children}
         <AlertDialogFooter>
           <AlertDialogCancel disabled={loading}>Cancelar</AlertDialogCancel>
-          <Button variant={destructive ? 'destructive' : 'default'} onClick={onConfirm} disabled={loading}>
+          <Button variant={destructive ? 'destructive' : 'default'} onClick={onConfirm} disabled={loading || confirmDisabled}>
             {loading && <Loader2 className="animate-spin" />}
             {confirmLabel}
           </Button>

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, ChevronDown, FileCode2, FileDown, FileMinus2, FilePlus2, Loader2, Printer, RefreshCw, Send } from 'lucide-react';
+import { ArrowLeft, ChevronDown, FileCode2, FileDown, FileMinus2, FilePlus2, Loader2, Pencil, Printer, RefreshCw, Send, Trash2 } from 'lucide-react';
 import { CopyButton } from '@/components/shared/CopyButton';
 import { DgiiStatusBadge, InternalStatusBadge, PaymentStatusBadge } from '@/components/shared/StatusBadge';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ import { ROUTES } from '@/constants/routes';
 import type { InvoiceDetail } from '@/types/ecf';
 import { formatDate, formatMoney } from '@/utils/format';
 import { EcfTypeTag } from '../EcfTypeTag';
-import { canCreateNoteFor, noteRoute } from '../../lib/invoice-routes';
+import { canCheckDgiiStatus, canCreateNoteFor, canEditUnsentInvoice, noteRoute } from '../../lib/invoice-routes';
 
 interface Props {
   invoice: InvoiceDetail;
@@ -23,10 +23,12 @@ interface Props {
   onPrint: () => void;
   onSend: () => void;
   sending: boolean;
+  onDelete: () => void;
 }
 
-export function DetailHeader({ invoice, canEmit, downloading, checking, onDownload, onCheckStatus, onPrint, onSend, sending }: Props) {
+export function DetailHeader({ invoice, canEmit, downloading, checking, onDownload, onCheckStatus, onPrint, onSend, sending, onDelete }: Props) {
   const notesAllowed = canEmit && canCreateNoteFor(invoice);
+  const editable = !ENV.invoicesUseMocks && canEmit && canEditUnsentInvoice(invoice);
   return (
     <motion.header initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="mb-6 space-y-4">
       <Link to={ROUTES.app.invoices} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
@@ -57,6 +59,10 @@ export function DetailHeader({ invoice, canEmit, downloading, checking, onDownlo
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {editable && <>
+            <Button asChild variant="outline" size="sm"><Link to={`${ROUTES.app.newInvoice}?editar=${encodeURIComponent(invoice.id)}`}><Pencil /> Editar</Link></Button>
+            <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={onDelete}><Trash2 /> Eliminar</Button>
+          </>}
           {!ENV.invoicesUseMocks && canEmit && invoice.dgiiStatus === 'NO_ENVIADO'
             && (invoice.internalStatus === 'CREADO' || invoice.internalStatus === 'XML_GENERADO') && (
             <Button size="sm" onClick={onSend} disabled={sending}>
@@ -72,7 +78,7 @@ export function DetailHeader({ invoice, canEmit, downloading, checking, onDownlo
           <Button variant="outline" size="sm" onClick={onPrint}>
             <Printer /> Imprimir
           </Button>
-          <Button variant="outline" size="sm" onClick={onCheckStatus} disabled={checking || (!ENV.invoicesUseMocks && !invoice.trackId)}>
+          <Button variant="outline" size="sm" onClick={onCheckStatus} disabled={checking || (!ENV.invoicesUseMocks && !canCheckDgiiStatus(invoice))}>
             {checking ? <Loader2 className="animate-spin" /> : <RefreshCw />} Consultar estado
           </Button>
           {notesAllowed && (

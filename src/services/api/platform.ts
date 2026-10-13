@@ -5,7 +5,7 @@ import type {
   AdminCompany, AdminDashboardOverview, AdminSubscription, ApiCredential, ApiLogEntry, ApiUsagePoint, AuditEvent, ChatMessage,
   BankAccount, CreatedCredential, InternalUser, PlatformSettings, SupportTicket, SupportTicketDetail,
 } from '@/types/platform';
-import { get, getBlob, patch, post, put } from '../http/client';
+import { del, get, getBlob, patch, post, put } from '../http/client';
 import { ApiError } from '../http/errors';
 import { ENDPOINTS } from './endpoints';
 import { adminCompanies, adminSubscriptions, credentials, internalUsers, plans } from '../mocks/data';
@@ -24,6 +24,7 @@ export interface AdminService {
   companies(query: PageQuery & { status?: string }): Promise<Page<AdminCompany>>;
   company(id: string): Promise<AdminCompany>;
   setCompanyStatus(id: string, status: string): Promise<void>;
+  deleteCompany(id: string, rnc: string): Promise<void>;
   activateEnvironment(rnc: string, environment: 'TesteCF' | 'CerteCF' | 'eCF', authorizationConfirmed: boolean): Promise<void>;
   plans(): Promise<Plan[]>;
   savePlan(plan: Plan): Promise<Plan>;
@@ -67,6 +68,7 @@ const http = {
     companies: (params) => get(ENDPOINTS.admin.companies, { params }),
     company: (id) => get(`${ENDPOINTS.admin.companies}/${id}`),
     setCompanyStatus: (id, status) => patch(`${ENDPOINTS.admin.companies}/${id}/estado`, { status }),
+    deleteCompany: (id, rnc) => del(`${ENDPOINTS.admin.companies}/${id}`, { data: { rnc } }),
     activateEnvironment: (rnc, environment, authorizationConfirmed) => put(`/admin/empresas/${encodeURIComponent(rnc)}/dgii/ambiente`, { environment, authorizationConfirmed }),
     plans: () => get(ENDPOINTS.admin.plans),
     savePlan: (plan) => (plan.id ? put(`${ENDPOINTS.admin.plans}/${plan.id}`, plan) : post(ENDPOINTS.admin.plans, plan)),
@@ -145,6 +147,12 @@ const mock = {
       await delay(500);
       const c = adminCompanies.find((x) => x.id === id);
       if (c) c.status = status;
+    },
+    async deleteCompany(id, rnc) {
+      await delay(500);
+      const index = adminCompanies.findIndex((company) => company.id === id && company.rnc === rnc);
+      if (index < 0) throw new ApiError('validation', 'El RNC no coincide con la empresa.', 400);
+      adminCompanies.splice(index, 1);
     },
     async activateEnvironment(rnc, environment) {
       await delay(300);
@@ -227,6 +235,7 @@ export const adminService: AdminService = {
   companies: ENV.authUseMocks ? mock.admin.companies : http.admin.companies,
   company: ENV.authUseMocks ? mock.admin.company : http.admin.company,
   setCompanyStatus: ENV.authUseMocks ? mock.admin.setCompanyStatus : http.admin.setCompanyStatus,
+  deleteCompany: ENV.authUseMocks ? mock.admin.deleteCompany : http.admin.deleteCompany,
   activateEnvironment: ENV.authUseMocks ? mock.admin.activateEnvironment : http.admin.activateEnvironment,
   plans: ENV.authUseMocks ? mock.admin.plans : http.admin.plans,
   savePlan: ENV.authUseMocks ? mock.admin.savePlan : http.admin.savePlan,

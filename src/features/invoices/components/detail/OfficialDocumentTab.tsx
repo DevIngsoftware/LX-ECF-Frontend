@@ -36,7 +36,7 @@ export function OfficialDocumentTab({ invoice, onDownload, printToken }: {
     <div className="flex flex-wrap items-center gap-2">
       <Button variant="outline" size="sm" onClick={() => frame.current?.contentWindow?.print()} disabled={!loaded}><Printer /> Imprimir PDF</Button>
       <Button variant="outline" size="sm" onClick={() => onDownload('pdf')}><FileDown /> PDF</Button>
-      <Button variant="outline" size="sm" onClick={() => onDownload('xml')}><FileCode2 /> XML</Button>
+      <Button variant="outline" size="sm" onClick={() => onDownload('xml')} disabled={!invoice.signedAt}><FileCode2 /> XML</Button>
       <p className="text-xs text-muted-foreground sm:ml-auto">Representación generada por la API.</p>
     </div>
     {url ? <iframe ref={frame} title={`Representación PDF ${invoice.encf}`} src={url} onLoad={() => setLoaded(true)}

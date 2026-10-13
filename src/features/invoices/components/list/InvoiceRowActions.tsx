@@ -1,24 +1,27 @@
 import { useNavigate } from 'react-router-dom';
-import { Eye, FileCode2, FileDown, FileMinus2, History, MoreHorizontal, RefreshCw } from 'lucide-react';
+import { Eye, FileCode2, FileDown, FileMinus2, History, MoreHorizontal, Pencil, RefreshCw, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ROUTES } from '@/constants/routes';
+import { ENV } from '@/constants/env';
 import type { InvoiceSummary } from '@/types/ecf';
-import { canCreateNoteFor, noteRoute } from '../../lib/invoice-routes';
+import { canCheckDgiiStatus, canCreateNoteFor, canEditUnsentInvoice, noteRoute } from '../../lib/invoice-routes';
 
 interface Props {
   invoice: InvoiceSummary;
   canEmit: boolean;
   onDownload: (inv: InvoiceSummary, kind: 'pdf' | 'xml') => void;
   onCheckStatus: (inv: InvoiceSummary) => void;
+  onDelete: (inv: InvoiceSummary) => void;
 }
 
-export function InvoiceRowActions({ invoice, canEmit, onDownload, onCheckStatus }: Props) {
+export function InvoiceRowActions({ invoice, canEmit, onDownload, onCheckStatus, onDelete }: Props) {
   const navigate = useNavigate();
   const detail = ROUTES.app.invoice(invoice.id);
   const noteAllowed = canEmit && canCreateNoteFor(invoice);
+  const editable = !ENV.invoicesUseMocks && canEmit && canEditUnsentInvoice(invoice);
 
   return (
     <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
@@ -33,13 +36,22 @@ export function InvoiceRowActions({ invoice, canEmit, onDownload, onCheckStatus 
           <DropdownMenuItem onSelect={() => navigate(detail)}>
             <Eye className="mr-2 h-4 w-4" /> Ver detalle
           </DropdownMenuItem>
+          {editable && <>
+            <DropdownMenuItem onSelect={() => navigate(`${ROUTES.app.newInvoice}?editar=${encodeURIComponent(invoice.id)}`)}>
+              <Pencil className="mr-2 h-4 w-4" /> Editar
+            </DropdownMenuItem>
+            <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => onDelete(invoice)}>
+              <Trash2 className="mr-2 h-4 w-4" /> Eliminar
+            </DropdownMenuItem>
+          </>}
+          {editable && <DropdownMenuSeparator />}
           <DropdownMenuItem onSelect={() => onDownload(invoice, 'pdf')}>
             <FileDown className="mr-2 h-4 w-4" /> Descargar PDF
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={() => onDownload(invoice, 'xml')}>
             <FileCode2 className="mr-2 h-4 w-4" /> Descargar XML
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => onCheckStatus(invoice)}>
+          <DropdownMenuItem disabled={!ENV.invoicesUseMocks && !canCheckDgiiStatus(invoice)} onSelect={() => onCheckStatus(invoice)}>
             <RefreshCw className="mr-2 h-4 w-4" /> Consultar estado DGII
           </DropdownMenuItem>
           <DropdownMenuSeparator />

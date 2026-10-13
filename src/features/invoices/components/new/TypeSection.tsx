@@ -23,7 +23,7 @@ export function TypeSection({ step, locked }: { step: number; locked?: boolean }
       id="sec-tipo"
       step={step}
       title="Tipo de comprobante"
-      description={locked ? 'El tipo se definió a partir del comprobante de referencia.' : 'Elige el e-CF que deseas emitir. El formulario se adapta al tipo seleccionado.'}
+      description={locked ? 'El tipo ya tiene un e-NCF asignado y no puede cambiarse.' : 'Elige el e-CF que deseas emitir. El formulario se adapta al tipo seleccionado.'}
     >
       <div role="radiogroup" aria-label="Tipo de comprobante" className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
         {ECF_TYPES.map((t) => {

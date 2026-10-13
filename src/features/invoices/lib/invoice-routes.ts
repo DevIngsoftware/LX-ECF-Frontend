@@ -13,6 +13,22 @@ export function canCreateNoteFor(inv: Pick<InvoiceSummary, 'type' | 'internalSta
   return inv.type !== 'E33' && inv.type !== 'E34' && inv.internalStatus !== 'RECHAZADO';
 }
 
+export function canEditUnsentInvoice(inv: Pick<InvoiceSummary, 'internalStatus' | 'trackId' | 'dgiiStatus'>): boolean {
+  return !inv.trackId
+    && (!inv.dgiiStatus || inv.dgiiStatus === 'NO_ENVIADO')
+    && (inv.internalStatus === 'CREADO' || inv.internalStatus === 'XML_GENERADO' || inv.internalStatus === 'FIRMADO');
+}
+
+export function isRfce(inv: Pick<InvoiceSummary, 'type' | 'total'>): boolean {
+  return inv.type === 'E32' && inv.total < 250000;
+}
+
+export function canCheckDgiiStatus(inv: Pick<InvoiceSummary, 'type' | 'total' | 'trackId' | 'internalStatus'>): boolean {
+  return !!inv.trackId || (isRfce(inv) && [
+    'ENVIANDO', 'ENVIO_INCIERTO', 'ENVIADO', 'EN_PROCESO', 'ACEPTADO', 'ACEPTADO_CONDICIONAL', 'RECHAZADO',
+  ].includes(inv.internalStatus));
+}
+
 export const DETAIL_TABS = ['resumen', 'documento', 'estado', 'historial'] as const;
 export type DetailTab = (typeof DETAIL_TABS)[number];
 export const isDetailTab = (v: string | null): v is DetailTab => !!v && (DETAIL_TABS as readonly string[]).includes(v);
