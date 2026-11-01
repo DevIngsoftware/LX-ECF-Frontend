@@ -100,7 +100,7 @@ export function SequencesSection() {
                   <div><dt className="text-muted-foreground">Disponibles</dt><dd className="font-semibold tabular-nums">{formatNumber(s.remaining)}</dd></div>
                   <div>
                     <dt className="text-muted-foreground">Vence</dt>
-                    <dd className={cn('font-semibold', st.expDays !== null && st.expDays <= 30 && 'text-warning')}>{formatDate(s.expiresAt)}</dd>
+                    <dd className={cn('font-semibold', st.expDays !== null && st.expDays <= 30 && 'text-warning')}>{s.type === 'E32' && !s.expiresAt ? 'Sin vencimiento' : formatDate(s.expiresAt)}</dd>
                   </div>
                 </dl>
                 <p className="mt-2 truncate font-mono text-[11px] text-muted-foreground">

@@ -98,8 +98,8 @@ export function SequencesStep({ defaultValues, onSubmit, usedTypes = [] }: StepP
                         name={`items.${index}.expiresAt`}
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Vencimiento</FormLabel>
-                            <FormControl><Input type="date" {...field} /></FormControl>
+                            <FormLabel>Vencimiento{row?.type === 'E32' ? ' (opcional)' : ''}</FormLabel>
+                            <FormControl><Input type="date" aria-required={row?.type !== 'E32'} {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
