@@ -37,7 +37,7 @@ export const invoiceFormSchema = z
       modifiedNcf: z.string().trim(),
       modifiedDate: z.string(),
       modificationCode: z.string(),
-      reason: z.string().trim().max(250, 'Máximo 250 caracteres'),
+      reason: z.string().trim().max(90, 'Máximo 90 caracteres'),
     }),
     notes: z.string().max(500, 'Máximo 500 caracteres'),
   })
@@ -89,7 +89,7 @@ export const invoiceFormSchema = z
       else if (!/^(E\d{12}|B\d{10})$/.test(ncf)) issue(['reference', 'modifiedNcf'], 'Formato no válido (ej.: E310000000001)');
       if (!v.reference.modifiedDate) issue(['reference', 'modifiedDate'], 'Indica la fecha del comprobante modificado');
       if (!v.reference.modificationCode) issue(['reference', 'modificationCode'], 'Selecciona el código de modificación');
-      if (v.reference.reason.length < 3) issue(['reference', 'reason'], 'Describe la razón de la modificación');
+      if (!v.reference.reason) issue(['reference', 'reason'], 'Indica la razón de la modificación (de 1 a 90 caracteres)');
     }
   });
 

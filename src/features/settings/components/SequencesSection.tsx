@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { settingsService } from '@/services/api/account';
 import { queryKeys } from '@/services/api/query-keys';
 import { errorMessage } from '@/services/http/errors';
-import { ECF_TYPE_MAP } from '@/constants/ecf';
+import { ECF_TYPE_MAP, isSequenceExpiryOptional } from '@/constants/ecf';
 import type { Sequence } from '@/types/ecf';
 import { daysUntil, formatDate, formatNumber } from '@/utils/format';
 import { cn } from '@/lib/utils';
@@ -100,7 +100,7 @@ export function SequencesSection() {
                   <div><dt className="text-muted-foreground">Disponibles</dt><dd className="font-semibold tabular-nums">{formatNumber(s.remaining)}</dd></div>
                   <div>
                     <dt className="text-muted-foreground">Vence</dt>
-                    <dd className={cn('font-semibold', st.expDays !== null && st.expDays <= 30 && 'text-warning')}>{s.type === 'E32' && !s.expiresAt ? 'Sin vencimiento' : formatDate(s.expiresAt)}</dd>
+                    <dd className={cn('font-semibold', st.expDays !== null && st.expDays <= 30 && 'text-warning')}>{isSequenceExpiryOptional(s.type) && !s.expiresAt ? 'Sin vencimiento' : formatDate(s.expiresAt)}</dd>
                   </div>
                 </dl>
                 <p className="mt-2 truncate font-mono text-[11px] text-muted-foreground">

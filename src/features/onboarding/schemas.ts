@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { CompanySettings } from '@/types/account';
 import { STORAGE_KEYS } from '@/constants/storage';
+import { isSequenceExpiryOptional } from '@/constants/ecf';
 
 export const STEP_FORM_ID = 'onboarding-step-form';
 const DRAFT_KEY = STORAGE_KEYS.onboardingDraft;
@@ -64,7 +65,7 @@ export const sequenceSchema = z
     expiresAt: z.string().trim(),
   })
   .refine((s) => Number(s.to) >= Number(s.from), { path: ['to'], message: 'Debe ser mayor o igual que "desde".' })
-  .refine((s) => s.type === 'E32' || !!s.expiresAt, { path: ['expiresAt'], message: 'Indica el vencimiento.' })
+  .refine((s) => isSequenceExpiryOptional(s.type) || !!s.expiresAt, { path: ['expiresAt'], message: 'Indica el vencimiento.' })
   .refine((s) => !s.expiresAt || s.expiresAt > todayIso(), { path: ['expiresAt'], message: 'Debe ser una fecha futura.' });
 
 export const sequencesSchema = z

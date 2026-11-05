@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ECF_TYPES } from '@/constants/ecf';
+import { ECF_TYPES, isSequenceExpiryOptional } from '@/constants/ecf';
 import { sequencesSchema, STEP_FORM_ID, type SequencesStepValues } from '../schemas';
 import { StepCard, type StepProps } from './StepCard';
 
@@ -98,8 +98,8 @@ export function SequencesStep({ defaultValues, onSubmit, usedTypes = [] }: StepP
                         name={`items.${index}.expiresAt`}
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Vencimiento{row?.type === 'E32' ? ' (opcional)' : ''}</FormLabel>
-                            <FormControl><Input type="date" aria-required={row?.type !== 'E32'} {...field} /></FormControl>
+                            <FormLabel>Vencimiento{isSequenceExpiryOptional(row?.type) ? ' (opcional)' : ''}</FormLabel>
+                            <FormControl><Input type="date" aria-required={!isSequenceExpiryOptional(row?.type)} {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )}

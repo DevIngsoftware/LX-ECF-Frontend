@@ -291,7 +291,7 @@ export function NewInvoicePage() {
               <Field id="modified-ncf" label="e-NCF o NCF modificado" error={errors.reference?.modifiedNcf?.message}><Input id="modified-ncf" {...form.register('reference.modifiedNcf')} /></Field>
               <Field id="modified-date" label="Fecha del comprobante" error={errors.reference?.modifiedDate?.message}><Input id="modified-date" type="date" {...form.register('reference.modifiedDate')} /></Field>
               <Field id="modification-code" label="Motivo de modificación" error={errors.reference?.modificationCode?.message}><select id="modification-code" className={selectClass} {...form.register('reference.modificationCode')}><option value="">Selecciona</option>{MODIFICATION_CODES.map((code) => <option key={code.value} value={code.value}>{code.label}</option>)}</select></Field>
-              <Field id="reason" label="Descripción del motivo" error={errors.reference?.reason?.message} className="sm:col-span-2"><Textarea id="reason" rows={2} {...form.register('reference.reason')} /></Field>
+              <Field id="reason" label="Descripción del motivo (máximo 90 caracteres)" error={errors.reference?.reason?.message} className="sm:col-span-2"><Textarea id="reason" rows={2} minLength={1} maxLength={90} {...form.register('reference.reason')} /></Field>
             </div>
           </FormSection>}
         </div>

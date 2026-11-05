@@ -33,6 +33,8 @@ export const ECF_TYPES: EcfTypeConfig[] = [
 
 export const ECF_TYPE_MAP = Object.fromEntries(ECF_TYPES.map((t) => [t.code, t])) as Record<EcfTypeCode, EcfTypeConfig>;
 
+export const isSequenceExpiryOptional = (type: string | undefined) => type === 'E32' || type === 'E34';
+
 /** Catálogos de referencia. Sujetos a confirmación con el contrato del backend. */
 export const INCOME_TYPES = [
   { value: '01', label: '01 — Ingresos por operaciones (no financieros)' },
