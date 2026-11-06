@@ -68,6 +68,78 @@ try {
     }
   });
 
+  await test('E34 con código 2 permite corregir texto con monto total cero y conserva datos al guardar y editar', () => {
+    for (const paymentType of ['1', '2', '3']) {
+      const values = noteValues('E34', paymentType);
+      values.reference.modificationCode = '2';
+      values.reference.reason = 'Corrige la descripción del servicio';
+      values.items = [{ ...item, unitPrice: 0, descripcionItem: 'Descripción corregida' }];
+      const parsed = invoiceFormSchema.parse(values);
+      const payload = toFacturaRequestDTO(toDraft(parsed));
+      assert.equal(payload.codigoModificacion, '2');
+      assert.equal(payload.razonModificacion, values.reference.reason);
+      assert.equal(payload.tipoPago, paymentType);
+      assert.equal(payload.items[0].precioUnitario, 0);
+      assert.equal(payload.items[0].descuento, 0);
+      assert.equal(payload.items[0].descripcionItem, 'Descripción corregida');
+      assert.equal(payload.itbisRetenido, 0);
+      assert.equal(payload.isrRetenido, 0);
+      const restored = fromDraft(fromFacturaRequestDTO(payload));
+      assert.equal(restored.reference.modificationCode, '2');
+      assert.equal(restored.items[0].unitPrice, 0);
+      assert.equal(restored.items[0].descripcionItem, 'Descripción corregida');
+      assert.equal(invoiceFormSchema.safeParse(restored).success, true);
+    }
+  });
+
+  await test('E34 con código 2 rechaza un monto total distinto de cero sin modificar los importes', () => {
+    for (const unitPrice of [0.01, 500]) {
+      const values = noteValues('E34', '1');
+      values.reference.modificationCode = '2';
+      values.items = [{ ...item, unitPrice: 0 }, { ...item, unitPrice }];
+      const original = structuredClone(values);
+      const result = invoiceFormSchema.safeParse(values);
+      assert.equal(result.success, false);
+      const issue = result.error.issues.find((issue) => issue.path.join('.') === 'reference.modificationCode');
+      assert.match(issue.message, /código 2.*monto total 0\.00/);
+      assert.deepEqual(values, original);
+      assert.equal(toFacturaRequestDTO(toDraft(values)).items[1].precioUnitario, unitPrice);
+    }
+  });
+
+  await test('E34 con código 2 requiere precios, descuentos y retenciones cero aunque el total sea cero', () => {
+    const values = noteValues('E34', '1');
+    values.reference.modificationCode = '2';
+    values.items = [{ ...item, discount: item.unitPrice }];
+    const discounted = invoiceFormSchema.safeParse(values);
+    assert.equal(discounted.success, false);
+    assert.equal(discounted.error.issues.some((issue) => issue.path.join('.') === 'items.0.unitPrice'), true);
+    assert.equal(discounted.error.issues.some((issue) => issue.path.join('.') === 'items.0.discount'), true);
+
+    values.items = [{ ...item, unitPrice: 0 }];
+    values.retentions = { itbis: 1, isr: 1 };
+    const retained = invoiceFormSchema.safeParse(values);
+    assert.equal(retained.success, false);
+    for (const field of ['itbis', 'isr']) {
+      const issue = retained.error.issues.find((issue) => issue.path.join('.') === `retentions.${field}`);
+      assert.match(issue.message, /código 2.*retenido 0\.00/);
+    }
+    values.retentions = { itbis: 0, isr: 0 };
+    values.items[0].quantity = 0;
+    assert.equal(invoiceFormSchema.safeParse(values).success, false);
+  });
+
+  await test('la regla de total cero para corrección de texto no afecta E34 con códigos 1 o 3 ni E33', () => {
+    for (const [type, modificationCode] of [['E34', '1'], ['E34', '3'], ['E33', '1'], ['E33', '2'], ['E33', '3']]) {
+      const values = noteValues(type, '1');
+      values.reference.modificationCode = modificationCode;
+      assert.equal(invoiceFormSchema.safeParse(values).success, true);
+      const payload = toFacturaRequestDTO(toDraft(values));
+      assert.equal(payload.codigoModificacion, modificationCode);
+      assert.equal(payload.items[0].precioUnitario, item.unitPrice);
+    }
+  });
+
   await test('NombreItem acepta 80 caracteres y rechaza 81 sin recortarlos', () => {
     assert.equal(itemSchema.parse({ ...item, description: 'x'.repeat(80) }).description.length, 80);
     const result = itemSchema.safeParse({ ...item, description: 'x'.repeat(81) });

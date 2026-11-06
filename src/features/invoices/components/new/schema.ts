@@ -80,6 +80,7 @@ export const invoiceFormSchema = z
   .superRefine((v, ctx) => {
     validateInvoiceTransport(v, ctx);
     const cfg = ECF_TYPE_MAP[v.type];
+    const isTextCorrection = v.type === 'E34' && v.reference.modificationCode === '2';
     const issue = (path: (string | number)[], message: string) => ctx.addIssue({ code: z.ZodIssueCode.custom, path, message });
     const rnc = v.buyer.rnc.replace(/[\s-]/g, '');
     const rncValid = /^(\d{9}|\d{11})$/.test(rnc);
@@ -110,14 +111,21 @@ export const invoiceFormSchema = z
     }
 
     v.items.forEach((it, i) => {
-      if (it.discount > it.quantity * it.unitPrice) issue(['items', i, 'discount'], 'El descuento supera el importe de la línea');
+      if (isTextCorrection && it.unitPrice !== 0) issue(['items', i, 'unitPrice'], 'E34 con código 2 requiere precio unitario 0.00 porque solo corrige texto.');
+      if (isTextCorrection && it.discount !== 0) issue(['items', i, 'discount'], 'E34 con código 2 requiere descuento 0.00 porque solo corrige texto.');
+      else if (it.discount > it.quantity * it.unitPrice) issue(['items', i, 'discount'], 'El descuento supera el importe de la línea');
       if (v.type === 'E44' && it.itbisRate !== 0) issue(['items', i, 'itbisRate'], 'E44 requiere artículos exentos de ITBIS');
     });
 
+    const totals = computeTotals(v.items);
     if (cfg.allowsRetentions) {
-      const t = computeTotals(v.items);
-      if (v.retentions.itbis > t.itbis) issue(['retentions', 'itbis'], 'No puede superar el ITBIS facturado');
-      if (v.retentions.isr > t.taxable) issue(['retentions', 'isr'], 'No puede superar el monto gravado');
+      if (isTextCorrection) {
+        if (v.retentions.itbis !== 0) issue(['retentions', 'itbis'], 'E34 con código 2 requiere ITBIS retenido 0.00 porque solo corrige texto.');
+        if (v.retentions.isr !== 0) issue(['retentions', 'isr'], 'E34 con código 2 requiere ISR retenido 0.00 porque solo corrige texto.');
+      } else {
+        if (v.retentions.itbis > totals.itbis) issue(['retentions', 'itbis'], 'No puede superar el ITBIS facturado');
+        if (v.retentions.isr > totals.taxable) issue(['retentions', 'isr'], 'No puede superar el monto gravado');
+      }
     }
 
     if (cfg.requiresReference) {
@@ -126,6 +134,9 @@ export const invoiceFormSchema = z
       else if (!/^(E\d{12}|B\d{10})$/.test(ncf)) issue(['reference', 'modifiedNcf'], 'Formato no válido (ej.: E310000000001)');
       if (!v.reference.modifiedDate) issue(['reference', 'modifiedDate'], 'Indica la fecha del comprobante modificado');
       if (!v.reference.modificationCode) issue(['reference', 'modificationCode'], 'Selecciona el código de modificación');
+      if (isTextCorrection && totals.total !== 0) {
+        issue(['reference', 'modificationCode'], 'E34 con código 2 corrige texto y requiere monto total 0.00. Revisa los importes de los artículos.');
+      }
       if (!v.reference.reason) issue(['reference', 'reason'], 'Indica la razón de la modificación (de 1 a 90 caracteres)');
     }
   });

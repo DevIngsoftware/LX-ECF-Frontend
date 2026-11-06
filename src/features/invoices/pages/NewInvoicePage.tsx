@@ -93,6 +93,7 @@ export function NewInvoicePage() {
   const { fields, append, remove } = useFieldArray({ control: form.control, name: 'items' });
   const type = useWatch({ control: form.control, name: 'type' });
   const paymentType = useWatch({ control: form.control, name: 'paymentType' });
+  const modificationCode = useWatch({ control: form.control, name: 'reference.modificationCode' });
   const conductor = useWatch({ control: form.control, name: 'conductor' });
   const placa = useWatch({ control: form.control, name: 'placa' });
   const items = useWatch({ control: form.control, name: 'items' });
@@ -353,10 +354,11 @@ export function NewInvoicePage() {
             </fieldset>}
           </FormSection>
           {config.requiresReference && <FormSection id="sec-referencia" step={5} title="Comprobante de referencia" description="Indica el comprobante que modifica esta nota.">
+            {type === 'E34' && modificationCode === '2' && <p id="text-correction-guidance" className="mb-4 rounded-lg bg-muted/50 p-3 text-sm text-muted-foreground">El código 2 corrige texto: los precios, descuentos, retenciones y el monto total deben ser 0.00. Describe el cambio en el motivo de la nota.</p>}
             <div className="grid gap-4 sm:grid-cols-2">
               <Field id="modified-ncf" label="e-NCF o NCF modificado" error={errors.reference?.modifiedNcf?.message}><Input id="modified-ncf" {...form.register('reference.modifiedNcf')} /></Field>
               <Field id="modified-date" label="Fecha del comprobante" error={errors.reference?.modifiedDate?.message}><Input id="modified-date" type="date" {...form.register('reference.modifiedDate')} /></Field>
-              <Field id="modification-code" label="Motivo de modificación" error={errors.reference?.modificationCode?.message}><select id="modification-code" className={selectClass} {...form.register('reference.modificationCode')}><option value="">Selecciona</option>{MODIFICATION_CODES.map((code) => <option key={code.value} value={code.value}>{code.label}</option>)}</select></Field>
+              <Field id="modification-code" label="Motivo de modificación" error={errors.reference?.modificationCode?.message}><select id="modification-code" className={selectClass} aria-invalid={!!errors.reference?.modificationCode} aria-describedby={errors.reference?.modificationCode ? 'modification-code-error' : type === 'E34' && modificationCode === '2' ? 'text-correction-guidance' : undefined} {...form.register('reference.modificationCode')}><option value="">Selecciona</option>{MODIFICATION_CODES.map((code) => <option key={code.value} value={code.value}>{code.label}</option>)}</select></Field>
               <Field id="reason" label="Descripción del motivo (máximo 90 caracteres)" error={errors.reference?.reason?.message} className="sm:col-span-2"><Textarea id="reason" rows={2} minLength={1} maxLength={90} {...form.register('reference.reason')} /></Field>
             </div>
           </FormSection>}
