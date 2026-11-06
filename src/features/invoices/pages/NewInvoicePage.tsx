@@ -11,7 +11,7 @@ import { ErrorState, LoadingState } from '@/components/shared/states';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { ECF_TYPE_MAP, INCOME_TYPES, ITBIS_RATES, MODIFICATION_CODES, PAYMENT_TYPES } from '@/constants/ecf';
+import { ECF_TYPE_MAP, INCOME_TYPES, ITBIS_RATES, MODIFICATION_CODES, PAYMENT_TYPES, supportsInvoiceTransport } from '@/constants/ecf';
 import { ENV } from '@/constants/env';
 import { ROUTES } from '@/constants/routes';
 import { DgiiMessages } from '../components/DgiiMessages';
@@ -19,8 +19,9 @@ import { TotalsList } from '../components/TotalsList';
 import { PartyPicker } from '../components/new/PartyPicker';
 import { ProductPicker } from '../components/new/ProductPicker';
 import { TypeSection } from '../components/new/TypeSection';
+import { ItemDetailsFields } from '../components/new/ItemDetailsFields';
 import { Field, FormSection } from '../components/new/form-ui';
-import { defaultValues, emptyItem, fromDraft, invoiceFormSchema, isEcfCode, toDraft, type InvoiceFormValues } from '../components/new/schema';
+import { defaultValues, emptyItem, fromDraft, invoiceFormSchema, invoiceTransportSchema, itemTextSchema, isEcfCode, toDraft, type InvoiceFormValues } from '../components/new/schema';
 import { computeTotals } from '../lib/invoice-math';
 import { invoicesService } from '@/services/api/invoices';
 import { partiesService } from '@/services/api/operations';
@@ -59,10 +60,11 @@ function validationField(path: string[]): string {
     incomeType: 'tipo de ingreso', paymentType: 'forma de pago', paymentTermDays: 'plazo de pago',
     'reference.modifiedNcf': 'NCF modificado', 'reference.modifiedDate': 'fecha del NCF modificado',
     'reference.modificationCode': 'motivo de modificación', 'reference.reason': 'descripción del motivo',
-    notes: 'notas',
+    notes: 'notas', conductor: 'conductor del comprobante', placa: 'placa del comprobante',
   };
   const itemNames: Record<string, string> = {
-    code: 'código', description: 'descripción', kind: 'tipo', quantity: 'cantidad',
+    code: 'código', description: 'nombre del artículo o servicio', descripcionItem: 'descripción adicional',
+    fechaServicio: 'fecha del servicio', chofer: 'chofer', tms: 'TMS', numeroSalida: 'número de salida', placa: 'placa', kind: 'tipo', quantity: 'cantidad',
     unitPrice: 'precio', discount: 'descuento', itbisRate: 'ITBIS',
   };
   if (path[0] === 'items' && path[1] && path[2]) return `línea ${Number(path[1]) + 1}, ${itemNames[path[2]] ?? path[2]}`;
@@ -91,6 +93,8 @@ export function NewInvoicePage() {
   const { fields, append, remove } = useFieldArray({ control: form.control, name: 'items' });
   const type = useWatch({ control: form.control, name: 'type' });
   const paymentType = useWatch({ control: form.control, name: 'paymentType' });
+  const conductor = useWatch({ control: form.control, name: 'conductor' });
+  const placa = useWatch({ control: form.control, name: 'placa' });
   const items = useWatch({ control: form.control, name: 'items' });
   const retentions = useWatch({ control: form.control, name: 'retentions' });
   const config = ECF_TYPE_MAP[type];
@@ -132,6 +136,14 @@ export function NewInvoicePage() {
       if (item.itbisRate !== 0) form.setValue(`items.${index}.itbisRate`, 0);
     });
   }, [type, form]);
+
+  useEffect(() => {
+    if (supportsInvoiceTransport(type) || (!form.getValues('conductor') && !form.getValues('placa'))) return;
+    form.setValue('conductor', '', { shouldDirty: true });
+    form.setValue('placa', '', { shouldDirty: true });
+    form.clearErrors(['conductor', 'placa']);
+    toast.info(`Se retiraron el conductor y la placa del comprobante porque ${type} no admite datos de transporte.`);
+  }, [type, conductor, placa, form]);
 
   useEffect(() => {
     if (!reference.data || !noteType || draftId || editId) return;
@@ -218,6 +230,42 @@ export function NewInvoicePage() {
     setFormError(null);
     emit.mutate(values);
   }, onInvalid);
+  const saveDraft = () => {
+    const values = form.getValues();
+    let valid = true;
+    let firstMessage: string | undefined;
+    form.clearErrors(['conductor', 'placa']);
+    const transport = invoiceTransportSchema.safeParse(values);
+    if (!transport.success) {
+      valid = false;
+      transport.error.issues.forEach((issue) => {
+        const field = issue.path[0];
+        if (field === 'conductor' || field === 'placa') form.setError(field, { type: 'manual', message: issue.message });
+        firstMessage ??= issue.message;
+      });
+    }
+    values.items.forEach((item, index) => {
+      const textFields = ['description', 'descripcionItem', 'fechaServicio', 'chofer', 'tms', 'numeroSalida', 'placa'] as const;
+      textFields.forEach((field) => form.clearErrors(`items.${index}.${field}`));
+      const result = itemTextSchema.safeParse(item);
+      if (result.success) return;
+      valid = false;
+      result.error.issues.forEach((issue) => {
+        const field = issue.path[0];
+        if (typeof field === 'string' && textFields.includes(field as typeof textFields[number])) {
+          form.setError(`items.${index}.${field as typeof textFields[number]}`, { type: 'manual', message: issue.message });
+        }
+        firstMessage ??= `Línea ${index + 1}: ${issue.message}`;
+      });
+    });
+    if (!valid) {
+      setFormError(firstMessage ?? 'Revisa el texto de los artículos.');
+      toast.error(firstMessage);
+      return;
+    }
+    setFormError(null);
+    save.mutate(values);
+  };
 
   return <PageTransition>
     <PageHeader eyebrow="Facturación electrónica" title={editId ? 'Editar comprobante' : type === 'E33' || type === 'E34' ? 'Nueva nota electrónica' : 'Nueva factura'} description={editId ? `Corrige ${editId} antes de enviarlo a la DGII. Se conservará su e-NCF.` : ENV.invoicesUseMocks ? 'Prepara un e-CF y revisa los totales antes de registrarlo. En modo demostración no se envía a la DGII.' : 'Prepara el e-CF, valídalo y regístralo. Podrás enviarlo a la DGII desde el detalle.'}
@@ -268,13 +316,19 @@ export function NewInvoicePage() {
                 <Button type="button" variant="ghost" size="icon-sm" aria-label={`Eliminar línea ${index + 1}`} disabled={fields.length === 1} onClick={() => remove(index)}><Trash2 /></Button>
               </div></div>
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <Field id={`description-${index}`} label="Descripción" error={errors.items?.[index]?.description?.message} className="sm:col-span-2 xl:col-span-3"><Input id={`description-${index}`} {...form.register(`items.${index}.description`)} /></Field>
+                <Field id={`description-${index}`} label="Nombre del artículo o servicio" required error={errors.items?.[index]?.description?.message}
+                  hint={`${items?.[index]?.description?.length ?? 0}/80 caracteres. Ej.: Flete: Stgo. - San Cristóbal`} className="sm:col-span-2 xl:col-span-3">
+                  <Input id={`description-${index}`} aria-invalid={!!errors.items?.[index]?.description}
+                    aria-describedby={errors.items?.[index]?.description ? `description-${index}-error` : undefined}
+                    {...form.register(`items.${index}.description`)} />
+                </Field>
                 <Field id={`kind-${index}`} label="Tipo"><select id={`kind-${index}`} className={selectClass} {...form.register(`items.${index}.kind`)}><option value="SERVICIO">Servicio</option><option value="BIEN">Bien</option></select></Field>
                 <Field id={`quantity-${index}`} label="Cantidad" error={errors.items?.[index]?.quantity?.message}><Input id={`quantity-${index}`} type="number" min="0.01" step="0.01" {...form.register(`items.${index}.quantity`, { valueAsNumber: true })} /></Field>
                 <Field id={`price-${index}`} label="Precio unitario" error={errors.items?.[index]?.unitPrice?.message}><Input id={`price-${index}`} type="number" min="0" step="0.01" {...form.register(`items.${index}.unitPrice`, { valueAsNumber: true })} /></Field>
                 <Field id={`discount-${index}`} label="Descuento" error={errors.items?.[index]?.discount?.message}><Input id={`discount-${index}`} type="number" min="0" step="0.01" {...form.register(`items.${index}.discount`, { valueAsNumber: true })} /></Field>
                 <Field id={`itbis-${index}`} label="ITBIS"><select id={`itbis-${index}`} className={selectClass} {...form.register(`items.${index}.itbisRate`, { valueAsNumber: true })}>{ITBIS_RATES.filter((rate) => type !== 'E44' && type !== 'E46' && type !== 'E47' || rate.value === 0).map((rate) => <option key={rate.value} value={rate.value}>{rate.label}</option>)}</select></Field>
               </div>
+              <ItemDetailsFields index={index} />
             </div>)}</div>
           </FormSection>
           <FormSection id="sec-pago" step={4} title="Pago y detalles">
@@ -285,6 +339,18 @@ export function NewInvoicePage() {
               {config.allowsRetentions && <><Field id="retained-itbis" label="ITBIS retenido" error={errors.retentions?.itbis?.message}><Input id="retained-itbis" type="number" min="0" step="0.01" {...form.register('retentions.itbis', { valueAsNumber: true })} /></Field><Field id="retained-isr" label="ISR retenido" error={errors.retentions?.isr?.message}><Input id="retained-isr" type="number" min="0" step="0.01" {...form.register('retentions.isr', { valueAsNumber: true })} /></Field></>}
               <Field id="notes" label="Notas" className="sm:col-span-2" error={errors.notes?.message}><Textarea id="notes" rows={2} {...form.register('notes')} /></Field>
             </div>
+            {supportsInvoiceTransport(type) && <fieldset className="mt-5 border-t pt-5">
+              <legend className="px-1 text-sm font-semibold">Transporte del comprobante (opcional)</legend>
+              <p className="mb-4 text-xs text-muted-foreground">Conductor y vehículo correspondientes al comprobante completo.</p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field id="invoice-conductor" label="Conductor" error={errors.conductor?.message} hint={`${conductor?.length ?? 0}/20 caracteres`}>
+                  <Input id="invoice-conductor" aria-invalid={!!errors.conductor} {...form.register('conductor')} />
+                </Field>
+                <Field id="invoice-placa" label="Placa" error={errors.placa?.message} hint={`${placa?.length ?? 0}/7 caracteres`}>
+                  <Input id="invoice-placa" aria-invalid={!!errors.placa} {...form.register('placa')} />
+                </Field>
+              </div>
+            </fieldset>}
           </FormSection>
           {config.requiresReference && <FormSection id="sec-referencia" step={5} title="Comprobante de referencia" description="Indica el comprobante que modifica esta nota.">
             <div className="grid gap-4 sm:grid-cols-2">
@@ -297,7 +363,7 @@ export function NewInvoicePage() {
         </div>
         <aside className="lg:sticky lg:top-24 lg:self-start"><div className="surface space-y-5 p-5"><h2 className="font-semibold">Resumen</h2>
           <TotalsList values={{ subtotal: totals.taxable, discount: totals.discount, itbis: totals.itbis, itbisByRate: totals.itbisByRate, retainedItbis: totals.retainedItbis, retainedIsr: totals.retainedIsr, total: totals.total }} />
-          <div className="space-y-2 border-t pt-5">{!ENV.invoicesUseMocks && !editId && <Button type="button" variant="outline" className="w-full" disabled={busy} onClick={() => save.mutate(form.getValues())}>{save.isPending ? <Loader2 className="animate-spin" /> : <Save />} Guardar borrador</Button>}<Button type="button" variant="outline" className="w-full" disabled={busy} onClick={validateForm}>{validate.isPending ? <Loader2 className="animate-spin" /> : <FileCheck2 />} Validar borrador</Button><Button type="submit" className="w-full" disabled={busy || (!editId && (access.isLoading || access.data?.allowed === false))}>{emit.isPending ? <Loader2 className="animate-spin" /> : <FileCheck2 />} {editId ? 'Guardar cambios' : 'Registrar comprobante'}</Button></div>
+          <div className="space-y-2 border-t pt-5">{!ENV.invoicesUseMocks && !editId && <Button type="button" variant="outline" className="w-full" disabled={busy} onClick={saveDraft}>{save.isPending ? <Loader2 className="animate-spin" /> : <Save />} Guardar borrador</Button>}<Button type="button" variant="outline" className="w-full" disabled={busy} onClick={validateForm}>{validate.isPending ? <Loader2 className="animate-spin" /> : <FileCheck2 />} Validar borrador</Button><Button type="submit" className="w-full" disabled={busy || (!editId && (access.isLoading || access.data?.allowed === false))}>{emit.isPending ? <Loader2 className="animate-spin" /> : <FileCheck2 />} {editId ? 'Guardar cambios' : 'Registrar comprobante'}</Button></div>
           {formError && <p role="alert" className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">{formError}</p>}
           <p className="text-xs text-muted-foreground">{editId ? 'Los cambios quedan en este comprobante. Revisa el PDF antes del envío a la DGII.' : ENV.invoicesUseMocks ? 'Modo demostración: el registro se guarda solo en la memoria de esta página y no tiene validez fiscal.' : 'Registrar asigna un e-NCF real de la empresa. El envío a la DGII es un paso separado.'}</p>
         </div>{validation && <div className="surface mt-4 p-4"><h2 className="mb-3 text-sm font-semibold">Validación</h2><DgiiMessages messages={validation.messages} tone={validation.valid ? 'info' : 'warning'} /></div>}</aside>

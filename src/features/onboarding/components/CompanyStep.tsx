@@ -7,7 +7,7 @@ import { companySchema, STEP_FORM_ID, type CompanyStepValues } from '../schemas'
 import { StepCard, type StepProps } from './StepCard';
 
 export function CompanyStep({ defaultValues, onSubmit }: StepProps<CompanyStepValues>) {
-  const form = useForm<CompanyStepValues>({ resolver: zodResolver(companySchema), defaultValues });
+  const form = useForm<CompanyStepValues>({ resolver: zodResolver(companySchema), defaultValues: { ...defaultValues, sucursal: defaultValues.sucursal ?? '', webSite: defaultValues.webSite ?? '' } });
 
   return (
     <StepCard icon={Building2} title="Información de la empresa" description="Datos generales que aparecerán en tus comprobantes y comunicaciones.">
@@ -40,12 +40,26 @@ export function CompanyStep({ defaultValues, onSubmit }: StepProps<CompanyStepVa
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Correo de facturación</FormLabel>
+                <FormLabel>Correo de facturación <span className="font-normal text-muted-foreground">(opcional)</span></FormLabel>
                 <FormControl><Input type="email" placeholder="facturacion@empresa.com" autoComplete="email" {...field} /></FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
+          <FormField control={form.control} name="sucursal" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Sucursal <span className="font-normal text-muted-foreground">(opcional, hasta 20 caracteres)</span></FormLabel>
+              <FormControl><Input {...field} /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+          <FormField control={form.control} name="webSite" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Sitio web <span className="font-normal text-muted-foreground">(opcional, hasta 50 caracteres)</span></FormLabel>
+              <FormControl><Input {...field} /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
           <FormField
             control={form.control}
             name="phone"

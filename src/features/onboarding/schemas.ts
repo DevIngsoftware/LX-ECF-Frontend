@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type { CompanySettings } from '@/types/account';
 import { STORAGE_KEYS } from '@/constants/storage';
 import { isSequenceExpiryOptional } from '@/constants/ecf';
+import { emitterFields } from '@/lib/emitter-fields';
 
 export const STEP_FORM_ID = 'onboarding-step-form';
 const DRAFT_KEY = STORAGE_KEYS.onboardingDraft;
@@ -23,7 +24,7 @@ const optionalText = (max: number) => z.string().trim().max(max, `Máximo ${max}
 export const companySchema = z.object({
   legalName: z.string().trim().min(2, 'Ingresa la razón social.').max(150, 'Máximo 150 caracteres.'),
   tradeName: optionalText(150),
-  email: z.string().trim().min(1, 'Ingresa un correo de contacto.').email('Ingresa un correo válido.'),
+  ...emitterFields,
   phone: z
     .string()
     .trim()
@@ -99,7 +100,7 @@ export interface OnboardingData {
 export function defaultsFromCompany(c: CompanySettings | undefined): OnboardingData {
   const rate = String(c?.defaultItbisRate ?? 18);
   return {
-    company: { legalName: c?.legalName ?? '', tradeName: c?.tradeName ?? '', email: c?.email ?? '', phone: c?.phone ?? '', address: c?.address ?? '' },
+    company: { legalName: c?.legalName ?? '', tradeName: c?.tradeName ?? '', email: c?.email ?? '', sucursal: c?.sucursal ?? '', webSite: c?.webSite ?? '', phone: c?.phone ?? '', address: c?.address ?? '' },
     fiscal: { rnc: c?.rnc ?? '', economicActivity: c?.economicActivity ?? '', province: '' },
     dgii: { environment: 'PRUEBAS' },
     certificate: { status: 'pending' },

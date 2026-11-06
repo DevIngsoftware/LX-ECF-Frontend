@@ -8,6 +8,12 @@ import type { EcfTypeCode, InvoiceDraft } from '@/types/ecf';
 export interface ItemDTO {
   codigo?: string | null;
   descripcion: string;
+  descripcionItem?: string | null;
+  fechaServicio?: string | null;
+  chofer?: string | null;
+  tms?: string | null;
+  numeroSalida?: string | null;
+  placa?: string | null;
   indicadorBienServicio: string;
   cantidad: number;
   precioUnitario: number;
@@ -25,6 +31,8 @@ export interface FacturaRequestDTO {
   tipoIngresos: string;
   tipoPago: string;
   plazoPagoDias?: number;
+  conductor?: string | null;
+  placa?: string | null;
   items: ItemDTO[];
   itbisRetenido: number;
   isrRetenido: number;
@@ -46,9 +54,17 @@ export function toFacturaRequestDTO(draft: InvoiceDraft): FacturaRequestDTO {
     tipoIngresos: draft.incomeType,
     tipoPago: draft.paymentType,
     plazoPagoDias: draft.paymentTermDays,
+    conductor: draft.conductor?.trim() || undefined,
+    placa: draft.placa?.trim() || undefined,
     items: draft.items.map((i) => ({
       codigo: i.code,
       descripcion: i.description,
+      descripcionItem: i.descripcionItem?.trim() || undefined,
+      fechaServicio: i.fechaServicio?.trim() || undefined,
+      chofer: i.chofer?.trim() || undefined,
+      tms: i.tms?.trim() || undefined,
+      numeroSalida: i.numeroSalida?.trim() || undefined,
+      placa: i.placa?.trim() || undefined,
       indicadorBienServicio: i.kind === 'BIEN' ? '1' : '2',
       cantidad: i.quantity,
       precioUnitario: i.unitPrice,
@@ -79,8 +95,16 @@ export function fromFacturaRequestDTO(saved: FacturaRequestDTO): InvoiceDraft {
     incomeType: saved.tipoIngresos ?? '01',
     paymentType: saved.tipoPago ?? '1',
     paymentTermDays: saved.plazoPagoDias ?? undefined,
+    conductor: saved.conductor ?? undefined,
+    placa: saved.placa ?? undefined,
     items: (saved.items ?? []).map((item) => ({
       code: item.codigo ?? undefined, description: item.descripcion ?? '',
+      descripcionItem: item.descripcionItem ?? undefined,
+      fechaServicio: item.fechaServicio ?? undefined,
+      chofer: item.chofer ?? undefined,
+      tms: item.tms ?? undefined,
+      numeroSalida: item.numeroSalida ?? undefined,
+      placa: item.placa ?? undefined,
       kind: item.indicadorBienServicio === '1' ? 'BIEN' : 'SERVICIO',
       quantity: item.cantidad == null ? 1 : amount(item.cantidad), unitPrice: amount(item.precioUnitario),
       discount: amount(item.descuento), itbisRate: amount(item.tasaItbis),

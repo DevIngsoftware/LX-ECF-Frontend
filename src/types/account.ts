@@ -156,7 +156,9 @@ export interface CompanySettings {
   legalName: string;
   tradeName?: string;
   rnc: string;
-  email: string;
+  email?: string;
+  sucursal?: string;
+  webSite?: string;
   phone?: string;
   address?: string;
   economicActivity?: string;

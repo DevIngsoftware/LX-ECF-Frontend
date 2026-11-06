@@ -13,21 +13,24 @@ import { settingsService } from '@/services/api/account';
 import { queryKeys } from '@/services/api/query-keys';
 import { errorMessage } from '@/services/http/errors';
 import type { CompanySettings } from '@/types/account';
+import { emitterFields } from '@/lib/emitter-fields';
 import { SaveBar, SectionError, SectionLoading, SectionShell, useCompanySettings } from './settings-shared';
 
-const schema = z.object({
+const companySettingsSchema = z.object({
   legalName: z.string().trim().min(3, 'Ingresa la razón social').max(150, 'Máximo 150 caracteres'),
   tradeName: z.string().trim().max(150, 'Máximo 150 caracteres'),
-  email: z.string().trim().min(1, 'Ingresa el correo').email('Correo electrónico no válido'),
+  ...emitterFields,
   phone: z.string().trim().max(20, 'Máximo 20 caracteres').refine((v) => v === '' || /^[\d\s()+-]{7,20}$/.test(v), 'Teléfono no válido'),
   address: z.string().trim().max(250, 'Máximo 250 caracteres'),
 });
-type Values = z.infer<typeof schema>;
+type Values = z.infer<typeof companySettingsSchema>;
 
 const toValues = (data?: CompanySettings): Values => ({
   legalName: data?.legalName ?? '',
   tradeName: data?.tradeName ?? '',
   email: data?.email ?? '',
+  sucursal: data?.sucursal ?? '',
+  webSite: data?.webSite ?? '',
   phone: data?.phone ?? '',
   address: data?.address ?? '',
 });
@@ -49,7 +52,7 @@ export function CompanySection() {
     },
     onError: (err) => toast.error(errorMessage(err)),
   });
-  const form = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { legalName: '', tradeName: '', email: '', phone: '', address: '' } });
+  const form = useForm<Values>({ resolver: zodResolver(companySettingsSchema), defaultValues: toValues() });
 
   useEffect(() => {
     if (!selectedFile) { setSelectedPreview(null); return; }
@@ -129,8 +132,22 @@ export function CompanySection() {
               )} />
               <FormField control={form.control} name="email" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Correo de facturación</FormLabel>
+                  <FormLabel>Correo de facturación <span className="font-normal text-muted-foreground">(opcional)</span></FormLabel>
                   <FormControl><Input type="email" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <FormField control={form.control} name="sucursal" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Sucursal <span className="font-normal text-muted-foreground">(opcional, hasta 20 caracteres)</span></FormLabel>
+                  <FormControl><Input {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <FormField control={form.control} name="webSite" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Sitio web <span className="font-normal text-muted-foreground">(opcional, hasta 50 caracteres)</span></FormLabel>
+                  <FormControl><Input {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )} />

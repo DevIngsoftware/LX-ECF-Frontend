@@ -1,21 +1,56 @@
 import { z } from 'zod';
-import { ECF_TYPE_MAP } from '@/constants/ecf';
+import { ECF_TYPE_MAP, supportsInvoiceTransport } from '@/constants/ecf';
 import type { EcfTypeCode, InvoiceDraft } from '@/types/ecf';
 import { computeTotals } from '../../lib/invoice-math';
+import { buildItemDescription, isServiceDate, ITEM_DESCRIPTION_MAX_LENGTH, ITEM_NAME_MAX_LENGTH, type ItemDescriptionFields } from '../../lib/item-description';
 
 const ECF_CODES = ['E31', 'E32', 'E33', 'E34', 'E41', 'E43', 'E44', 'E45', 'E46', 'E47'] as const satisfies readonly EcfTypeCode[];
 
 const num = (msg = 'Ingresa un número válido') => z.number({ invalid_type_error: msg, required_error: msg });
+const optionalText = () => z.string().nullish().transform((value) => value?.trim() || undefined);
 
-export const itemSchema = z.object({
+const transportFields = {
+  conductor: z.string().max(20, 'Conductor admite hasta 20 caracteres. Reduce el nombre para continuar.').nullish().transform((value) => value?.trim() || undefined),
+  placa: z.string().max(7, 'Placa del comprobante admite hasta 7 caracteres. Reduce el valor para continuar.').nullish().transform((value) => value?.trim() || undefined),
+};
+
+function validateInvoiceTransport(value: { type: EcfTypeCode; conductor?: string; placa?: string }, ctx: z.RefinementCtx) {
+  if (supportsInvoiceTransport(value.type)) return;
+  (['conductor', 'placa'] as const).forEach((field) => {
+    if (value[field]) ctx.addIssue({ code: z.ZodIssueCode.custom, path: [field], message: `${value.type} no admite ${field === 'conductor' ? 'Conductor' : 'Placa'} en el transporte del comprobante.` });
+  });
+}
+
+export const invoiceTransportSchema = z.object({ type: z.enum(ECF_CODES), ...transportFields }).superRefine(validateInvoiceTransport);
+
+const itemTextFields = z.object({
+  description: z.string().max(ITEM_NAME_MAX_LENGTH, 'NombreItem admite hasta 80 caracteres. Reduce el nombre o mueve la información adicional a DescripcionItem.'),
+  descripcionItem: z.string().max(ITEM_DESCRIPTION_MAX_LENGTH, 'DescripcionItem admite hasta 1000 caracteres.').nullish().transform((value) => value?.trim() || undefined),
+  fechaServicio: optionalText().refine((value) => !value || isServiceDate(value), 'Ingresa una fecha de servicio válida'),
+  chofer: optionalText(),
+  tms: optionalText(),
+  numeroSalida: optionalText(),
+  placa: optionalText(),
+});
+
+function validateItemDescription(item: ItemDescriptionFields, ctx: z.RefinementCtx) {
+  if (buildItemDescription(item).length > ITEM_DESCRIPTION_MAX_LENGTH) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['descripcionItem'], message: 'DescripcionItem, incluidos los datos del viaje, admite hasta 1000 caracteres. Reduce la información adicional.' });
+  }
+}
+
+/** Permite guardar un borrador incompleto, respetando los límites del texto del ítem. */
+export const itemTextSchema = itemTextFields.superRefine(validateItemDescription);
+
+export const itemSchema = itemTextFields.extend({
   code: z.string().nullish().transform((value) => value ?? undefined),
-  description: z.string().trim().min(1, 'Describe el artículo').max(500, 'Máximo 500 caracteres'),
+  description: itemTextFields.shape.description.trim().min(1, 'Indica el nombre del artículo o servicio'),
   kind: z.enum(['BIEN', 'SERVICIO']),
   quantity: num().positive('Debe ser mayor que 0'),
   unitPrice: num().min(0, 'No puede ser negativo'),
   discount: num().min(0, 'No puede ser negativo'),
   itbisRate: num(),
-});
+}).superRefine(validateItemDescription);
 
 export const invoiceFormSchema = z
   .object({
@@ -31,6 +66,7 @@ export const invoiceFormSchema = z
     incomeType: z.string().min(1, 'Selecciona el tipo de ingreso'),
     paymentType: z.string().min(1, 'Selecciona la forma de pago'),
     paymentTermDays: num('Ingresa los días de plazo').int('Debe ser un número entero').optional(),
+    ...transportFields,
     items: z.array(itemSchema).min(1, 'Agrega al menos un artículo'),
     retentions: z.object({ itbis: num().min(0, 'No puede ser negativo'), isr: num().min(0, 'No puede ser negativo') }),
     reference: z.object({
@@ -42,6 +78,7 @@ export const invoiceFormSchema = z
     notes: z.string().max(500, 'Máximo 500 caracteres'),
   })
   .superRefine((v, ctx) => {
+    validateInvoiceTransport(v, ctx);
     const cfg = ECF_TYPE_MAP[v.type];
     const issue = (path: (string | number)[], message: string) => ctx.addIssue({ code: z.ZodIssueCode.custom, path, message });
     const rnc = v.buyer.rnc.replace(/[\s-]/g, '');
@@ -96,7 +133,7 @@ export const invoiceFormSchema = z
 export type InvoiceFormValues = z.infer<typeof invoiceFormSchema>;
 export type InvoiceItemValues = z.infer<typeof itemSchema>;
 
-export const emptyItem = (): InvoiceItemValues => ({ code: undefined, description: '', kind: 'SERVICIO', quantity: 1, unitPrice: 0, discount: 0, itbisRate: 18 });
+export const emptyItem = (): InvoiceItemValues => ({ code: undefined, description: '', descripcionItem: '', fechaServicio: '', chofer: '', tms: '', numeroSalida: '', placa: '', kind: 'SERVICIO', quantity: 1, unitPrice: 0, discount: 0, itbisRate: 18 });
 
 export const defaultValues = (type: EcfTypeCode = 'E31'): InvoiceFormValues => ({
   type,
@@ -104,6 +141,8 @@ export const defaultValues = (type: EcfTypeCode = 'E31'): InvoiceFormValues => (
   incomeType: '01',
   paymentType: '1',
   paymentTermDays: undefined,
+  conductor: '',
+  placa: '',
   items: [{ ...emptyItem(), itbisRate: type === 'E44' || type === 'E46' || type === 'E47' ? 0 : 18 }],
   retentions: { itbis: 0, isr: 0 },
   reference: { modifiedNcf: '', modifiedDate: '', modificationCode: '', reason: '' },
@@ -128,7 +167,14 @@ export function toDraft(v: InvoiceFormValues): InvoiceDraft {
     incomeType: v.incomeType,
     paymentType: v.paymentType,
     paymentTermDays: v.paymentType === '2' && cfg.allowsCredit ? v.paymentTermDays : undefined,
-    items: v.items.map((i) => ({ ...i, code: i.code ?? undefined, description: i.description.trim() })),
+    conductor: clean(v.conductor ?? ''),
+    placa: clean(v.placa ?? ''),
+    items: v.items.map((i) => ({
+      ...i, code: i.code ?? undefined, description: i.description.trim(),
+      descripcionItem: clean(i.descripcionItem ?? ''), fechaServicio: clean(i.fechaServicio ?? ''),
+      chofer: clean(i.chofer ?? ''), tms: clean(i.tms ?? ''),
+      numeroSalida: clean(i.numeroSalida ?? ''), placa: clean(i.placa ?? ''),
+    })),
     retentions: cfg.allowsRetentions ? { itbis: v.retentions.itbis || 0, isr: v.retentions.isr || 0 } : { itbis: 0, isr: 0 },
     reference: cfg.requiresReference
       ? {
@@ -152,6 +198,8 @@ export function fromDraft(draft: InvoiceDraft): InvoiceFormValues {
     incomeType: draft.incomeType || defaults.incomeType,
     paymentType: draft.paymentType || defaults.paymentType,
     paymentTermDays: draft.paymentTermDays,
+    conductor: draft.conductor ?? '',
+    placa: draft.placa ?? '',
     items: draft.items.length ? draft.items.map((item) => ({ ...emptyItem(), ...item })) : defaults.items,
     retentions: draft.retentions,
     reference: { ...defaults.reference, ...draft.reference },

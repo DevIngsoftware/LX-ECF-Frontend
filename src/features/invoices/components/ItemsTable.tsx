@@ -2,6 +2,7 @@ import type { InvoiceItem } from '@/types/ecf';
 import { formatMoney, formatNumber } from '@/utils/format';
 import { cn } from '@/lib/utils';
 import { lineItbis, lineNet } from '../lib/invoice-math';
+import { buildItemDescription } from '../lib/item-description';
 
 export function ItemsTable({ items, className, print }: { items: InvoiceItem[]; className?: string; print?: boolean }) {
   return (
@@ -24,6 +25,7 @@ export function ItemsTable({ items, className, print }: { items: InvoiceItem[]; 
               <td className="py-2.5 pr-3 align-top tabular-nums text-muted-foreground">{i + 1}</td>
               <td className="py-2.5 pr-3 align-top">
                 <p className="font-medium">{it.description}</p>
+                {buildItemDescription(it) && <p className="mt-1 whitespace-pre-wrap break-words text-xs text-muted-foreground">{buildItemDescription(it)}</p>}
                 <p className="text-xs text-muted-foreground">
                   {it.code && <span className="font-mono">{it.code} · </span>}
                   {it.kind === 'BIEN' ? 'Bien' : 'Servicio'}

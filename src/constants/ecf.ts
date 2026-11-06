@@ -35,6 +35,8 @@ export const ECF_TYPE_MAP = Object.fromEntries(ECF_TYPES.map((t) => [t.code, t])
 
 export const isSequenceExpiryOptional = (type: string | undefined) => type === 'E32' || type === 'E34';
 
+export const supportsInvoiceTransport = (type: string) => ['E31', 'E32', 'E33', 'E34', 'E44', 'E45', 'E46'].includes(type);
+
 /** Catálogos de referencia. Sujetos a confirmación con el contrato del backend. */
 export const INCOME_TYPES = [
   { value: '01', label: '01 — Ingresos por operaciones (no financieros)' },

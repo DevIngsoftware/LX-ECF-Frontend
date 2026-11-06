@@ -24,7 +24,14 @@ export interface InvoiceEvent {
 export interface InvoiceItem {
   id?: Id;
   code?: string;
+  /** Concepto principal que se envía como NombreItem (máximo 80 caracteres). */
   description: string;
+  descripcionItem?: string;
+  fechaServicio?: string;
+  chofer?: string;
+  tms?: string;
+  numeroSalida?: string;
+  placa?: string;
   kind: ItemKind;
   quantity: number;
   unitPrice: number;
@@ -72,6 +79,8 @@ export interface InvoiceDetail extends InvoiceSummary {
   incomeType: string;
   paymentType: string;
   paymentTermDays?: number;
+  conductor?: string;
+  placa?: string;
   reference?: InvoiceReference;
   notes?: string;
   securityCode?: string;
@@ -88,6 +97,8 @@ export interface InvoiceDraft {
   incomeType: string;
   paymentType: string;
   paymentTermDays?: number;
+  conductor?: string;
+  placa?: string;
   items: InvoiceItem[];
   retentions: { itbis: number; isr: number };
   reference?: InvoiceReference;

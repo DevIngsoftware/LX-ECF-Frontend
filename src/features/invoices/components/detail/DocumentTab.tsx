@@ -6,6 +6,7 @@ import { useAuth } from '@/features/auth/auth-context';
 import type { InvoiceDetail } from '@/types/ecf';
 import { formatDate, formatDateTime } from '@/utils/format';
 import { ItemsTable } from '../ItemsTable';
+import { InvoiceTransportDetails } from '../InvoiceTransportDetails';
 import { TotalsList } from '../TotalsList';
 import { detailTotals } from '../../lib/invoice-math';
 
@@ -69,6 +70,8 @@ export function DocumentTab({ invoice, onDownload, onPrint }: Props) {
             {invoice.reference && <p><span className="text-muted-foreground">e-NCF modificado: </span><span className="font-mono">{invoice.reference.modifiedNcf}</span></p>}
           </div>
         </section>
+
+        <InvoiceTransportDetails type={invoice.type} conductor={invoice.conductor} placa={invoice.placa} className="border-b py-4" />
 
         <ItemsTable items={invoice.items} print className="py-4" />
 

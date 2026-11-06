@@ -136,6 +136,7 @@ const mockInvoices: InvoicesService = {
       buyer: draft.buyer, items: draft.items, subtotal, discountTotal: draft.items.reduce((s, i) => s + i.discount, 0),
       itbisRetained: draft.retentions.itbis, isrRetained: draft.retentions.isr, incomeType: draft.incomeType, paymentType: draft.paymentType,
       paymentTermDays: draft.paymentTermDays, reference: draft.reference,
+      conductor: draft.conductor, placa: draft.placa,
       history: [{ at: daysAgo(0), type: 'CREADO', description: 'Registrado en modo demostración. No fue firmado ni enviado a la DGII.' }],
       dgiiMessages: [DEMO_NOTICE],
     });

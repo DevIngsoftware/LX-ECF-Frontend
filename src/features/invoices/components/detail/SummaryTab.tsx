@@ -8,6 +8,7 @@ import { ItemsTable } from '../ItemsTable';
 import { TotalsList } from '../TotalsList';
 import { detailTotals } from '../../lib/invoice-math';
 import { ReferenceCard } from './ReferenceCard';
+import { InvoiceTransportDetails } from '../InvoiceTransportDetails';
 
 function InfoCard({ icon: Icon, title, children }: { icon: typeof Building2; title: string; children: ReactNode }) {
   return (
@@ -57,6 +58,8 @@ export function SummaryTab({ invoice }: { invoice: InvoiceDetail }) {
       </div>
 
       {invoice.reference && <ReferenceCard reference={invoice.reference} />}
+
+      <InvoiceTransportDetails type={invoice.type} conductor={invoice.conductor} placa={invoice.placa} className="surface p-5" />
 
       {invoice.notes && <section className="surface p-5"><h2 className="mb-2 font-semibold">Notas</h2><p className="whitespace-pre-wrap text-sm">{invoice.notes}</p></section>}
 
