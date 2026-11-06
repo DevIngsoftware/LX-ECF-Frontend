@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ECF_TYPE_MAP, supportsInvoiceTransport } from '@/constants/ecf';
+import { ECF_TYPE_MAP, PAYMENT_TYPES, supportsInvoiceTransport } from '@/constants/ecf';
 import type { EcfTypeCode, InvoiceDraft } from '@/types/ecf';
 import { computeTotals } from '../../lib/invoice-math';
 import { buildItemDescription, isServiceDate, ITEM_DESCRIPTION_MAX_LENGTH, ITEM_NAME_MAX_LENGTH, type ItemDescriptionFields } from '../../lib/item-description';
@@ -64,7 +64,7 @@ export const invoiceFormSchema = z
       country: z.string().trim(),
     }),
     incomeType: z.string().min(1, 'Selecciona el tipo de ingreso'),
-    paymentType: z.string().min(1, 'Selecciona la forma de pago'),
+    paymentType: z.string().refine((value) => PAYMENT_TYPES.some((type) => type.value === value), 'Selecciona la forma de pago: Contado (1), Crédito (2) o Gratuito (3)'),
     paymentTermDays: num('Ingresa los días de plazo').int('Debe ser un número entero').optional(),
     ...transportFields,
     items: z.array(itemSchema).min(1, 'Agrega al menos un artículo'),

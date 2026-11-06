@@ -14,10 +14,59 @@ try {
   const { InvoiceTransportDetails } = await server.ssrLoadModule('/src/features/invoices/components/InvoiceTransportDetails.tsx');
   const { companySchema, defaultsFromCompany } = await server.ssrLoadModule('/src/features/onboarding/schemas.ts');
   const { emitterFields } = await server.ssrLoadModule('/src/lib/emitter-fields.ts');
-  const { supportsInvoiceTransport } = await server.ssrLoadModule('/src/constants/ecf.ts');
+  const { ECF_TYPE_MAP, PAYMENT_TYPES, supportsInvoiceTransport } = await server.ssrLoadModule('/src/constants/ecf.ts');
 
   const item = { description: 'Flete: Stgo. - San Cristóbal', kind: 'SERVICIO', quantity: 1, unitPrice: 500, discount: 0, itbisRate: 18 };
   const freight = { fechaServicio: '2026-10-29', chofer: 'Eliecer Bautista', tms: '6883', numeroSalida: '56642', placa: 'L123456' };
+
+  const noteValues = (type, paymentType) => ({
+    ...defaultValues(type),
+    buyer: { rnc: '101000000', name: 'Cliente de prueba', email: '', foreignId: '', country: '' },
+    paymentType,
+    paymentTermDays: paymentType === '2' ? 30 : undefined,
+    items: [item],
+    reference: { modifiedNcf: 'E310000000001', modifiedDate: '2026-10-29', modificationCode: '3', reason: 'Ajuste del importe' },
+  });
+
+  await test('E33 y E34 permiten Contado, Crédito y Gratuito y conservan el tipo al guardar y editar', () => {
+    for (const type of ['E33', 'E34']) {
+      const options = PAYMENT_TYPES.filter((option) => option.value !== '2' || ECF_TYPE_MAP[type].allowsCredit);
+      assert.deepEqual(options.map((option) => option.value), ['1', '2', '3']);
+      for (const paymentType of ['1', '2', '3']) {
+        const values = invoiceFormSchema.parse(noteValues(type, paymentType));
+        const payload = toFacturaRequestDTO(toDraft(values));
+        assert.equal(payload.tipoPago, paymentType);
+        assert.equal(payload.plazoPagoDias, paymentType === '2' ? 30 : undefined);
+        const restored = fromDraft(fromFacturaRequestDTO(payload));
+        assert.equal(restored.paymentType, paymentType);
+        assert.equal(restored.paymentTermDays, values.paymentTermDays);
+        assert.equal(invoiceFormSchema.safeParse(restored).success, true);
+      }
+    }
+  });
+
+  await test('las notas rechazan tipos de pago ajenos al catálogo XSD', () => {
+    for (const type of ['E33', 'E34']) {
+      for (const paymentType of ['', '0', '4', '01', 'CONTADO']) {
+        const result = invoiceFormSchema.safeParse(noteValues(type, paymentType));
+        assert.equal(result.success, false);
+        assert.equal(result.error.issues.some((issue) => issue.path[0] === 'paymentType'), true);
+      }
+    }
+  });
+
+  await test('el pago a crédito en E33 y E34 requiere un plazo entero entre 1 y 365 días', () => {
+    for (const type of ['E33', 'E34']) {
+      for (const paymentTermDays of [1, 365]) {
+        assert.equal(invoiceFormSchema.safeParse({ ...noteValues(type, '2'), paymentTermDays }).success, true);
+      }
+      for (const paymentTermDays of [undefined, 0, 366, 1.5]) {
+        const result = invoiceFormSchema.safeParse({ ...noteValues(type, '2'), paymentTermDays });
+        assert.equal(result.success, false);
+        assert.equal(result.error.issues.some((issue) => issue.path[0] === 'paymentTermDays'), true);
+      }
+    }
+  });
 
   await test('NombreItem acepta 80 caracteres y rechaza 81 sin recortarlos', () => {
     assert.equal(itemSchema.parse({ ...item, description: 'x'.repeat(80) }).description.length, 80);
